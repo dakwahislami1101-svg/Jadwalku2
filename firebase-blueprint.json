@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sistem Jadwal Shif & Wali Asuh Database Schema",
+  "entities": {
+    "schedules": {
+      "description": "Monthly shift schedule matrices",
+      "fields": {
+        "year": { "type": "number", "required": true },
+        "month": { "type": "number", "required": true },
+        "totalDays": { "type": "number", "required": true },
+        "days": { "type": "object", "required": true },
+        "updatedAt": { "type": "string", "required": true },
+        "updatedBy": { "type": "string", "required": false }
+      }
+    },
+    "swap_logs": {
+      "description": "Admin shift swap and override logs",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "timestamp": { "type": "string", "required": true },
+        "year": { "type": "number", "required": true },
+        "month": { "type": "number", "required": true },
+        "type": { "type": "string", "required": true },
+        "day1": { "type": "number", "required": true },
+        "staff1Id": { "type": "number", "required": true },
+        "staff1Name": { "type": "string", "required": true },
+        "staff1OldShift": { "type": "string", "required": true },
+        "staff1NewShift": { "type": "string", "required": true },
+        "reason": { "type": "string", "required": true },
+        "undone": { "type": "boolean", "required": false }
+      }
+    },
+    "handover_reports": {
+      "description": "Daily handover shift reports submitted by staff",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "date": { "type": "string", "required": true },
+        "shift": { "type": "string", "required": true },
+        "jenjang": { "type": "string", "required": true },
+        "santriSakit": { "type": "array", "required": true },
+        "kebersihanKamar": { "type": "object", "required": true },
+        "catatanKhusus": { "type": "string", "required": false },
+        "submittedBy": { "type": "string", "required": true },
+        "submittedAt": { "type": "string", "required": true }
+      }
+    },
+    "daily_tasks": {
+      "description": "Daily checklist tasks status",
+      "fields": {
+        "dateKey": { "type": "string", "required": true },
+        "staffId": { "type": "number", "required": true },
+        "tasks": { "type": "array", "required": true },
+        "updatedAt": { "type": "string", "required": true }
+      }
+    },
+    "settings": {
+      "description": "System settings including customizable SOP checklist tasks",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "tasks": { "type": "array", "required": true },
+        "updatedAt": { "type": "string", "required": true },
+        "updatedBy": { "type": "string", "required": false }
+      }
+    }
+  }
+}

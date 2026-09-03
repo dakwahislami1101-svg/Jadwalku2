@@ -1,0 +1,496 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Calendar, 
+  Clock, 
+  Bell, 
+  Volume2, 
+  VolumeX, 
+  Moon, 
+  Sun, 
+  User, 
+  LayoutDashboard, 
+  CalendarDays, 
+  Sparkles, 
+  Printer, 
+  Settings,
+  ShieldCheck,
+  FileText,
+  LogOut,
+  ArrowLeftRight,
+  Database,
+  RefreshCw,
+  ListTodo
+} from 'lucide-react';
+import { Staff } from '../types';
+import { INSTITUTION_INFO } from '../data/initialSchedule';
+import { soundManager } from '../utils/audio';
+
+interface NavbarProps {
+  userRole?: 'admin' | 'staff';
+  currentTab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop';
+  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop') => void;
+  staffList: Staff[];
+  selectedStaffId: number;
+  setSelectedStaffId: (id: number) => void;
+  selectedMonth: { year: number; month: number; monthName: string };
+  onSelectMonth: (year: number, month: number) => void;
+  darkMode: boolean;
+  setDarkMode: (val: boolean) => void;
+  soundEnabled: boolean;
+  setSoundEnabled: (val: boolean) => void;
+  activeShiftTitle: string;
+  onLogout?: () => void;
+  cloudStatus?: 'connected' | 'syncing' | 'offline' | 'error';
+  onForceSyncToCloud?: () => void;
+  onShowSplash?: () => void;
+  isRefreshing?: boolean;
+  onRefreshServer?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({
+  userRole = 'staff',
+  currentTab,
+  setCurrentTab,
+  staffList,
+  selectedStaffId,
+  setSelectedStaffId,
+  selectedMonth,
+  onSelectMonth,
+  darkMode,
+  setDarkMode,
+  soundEnabled,
+  setSoundEnabled,
+  activeShiftTitle,
+  onLogout,
+  cloudStatus = 'connected',
+  onForceSyncToCloud,
+  onShowSplash,
+  isRefreshing = false,
+  onRefreshServer,
+}) => {
+  const [timeStr, setTimeStr] = useState<string>('');
+  const [dateStr, setDateStr] = useState<string>('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      setTimeStr(`${hours}:${mins}:${secs} WIB`);
+
+      const options: Intl.DateTimeFormatOptions = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      setDateStr(now.toLocaleDateString('id-ID', options));
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleToggleSound = () => {
+    const newVal = !soundEnabled;
+    setSoundEnabled(newVal);
+    soundManager.setEnabled(newVal);
+    if (newVal) {
+      soundManager.playChime();
+    }
+  };
+
+  const selectedStaff = staffList.find((s) => s.id === selectedStaffId);
+
+  return (
+    <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 transition-colors shadow-xs">
+      {/* Top Banner / Institution Title */}
+      <div className="bg-slate-900 dark:bg-slate-950 text-white px-3 py-1 text-[11px] font-medium border-b border-slate-800 flex flex-wrap items-center justify-between gap-1.5">
+        <div className="flex items-center gap-1.5">
+          {userRole === 'admin' ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
+              👑 Administrator SRT 1
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-emerald-600/90 text-[10px] font-bold uppercase tracking-wider text-emerald-50">
+              <ShieldCheck className="w-2.5 h-2.5" /> Kemensos RI
+            </span>
+          )}
+          <span className="hidden sm:inline text-slate-300 font-semibold text-[11px]">{INSTITUTION_INFO.sekolah}</span>
+          <span className="text-slate-400 hidden md:inline text-[10.5px]">• {INSTITUTION_INFO.gedung}</span>
+        </div>
+        <div className="flex items-center gap-2.5 text-slate-300 text-[11px]">
+          {/* Cloud Database Status Badge */}
+          <div 
+            onClick={onForceSyncToCloud}
+            title={
+              cloudStatus === 'connected' 
+                ? 'Firestore Database Terhubung (Real-time Cloud Sync Aktif). Klik untuk sinkronkan ulang.'
+                : cloudStatus === 'syncing'
+                ? 'Sedang menyinkronkan data ke Cloud Firestore...'
+                : cloudStatus === 'error'
+                ? 'Koneksi Firestore mengalami kendala (menggunakan penyimpanan lokal).'
+                : 'Mode Offline (Penyimpanan lokal aktif).'
+            }
+            className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold cursor-pointer transition-all ${
+              cloudStatus === 'connected'
+                ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/80 hover:bg-emerald-900/80'
+                : cloudStatus === 'syncing'
+                ? 'bg-blue-950/80 text-blue-300 border border-blue-700/80 animate-pulse'
+                : 'bg-amber-950/80 text-amber-300 border border-amber-700/80'
+            }`}
+          >
+            <Database className={`w-2.5 h-2.5 ${cloudStatus === 'syncing' ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">
+              {cloudStatus === 'connected' && 'Cloud DB Terhubung'}
+              {cloudStatus === 'syncing' && 'Menyinkronkan...'}
+              {cloudStatus === 'offline' && 'Lokal (Offline)'}
+              {cloudStatus === 'error' && 'DB Terputus'}
+            </span>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              cloudStatus === 'connected' ? 'bg-emerald-400' :
+              cloudStatus === 'syncing' ? 'bg-blue-400' : 'bg-amber-400'
+            }`} />
+          </div>
+
+          {/* Dedicated Refresh from Server Button in Top Bar */}
+          {onRefreshServer && (
+            <button
+              type="button"
+              onClick={onRefreshServer}
+              disabled={isRefreshing}
+              title={isRefreshing ? 'Sedang memuat data dari server...' : 'Ambil data terbaru dari server (Cloud Firestore)'}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 hover:text-white border border-slate-700 hover:border-blue-500/80 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-2.5 h-2.5 text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden xs:inline">Refresh</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-1">
+            <Clock className="w-3 h-3 text-amber-400" />
+            <span className="font-mono text-amber-300 font-bold">{timeStr}</span>
+          </div>
+          <span className="text-slate-600 hidden sm:inline">|</span>
+          <div className="hidden sm:flex items-center gap-1">
+            <Calendar className="w-3 h-3 text-slate-400" />
+            <span>{dateStr}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Header Bar */}
+      <div className="max-w-[1680px] mx-auto px-2 sm:px-4 py-1.5 flex flex-wrap items-center justify-between gap-2">
+        {/* Logo & Title */}
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentTab('dashboard')}>
+          <img 
+            src="/logo.svg" 
+            alt="Logo Wali Asuh" 
+            className="w-8 h-8 rounded-lg shadow-xs object-cover border border-emerald-500/30 shrink-0" 
+          />
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
+                Sistem Jadwal Shif Wali Asuh
+              </h1>
+              <span className="hidden lg:inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
+                {activeShiftTitle}
+              </span>
+            </div>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-none">
+              Otomatisasi Jadwal Harian & Notifikasi Pengingat Tugas
+            </p>
+          </div>
+        </div>
+
+        {/* User Identity & Quick Controls */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Month Selector Switcher */}
+          <div className="flex items-center gap-1 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/60 dark:to-indigo-950/60 px-2 py-1 rounded-lg border border-blue-200 dark:border-blue-800 text-[11px] shadow-2xs">
+            <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+            <select
+              aria-label="Pilih Periode Bulan Jadwal"
+              value={`${selectedMonth.year}-${selectedMonth.month}`}
+              onChange={(e) => {
+                const [y, m] = e.target.value.split('-').map(Number);
+                onSelectMonth(y, m);
+              }}
+              className="bg-transparent font-bold text-blue-900 dark:text-blue-200 focus:outline-none cursor-pointer pr-1 text-[11px]"
+            >
+              <option value="2026-8" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
+                Agustus 2026 (38 Petugas)
+              </option>
+              <option value="2026-9" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
+                September 2026 (31 Petugas)
+              </option>
+            </select>
+          </div>
+
+          {/* Active Staff Profile Selector */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px]">
+            <User className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span className="text-slate-500 dark:text-slate-400 font-medium hidden sm:inline">Saya:</span>
+            <select
+              aria-label="Pilih Profil Wali Asuh"
+              value={selectedStaffId}
+              onChange={(e) => setSelectedStaffId(Number(e.target.value))}
+              className="bg-transparent font-semibold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer pr-0.5 text-[11px] max-w-[130px] truncate"
+            >
+              {staffList.map((st) => (
+                <option key={st.id} value={st.id} className="dark:bg-slate-800 dark:text-slate-100">
+                  {st.code ? `[${st.code}] ` : ''}{st.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Splash Screen Intro Preview */}
+          {onShowSplash && (
+            <button
+              onClick={onShowSplash}
+              title="Lihat Animasi Splash Screen (Intro APK)"
+              className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden xl:inline">Splash</span>
+            </button>
+          )}
+
+          {/* Server Refresh Icon Button */}
+          {onRefreshServer && (
+            <button
+              type="button"
+              onClick={onRefreshServer}
+              disabled={isRefreshing}
+              title={isRefreshing ? 'Sedang mengambil data terbaru dari server...' : 'Ambil Data Terbaru dari Server Cloud'}
+              className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center ${
+                isRefreshing
+                  ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-700 ring-2 ring-blue-400/30'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-600 hover:border-blue-300'
+              }`}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`} />
+            </button>
+          )}
+
+          {/* Sound Toggle */}
+          <button
+            onClick={handleToggleSound}
+            title={soundEnabled ? 'Suara Notifikasi Aktif' : 'Suara Notifikasi Dinonaktifkan'}
+            className={`p-1.5 rounded-lg border transition-colors ${
+              soundEnabled
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            title={darkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+          >
+            {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
+          </button>
+
+          {/* Logout Button */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              title="Keluar / Kunci Sesi"
+              className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-semibold px-2"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Keluar</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="max-w-[1680px] mx-auto px-2 sm:px-4">
+        <nav className="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none border-t border-slate-100 dark:border-slate-800">
+          {userRole === 'admin' ? (
+            /* ADMIN PORTAL TABS */
+            <>
+              <button
+                onClick={() => setCurrentTab('admin')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                  currentTab === 'admin'
+                    ? 'bg-amber-600 text-white shadow-xs font-extrabold'
+                    : 'text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/40'
+                }`}
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-amber-500 dark:text-amber-300" />
+                <span>Panel Tukar Shif (Admin)</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('matrix')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'matrix'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>Matriks Roster 31 Hari</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('dashboard')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'dashboard'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Dashboard Hari Ini</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('handover')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'handover'
+                    ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                    : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Laporan Serah Terima Shift</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('sop')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'sop'
+                    ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                    : 'text-indigo-800 dark:text-indigo-300 bg-indigo-50/70 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800'
+                }`}
+              >
+                <ListTodo className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-300" />
+                <span>SOP & Checklist Shif (Admin)</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('auto')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'auto'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Atur Shif Otomatis</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('notifications')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'notifications'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>Notifikasi & Pengingat</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('print')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'print'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Cetak Jadwal Resmi</span>
+              </button>
+            </>
+          ) : (
+            /* REGULAR WALI ASUH (STAFF) TABS - TUKAR SHIF DISEMBUNYIKAN */
+            <>
+              <button
+                onClick={() => setCurrentTab('dashboard')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'dashboard'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Dashboard Hari Ini</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('matrix')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'matrix'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>Matriks Roster 31 Hari</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('personal')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'personal'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Jadwal Personal ({selectedStaff?.name.split(' ')[0]})</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('handover')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'handover'
+                    ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                    : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Laporan Serah Terima Shift</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('notifications')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'notifications'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>Notifikasi & Pengingat</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('print')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'print'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Cetak Jadwal Resmi</span>
+              </button>
+            </>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+};

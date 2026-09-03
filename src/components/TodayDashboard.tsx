@@ -1,0 +1,779 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Clock, 
+  Calendar, 
+  CheckCircle2, 
+  Circle, 
+  AlertCircle, 
+  Sun, 
+  Sunset, 
+  Moon, 
+  Coffee, 
+  Bell, 
+  BellRing, 
+  ChevronLeft, 
+  ChevronRight, 
+  FileText, 
+  Save, 
+  UserCheck, 
+  ShieldAlert, 
+  Sparkles,
+  ArrowRight,
+  ListTodo,
+  FileDown,
+  Download,
+  Share2,
+  ArrowLeftRight,
+  Edit3
+} from 'lucide-react';
+import { MonthSchedule, Staff, ShiftCode, DailyTask } from '../types';
+import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
+import { calculateDailyStats, INDONESIAN_MONTH_NAMES, INDONESIAN_DAY_NAMES } from '../utils/scheduler';
+import { generateDailySchedulePDF } from '../utils/pdfExport';
+import { soundManager } from '../utils/audio';
+import { notificationService } from '../utils/notification';
+
+interface TodayDashboardProps {
+  schedule: MonthSchedule;
+  staffList: Staff[];
+  selectedStaffId: number;
+  activeDay: number;
+  setActiveDay: (day: number) => void;
+  onNavigateToTab: (tab: 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop') => void;
+  sopTasks?: DailyTask[];
+  userRole?: 'admin' | 'staff';
+}
+
+export const TodayDashboard: React.FC<TodayDashboardProps> = ({
+  schedule,
+  staffList,
+  selectedStaffId,
+  activeDay,
+  setActiveDay,
+  onNavigateToTab,
+  sopTasks,
+  userRole = 'staff',
+}) => {
+  const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(`tasks_${schedule.year}_${schedule.month}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [logBookText, setLogBookText] = useState<string>(() => {
+    try {
+      return localStorage.getItem(`logbook_${schedule.year}_${schedule.month}_${activeDay}`) || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [logSavedToast, setLogSavedToast] = useState(false);
+  const [downloadToast, setDownloadToast] = useState<string | null>(null);
+  const [currentTimeMinutes, setCurrentTimeMinutes] = useState(0);
+  const [currentTimeFormatted, setCurrentTimeFormatted] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTimeMinutes(now.getHours() * 60 + now.getMinutes());
+      setCurrentTimeFormatted(
+        `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Update log text when activeDay changes
+  useEffect(() => {
+    try {
+      const text = localStorage.getItem(`logbook_${schedule.year}_${schedule.month}_${activeDay}`) || '';
+      setLogBookText(text);
+    } catch {
+      setLogBookText('');
+    }
+  }, [activeDay, schedule.year, schedule.month]);
+
+  const showToast = (msg: string) => {
+    setDownloadToast(msg);
+    soundManager.playChime();
+    setTimeout(() => setDownloadToast(null), 3500);
+  };
+
+  const handleDownloadTodayPDF = () => {
+    try {
+      const filename = generateDailySchedulePDF(schedule, activeDay, staffList, logBookText);
+      showToast(`Jadwal tanggal ${activeDay} berhasil diunduh sebagai PDF: ${filename}`);
+    } catch (e) {
+      console.error(e);
+      showToast('Gagal membuat PDF, mengalihkan ke mode cetak...');
+      onNavigateToTab('print');
+    }
+  };
+
+  const handleDownloadTodayCSV = () => {
+    let csv = `JADWAL PENUGASAN DINAS HARIAN WALI ASUH SRT 1 KAB KEDIRI\n`;
+    csv += `Tanggal,${activeDay} ${schedule.monthName} ${schedule.year}\n\n`;
+    csv += `No,Nama Petugas,Posisi,Kode Shif,Nama Shif,Jam Dinas,Pos Penugasan\n`;
+
+    staffList.forEach((staff) => {
+      const shift = schedule.days[activeDay]?.[staff.id] || 'O';
+      const sInfo = SHIFT_DEFINITIONS[shift] || SHIFT_DEFINITIONS['O'];
+      let pos = sInfo.description;
+      if (shift === 'S2A') pos = 'Kantin SMP (2 Petugas)';
+      if (shift === 'S3A') pos = 'Kantin SMA (2 Petugas)';
+      if (shift === 'S4A') pos = 'Jaga Masjid & Lingkungan';
+      if (shift === 'M1') pos = 'Piket Malam - Sesi 1 (15:00 - 00:00)';
+      if (shift === 'M2') pos = 'Piket Malam - Sesi 2 (Subuh - 07:00)';
+
+      csv += `${staff.id},"${staff.name}","${staff.role}",${shift},"${sInfo.name}","${sInfo.startTime} - ${sInfo.endTime}","${pos}"\n`;
+    });
+
+    if (logBookText) {
+      csv += `\nCatatan Buku Jaga & Mutasi:,"${logBookText.replace(/"/g, '""')}"\n`;
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Jadwal_Dinas_Harian_Tgl_${activeDay}_${schedule.monthName}_${schedule.year}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    showToast(`Jadwal tanggal ${activeDay} berhasil diekspor ke CSV!`);
+  };
+
+  const handleShareWhatsApp = () => {
+    const dateStr = `${dayName}, ${activeDay} ${schedule.monthName} ${schedule.year}`;
+    let text = `*LEMBAR PENUGASAN DINAS WALI ASUH SRT 1 KAB KEDIRI*\n📅 *${dateStr}*\n\n`;
+
+    text += `*DAFTAR PETUGAS JAGA HARI INI:*\n`;
+    staffList.forEach((staff) => {
+      const shift = schedule.days[activeDay]?.[staff.id] || 'O';
+      const sInfo = SHIFT_DEFINITIONS[shift];
+      if (shift !== 'O' && shift !== 'LP') {
+        text += `• ${staff.name}: *[${shift}]* ${sInfo.name} (${sInfo.startTime} - ${sInfo.endTime})\n`;
+      }
+    });
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleSaveLogBook = () => {
+    try {
+      localStorage.setItem(`logbook_${schedule.year}_${schedule.month}_${activeDay}`, logBookText);
+      setLogSavedToast(true);
+      soundManager.playChime();
+      setTimeout(() => setLogSavedToast(false), 2500);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const toggleTask = (taskId: string) => {
+    const key = `${activeDay}_${taskId}`;
+    const nextState = !completedTasks[key];
+    const updated = { ...completedTasks, [key]: nextState };
+    setCompletedTasks(updated);
+    try {
+      localStorage.setItem(`tasks_${schedule.year}_${schedule.month}`, JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    if (nextState) {
+      soundManager.playBell();
+    }
+  };
+
+  const selectedStaff = staffList.find((s) => s.id === selectedStaffId) || staffList[0] || {
+    id: 0,
+    name: 'Belum Ada Petugas',
+    role: 'Wali Asuh',
+    group: 'Umum',
+    initials: '-',
+    gender: 'L' as const,
+  };
+  const userTodayShift: ShiftCode = selectedStaff.id ? (schedule.days[activeDay]?.[selectedStaff.id] || 'O') : 'O';
+  const shiftMeta = SHIFT_DEFINITIONS[userTodayShift] || SHIFT_DEFINITIONS['O'];
+
+  // Daily statistics for active day
+  const dailyStats = calculateDailyStats(activeDay, schedule.days, staffList);
+
+  // Relevant tasks for the user's shift today (derived from customizable SOP tasks or default template)
+  const taskSource = sopTasks && sopTasks.length > 0 ? sopTasks : SHIFT_TASKS_TEMPLATE;
+  const hasSpecificTasks = taskSource.some((t) => t.shiftCode === userTodayShift);
+  const relevantTasks = taskSource.filter((t) => {
+    if (hasSpecificTasks) {
+      return t.shiftCode === userTodayShift;
+    }
+    if (userTodayShift === 'P1' || userTodayShift === 'P2' || userTodayShift === 'P3') {
+      return t.shiftCode === userTodayShift || t.shiftCode === 'P';
+    }
+    if (['S2A', 'S3A', 'S4A'].includes(userTodayShift)) {
+      return t.shiftCode === userTodayShift || t.shiftCode === 'S';
+    }
+    if (userTodayShift === 'M1' || userTodayShift === 'M2') {
+      return t.shiftCode === userTodayShift || t.shiftCode === 'M';
+    }
+    if (userTodayShift === 'P') return t.shiftCode === 'P' || t.shiftCode === 'P1';
+    if (userTodayShift === 'S') return t.shiftCode === 'S';
+    if (userTodayShift === 'M') return t.shiftCode === 'M';
+    return false;
+  });
+
+  // Calculate day date
+  const dayDate = new Date(schedule.year, schedule.month - 1, activeDay);
+  const dayName = INDONESIAN_DAY_NAMES[dayDate.getDay()];
+  const dateFormatted = `${dayName}, ${activeDay} ${schedule.monthName} ${schedule.year}`;
+
+  const triggerTestAlarm = () => {
+    notificationService.triggerNotification(
+      `Pengingat Shif: ${selectedStaff.name}`,
+      {
+        body: `Hari ini Anda bertugas pada ${shiftMeta.name} (${shiftMeta.startTime} - ${shiftMeta.endTime}). Siapkan kelengkapan tugas!`,
+        sound: 'chime',
+      }
+    );
+  };
+
+  // Next day shift preview
+  const nextDay = activeDay < schedule.totalDays ? activeDay + 1 : 1;
+  const nextDayShift: ShiftCode = selectedStaff.id ? (schedule.days[nextDay]?.[selectedStaff.id] || 'O') : 'O';
+  const nextShiftMeta = SHIFT_DEFINITIONS[nextDayShift] || SHIFT_DEFINITIONS['O'];
+
+  return (
+    <div className="space-y-2.5">
+      {/* Toast Notification for Download / Action */}
+      {downloadToast && (
+        <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100 text-xs flex items-center justify-between gap-2 shadow-xs animate-in fade-in slide-in-from-top-1">
+          <div className="flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="font-semibold text-xs">{downloadToast}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Date Switcher & Live Status Header */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-2.5 sm:p-3 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-700/60 rounded-lg p-0.5 border border-slate-200 dark:border-slate-600">
+            <button
+              onClick={() => setActiveDay(Math.max(1, activeDay - 1))}
+              disabled={activeDay === 1}
+              className="p-1 rounded hover:bg-white dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+              title="Hari Sebelumnya"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <span className="px-2 py-0.5 font-bold text-xs text-slate-900 dark:text-white">
+              Tgl {activeDay}
+            </span>
+            <button
+              onClick={() => setActiveDay(Math.min(schedule.totalDays, activeDay + 1))}
+              disabled={activeDay === schedule.totalDays}
+              className="p-1 rounded hover:bg-white dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 disabled:opacity-30 transition-colors cursor-pointer"
+              title="Hari Berikutnya"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
+                {dateFormatted}
+              </h2>
+              {activeDay === 22 && (
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                  Hari Ini
+                </span>
+              )}
+            </div>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400">
+              Monitoring {staffList.length} Wali Asuh • {schedule.monthName} {schedule.year}
+            </p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Tombol Tukar Shif (Admin) */}
+          <button
+            onClick={() => onNavigateToTab('admin')}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 text-xs font-bold shadow-xs transition-all cursor-pointer"
+            title="Buka panel Admin untuk menukar shif wali asuh hari ini"
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5 text-slate-950" />
+            <span>Tukar Shif</span>
+          </button>
+
+          {/* Tombol Laporan Serah Terima Shift */}
+          <button
+            onClick={() => onNavigateToTab('handover')}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+            title="Buat Laporan Serah Terima Pergantian Shift & Kirim ke WhatsApp"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Laporan Serah Terima</span>
+          </button>
+
+          {/* Tombol Unduh PDF Hari Ini */}
+          <button
+            onClick={handleDownloadTodayPDF}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+            title="Unduh jadwal penugasan hari ini langsung ke file PDF resmi"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            <span>Unduh PDF</span>
+          </button>
+
+          {/* Tombol Ekspor CSV */}
+          <button
+            onClick={handleDownloadTodayCSV}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
+            title="Ekspor daftar petugas hari ini ke Excel / CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">CSV</span>
+          </button>
+
+          {/* Tombol Kirim WhatsApp */}
+          <button
+            onClick={handleShareWhatsApp}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            title="Bagikan jadwal tugas hari ini ke grup WhatsApp"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Kirim WA</span>
+          </button>
+
+          {/* Quick Day Selector Dropdown */}
+          <div className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-slate-700">
+            <select
+              id="jump-day-select"
+              value={activeDay}
+              onChange={(e) => setActiveDay(Number(e.target.value))}
+              className="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              {Array.from({ length: schedule.totalDays }, (_, i) => i + 1).map((d) => (
+                <option key={d} value={d}>
+                  Tgl {d}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* User's Assigned Shift Banner */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 text-white p-3 sm:p-4 shadow-sm">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/15 backdrop-blur text-[11px] font-medium text-blue-100 border border-white/20">
+              <Sparkles className="w-3 h-3 text-amber-300" />
+              <span>Penugasan Wali Asuh: <strong>{selectedStaff.name}</strong></span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-lg sm:text-xl font-extrabold tracking-tight">
+                {shiftMeta.name}
+              </span>
+              <span className={`px-2 py-0.5 rounded-md text-xs font-bold shadow-xs ${shiftMeta.badgeClass}`}>
+                Kode: {shiftMeta.code}
+              </span>
+            </div>
+            <p className="text-xs text-blue-100 max-w-3xl leading-relaxed">
+              {shiftMeta.description}
+            </p>
+            <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-blue-200 pt-0.5">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-amber-300" />
+                <span>Jam: <strong>{shiftMeta.startTime} - {shiftMeta.endTime}</strong> ({shiftMeta.hours} Jam)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Besok (Tgl {nextDay}): <strong>{nextShiftMeta.name} ({nextShiftMeta.code})</strong></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Action Buttons */}
+          <div className="flex flex-row md:flex-col gap-1.5 shrink-0">
+            <button
+              onClick={triggerTestAlarm}
+              className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-xs transition-transform active:scale-95"
+            >
+              <BellRing className="w-3.5 h-3.5 text-slate-950" />
+              <span>Alarm Tugas</span>
+            </button>
+            <button
+              onClick={() => onNavigateToTab('personal')}
+              className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white font-semibold text-xs border border-white/25 transition-colors"
+            >
+              <span>Jadwal Personal</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Real-Time Shift Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        {/* Shif Pagi */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-2.5 border border-sky-200 dark:border-sky-900/50 shadow-xs">
+          <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-sky-100 dark:border-sky-900/40">
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-md bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 flex items-center justify-center">
+                <Sun className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white">Jaga Pagi (P1/P2)</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">07:00 - 16:00</p>
+              </div>
+            </div>
+            <span className="px-1.5 py-0.2 rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 text-[10.5px] font-bold">
+              {dailyStats.pagiFull} Org
+            </span>
+          </div>
+          <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+            {dailyStats.pagiWali.length > 0 ? (
+              dailyStats.pagiWali.map((st) => {
+                const shiftCode = schedule.days[activeDay]?.[st.id];
+                const isP1 = shiftCode === 'P1' || shiftCode === 'P';
+                const badgeClass = isP1
+                  ? 'bg-sky-600 text-white'
+                  : shiftCode === 'P2'
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-yellow-500 text-slate-900';
+                return (
+                  <div
+                    key={st.id}
+                    className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-sky-50/70 dark:bg-sky-950/40 text-slate-800 dark:text-slate-200"
+                  >
+                    <span className="font-medium truncate">{st.name}</span>
+                    <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded shrink-0 ${badgeClass}`}>
+                      {shiftCode}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-[11px] text-slate-400 italic">Tidak ada petugas pagi</p>
+            )}
+          </div>
+        </div>
+
+        {/* Shif Sore */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-2.5 border border-orange-200 dark:border-orange-900/50 shadow-xs">
+          <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-orange-100 dark:border-orange-900/40">
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-md bg-orange-100 dark:bg-orange-900/60 text-orange-700 dark:text-orange-300 flex items-center justify-center">
+                <Sunset className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white">Jaga Sore (S)</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">15:00 - 23:00</p>
+              </div>
+            </div>
+            <span className="px-1.5 py-0.2 rounded bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 text-[10.5px] font-bold">
+              {dailyStats.s} Org
+            </span>
+          </div>
+          <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+            {dailyStats.soreWali.length > 0 ? (
+              dailyStats.soreWali.map((st) => {
+                const shiftCode = schedule.days[activeDay]?.[st.id] || 'S';
+                let badgeBg = 'bg-orange-200 dark:bg-orange-800 text-orange-900 dark:text-orange-100';
+                let postLabel = '';
+                if (shiftCode === 'S2A') {
+                  badgeBg = 'bg-purple-600 text-white';
+                  postLabel = 'Kantin SMP';
+                } else if (shiftCode === 'S3A') {
+                  badgeBg = 'bg-orange-500 text-white';
+                  postLabel = 'Kantin SMA';
+                } else if (shiftCode === 'S4A') {
+                  badgeBg = 'bg-emerald-600 text-white';
+                  postLabel = 'Jaga Masjid';
+                }
+
+                return (
+                  <div
+                    key={st.id}
+                    className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-orange-50/70 dark:bg-orange-950/40 text-slate-800 dark:text-slate-200 gap-1"
+                  >
+                    <div className="flex items-center gap-1 truncate">
+                      <span className="font-medium truncate">{st.name}</span>
+                      {postLabel && (
+                        <span className="text-[8.5px] text-slate-500 dark:text-slate-400 shrink-0">({postLabel})</span>
+                      )}
+                    </div>
+                    <span className={`text-[9.5px] font-bold px-1 py-0.2 rounded shrink-0 ${badgeBg}`}>
+                      {shiftCode}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-[11px] text-slate-400 italic">Tidak ada petugas sore</p>
+            )}
+          </div>
+        </div>
+
+        {/* Shif Malam */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-2.5 border border-blue-200 dark:border-blue-900/50 shadow-xs">
+          <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-blue-100 dark:border-blue-900/40">
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 flex items-center justify-center">
+                <Moon className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white">Jaga Malam (M)</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">15:00 - 07:00 (Pagi)</p>
+              </div>
+            </div>
+            <span className="px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 text-[10.5px] font-bold">
+              {dailyStats.m} Org
+            </span>
+          </div>
+          <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+            {dailyStats.malamWali.length > 0 ? (
+              dailyStats.malamWali.map((st) => {
+                const shiftCode = schedule.days[activeDay]?.[st.id] || 'M';
+                let badgeBg = 'bg-blue-600 text-white';
+                let postLabel = '';
+                if (shiftCode === 'M1') {
+                  badgeBg = 'bg-indigo-600 text-white';
+                  postLabel = 'Sesi 1 (s.d 00:00)';
+                } else if (shiftCode === 'M2') {
+                  badgeBg = 'bg-blue-600 text-white';
+                  postLabel = 'Sesi 2 (Subuh-07:00)';
+                }
+
+                return (
+                  <div
+                    key={st.id}
+                    className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-blue-50/70 dark:bg-blue-950/40 text-slate-800 dark:text-slate-200 gap-1"
+                  >
+                    <div className="flex items-center gap-1 truncate">
+                      <span className="font-medium truncate">{st.name}</span>
+                      {postLabel && (
+                        <span className="text-[8.5px] text-slate-500 dark:text-slate-400 shrink-0">({postLabel})</span>
+                      )}
+                    </div>
+                    <span className={`text-[9.5px] font-bold px-1 py-0.2 rounded shrink-0 ${badgeBg}`}>
+                      {shiftCode}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-[11px] text-slate-400 italic">Tidak ada petugas malam</p>
+            )}
+          </div>
+        </div>
+
+        {/* Lepas Piket & Libur */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-2.5 border border-slate-200 dark:border-slate-700 shadow-xs">
+          <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-slate-100 dark:border-slate-750">
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 flex items-center justify-center">
+                <Coffee className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white">Lepas & Libur</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Istirahat / Off</p>
+              </div>
+            </div>
+            <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10.5px] font-bold">
+              {dailyStats.offDanLepas + dailyStats.cuti} Org
+            </span>
+          </div>
+          <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+            {dailyStats.lepasWali.map((st) => (
+              <div key={st.id} className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-sky-50 dark:bg-sky-950/40 text-slate-700 dark:text-slate-300">
+                <span className="font-medium truncate">{st.name}</span>
+                <span className="text-[9.5px] font-bold px-1 py-0.2 rounded bg-sky-200 dark:bg-sky-900 text-sky-900 dark:text-sky-200 shrink-0">LP</span>
+              </div>
+            ))}
+            {dailyStats.offWali.map((st) => (
+              <div key={st.id} className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-red-50 dark:bg-red-950/40 text-slate-700 dark:text-slate-300">
+                <span className="font-medium truncate">{st.name}</span>
+                <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded bg-red-600 text-white shrink-0">L / OFF</span>
+              </div>
+            ))}
+            {dailyStats.cutiWali.map((st) => (
+              <div key={st.id} className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-teal-50 dark:bg-teal-950/40 text-slate-700 dark:text-slate-300">
+                <span className="font-medium truncate">{st.name}</span>
+                <span className="text-[9.5px] font-bold px-1 py-0.2 rounded bg-teal-200 dark:bg-teal-900 text-teal-900 dark:text-teal-200 shrink-0">CUTI</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Bottom Section: Checklist Tugas Harian & Buku Laporan Jaga */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
+        {/* Checklist Tugas Harian Wali Asuh (2 cols on large screen) */}
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-3.5 border border-slate-200 dark:border-slate-700 shadow-xs space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center">
+                <ListTodo className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white leading-tight">
+                  Checklist & Pengingat Tugas Shif ({shiftMeta.name})
+                </h3>
+                <p className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                  Agenda SOP wali asuh dengan notifikasi waktu
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {userRole === 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateToTab('sop')}
+                  className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Buka Pengaturan SOP untuk mengubah kata-kata dan jam checklist"
+                >
+                  <Edit3 className="w-3 h-3 text-indigo-500" />
+                  <span className="hidden sm:inline">Ubah Kata & Jam</span>
+                  <span className="sm:hidden">Edit SOP</span>
+                </button>
+              )}
+              <div className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                {relevantTasks.filter((t) => completedTasks[`${activeDay}_${t.id}`]).length} / {relevantTasks.length} Selesai
+              </div>
+            </div>
+          </div>
+
+          {relevantTasks.length > 0 ? (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+              {relevantTasks.map((task) => {
+                const isDone = Boolean(completedTasks[`${activeDay}_${task.id}`]);
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => toggleTask(task.id)}
+                    className={`cursor-pointer rounded-lg p-2 border transition-all flex items-start gap-2 ${
+                      isDone
+                        ? 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-75'
+                        : 'bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      className="mt-0.5 text-blue-600 dark:text-blue-400 shrink-0"
+                      title={isDone ? 'Tandai Belum Selesai' : 'Tandai Selesai'}
+                    >
+                      {isDone ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-slate-400 hover:text-blue-500" />
+                      )}
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                        <span className="font-mono text-[10.5px] font-bold px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                          {task.time} WIB
+                        </span>
+                        <h4 className={`text-xs font-semibold ${isDone ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'}`}>
+                          {task.title}
+                        </h4>
+                        {task.priority === 'krusial' && (
+                          <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
+                            Wajib
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-[11px] leading-snug ${isDone ? 'text-slate-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                        {task.description}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        soundManager.playChime();
+                        notificationService.triggerNotification(`Pengingat Tugas: ${task.title}`, {
+                          body: `Waktu: ${task.time} WIB - ${task.description}`,
+                          sound: 'bell',
+                        });
+                      }}
+                      className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-blue-600 transition-colors"
+                      title="Bunyikan Alarm Tugas"
+                    >
+                      <Bell className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-4 text-center bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 space-y-1">
+              <Coffee className="w-6 h-6 text-slate-400 mx-auto" />
+              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Hari Ini Bebas Tugas Piket ({shiftMeta.name})
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                Anda tidak memiliki jadwal piket aktif hari ini.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Buku Jaga / Handover Logbook */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-3.5 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col space-y-2">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                Buku Jaga & Laporan Mutasi
+              </h3>
+            </div>
+            <span className="text-[10.5px] text-slate-500 font-mono">Tgl {activeDay} {schedule.monthName}</span>
+          </div>
+
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-tight">
+            Catat mutasi anak asuh, sakit/izin, dan catatan serah terima shif.
+          </p>
+
+          <textarea
+            value={logBookText}
+            onChange={(e) => setLogBookText(e.target.value)}
+            placeholder="Contoh catatan:&#10;- Jam 16:30: 2 anak asuh izin berobat di UKS.&#10;- Jam 19:45: Belajar malam tertib.&#10;- Jam 22:00: Pintu gerbang & barak dikunci..."
+            rows={4}
+            className="w-full flex-1 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none font-sans"
+          />
+
+          <div className="flex items-center justify-between gap-1.5 pt-0.5">
+            <span className="text-[10.5px] text-slate-400">
+              {logSavedToast ? (
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Tersimpan
+                </span>
+              ) : (
+                'Tersimpan otomatis'
+              )}
+            </span>
+            <button
+              onClick={handleSaveLogBook}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+            >
+              <Save className="w-3 h-3" />
+              <span>Simpan</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
