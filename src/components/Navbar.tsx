@@ -45,6 +45,7 @@ interface NavbarProps {
   onShowSplash?: () => void;
   isRefreshing?: boolean;
   onRefreshServer?: () => void;
+  onOpenSupabaseMigration?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -67,6 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onShowSplash,
   isRefreshing = false,
   onRefreshServer,
+  onOpenSupabaseMigration,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -166,6 +168,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <RefreshCw className={`w-2.5 h-2.5 text-blue-400 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden xs:inline">Refresh</span>
+            </button>
+          )}
+
+          {/* Dedicated Supabase Migration Button in Top Bar */}
+          {onOpenSupabaseMigration && (
+            <button
+              type="button"
+              onClick={onOpenSupabaseMigration}
+              title="Migrasi & Ekspor Database ke Supabase (PostgreSQL SQL)"
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950/90 hover:bg-emerald-900 text-emerald-300 border border-emerald-600/80 transition-all cursor-pointer shadow-2xs"
+            >
+              <Database className="w-2.5 h-2.5 text-emerald-400" />
+              <span>Migrasi Supabase</span>
             </button>
           )}
 
@@ -272,6 +287,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-600 dark:text-blue-400' : ''}`} />
+            </button>
+          )}
+
+          {/* Supabase Migration Action Button */}
+          {onOpenSupabaseMigration && (
+            <button
+              type="button"
+              onClick={onOpenSupabaseMigration}
+              title="Migrasi Database ke Supabase (PostgreSQL)"
+              className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer flex items-center gap-1 text-[11px] font-bold px-2"
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="hidden lg:inline">Supabase</span>
             </button>
           )}
 
@@ -412,6 +440,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Printer className="w-3.5 h-3.5" />
                 <span>Cetak Jadwal Resmi</span>
               </button>
+
+              {onOpenSupabaseMigration && (
+                <button
+                  type="button"
+                  onClick={onOpenSupabaseMigration}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/80 cursor-pointer shadow-2xs"
+                >
+                  <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Migrasi Supabase</span>
+                </button>
+              )}
             </>
           ) : (
             /* REGULAR WALI ASUH (STAFF) TABS - TUKAR SHIF DISEMBUNYIKAN */

@@ -30,6 +30,12 @@ import { AdminShiftSwapView } from './components/AdminShiftSwapView';
 import { AdminChecklistConfigView } from './components/AdminChecklistConfigView';
 import { LoginPage } from './components/LoginPage';
 import { SplashScreen } from './components/SplashScreen';
+import { SupabaseMigrationModal } from './components/SupabaseMigrationModal';
+import { 
+  isSupabaseConfigured, 
+  saveScheduleToSupabase, 
+  fetchScheduleFromSupabase 
+} from './utils/supabaseService';
 import { AnimatePresence } from 'motion/react';
 import { RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { 
@@ -68,12 +74,10 @@ function resolveScheduleDays(
     for (const staffIdStr in result[day]) {
       const staffId = Number(staffIdStr);
       const val = result[day][staffId];
-      if (isMonday && (val === 'P' || val === 'P1' || val === 'P2')) {
-        // Khusus hari Senin: semua shif pagi menjadi P3 (07:00 - 16:00) dikarenakan ada upacara bendera
-        result[day][staffId] = 'P3';
-        modified = true;
-      } else if (!isMonday && val === 'P') {
-        result[day][staffId] = 'P1';
+      // Only normalize old legacy shorthand codes ('P', 'S', 'M')
+      // Strictly NEVER touch explicit user shift assignments (P1, P2, P3, S2A, S3A, S4A, M1, M2, LP, O, C)
+      if (val === 'P') {
+        result[day][staffId] = isMonday ? 'P3' : 'P1';
         modified = true;
       } else if (val === 'S' || (val as unknown as string) === 'S2B') {
         result[day][staffId] = 'S2A';
@@ -262,6 +266,7 @@ export default function App() {
   const [cloudStatus, setCloudStatus] = useState<'connected' | 'syncing' | 'offline' | 'error'>('syncing');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [refreshToast, setRefreshToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
   const isCloudSyncedRef = React.useRef<boolean>(false);
   const isIncomingRemoteUpdateRef = React.useRef<boolean>(false);
   const lastSyncedScheduleHashRef = React.useRef<string>('');
@@ -422,7 +427,14 @@ export default function App() {
     if (isCloudSyncedRef.current) {
       setCloudStatus('syncing');
       const timer = setTimeout(() => {
-        saveScheduleToFirestore(schedule, currentUserRoleRef.current === 'admin' ? 'Administrator SRT 1' : 'Wali Asuh')
+        const updaterName = currentUserRoleRef.current === 'admin' ? 'Administrator SRT 1' : 'Wali Asuh';
+        
+        // Parallel sync to Supabase if configured
+        if (isSupabaseConfigured()) {
+          saveScheduleToSupabase(schedule, updaterName).catch(() => {});
+        }
+
+        saveScheduleToFirestore(schedule, updaterName)
           .then((ok) => {
             if (ok) {
               lastSyncedScheduleHashRef.current = currentHash;
@@ -455,6 +467,9 @@ export default function App() {
           return;
         }
       }
+      if (isSupabaseConfigured()) {
+        await saveScheduleToSupabase(schedule, 'Sinkronisasi Manual');
+      }
       const ok = await saveScheduleToFirestore(schedule, 'Sinkronisasi Manual');
       if (ok) {
         setCloudStatus('connected');
@@ -483,7 +498,13 @@ export default function App() {
       if (isFirestoreOfflineOrQuotaExhausted()) {
         await resetQuotaExhausted();
       }
-      const cloudData = await fetchScheduleFromFirestore(selectedMonth.year, selectedMonth.month);
+      let cloudData = await fetchScheduleFromFirestore(selectedMonth.year, selectedMonth.month);
+      if ((!cloudData || !cloudData.days || Object.keys(cloudData.days).length === 0) && isSupabaseConfigured()) {
+        const supabaseData = await fetchScheduleFromSupabase(selectedMonth.year, selectedMonth.month);
+        if (supabaseData && supabaseData.days && Object.keys(supabaseData.days).length > 0) {
+          cloudData = supabaseData;
+        }
+      }
       if (cloudData && cloudData.days && Object.keys(cloudData.days).length > 0) {
         isIncomingRemoteUpdateRef.current = true;
         const resolvedDays = resolveScheduleDays(
@@ -560,8 +581,7 @@ export default function App() {
           val === 'S' ||
           val === 'M' ||
           (val as unknown as string) === 'S2B' ||
-          (val as unknown as string) === 'S3B' ||
-          (isMonday && (val === 'P1' || val === 'P2'))
+          (val as unknown as string) === 'S3B'
         ) {
           hasLegacy = true;
           break;
@@ -696,6 +716,7 @@ export default function App() {
             onShowSplash={() => setShowSplash(true)}
             isRefreshing={isRefreshing}
             onRefreshServer={handleRefreshDataFromServer}
+            onOpenSupabaseMigration={() => setIsSupabaseModalOpen(true)}
           />
 
           {/* Floating Cloud Refresh Toast Notification */}
@@ -832,6 +853,15 @@ export default function App() {
               </span>
             </div>
           </footer>
+
+          {/* Supabase Migration & SQL Export Modal */}
+          <SupabaseMigrationModal
+            isOpen={isSupabaseModalOpen}
+            onClose={() => setIsSupabaseModalOpen(false)}
+            schedule={schedule}
+            staffList={staffList}
+            sopTasks={sopTasks}
+          />
         </div>
       )}
     </>
