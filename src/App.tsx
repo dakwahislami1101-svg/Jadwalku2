@@ -31,6 +31,7 @@ import { AdminChecklistConfigView } from './components/AdminChecklistConfigView'
 import { LoginPage } from './components/LoginPage';
 import { SplashScreen } from './components/SplashScreen';
 import { SupabaseMigrationModal } from './components/SupabaseMigrationModal';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { 
   isSupabaseConfigured, 
   saveScheduleToSupabase, 
@@ -853,6 +854,9 @@ export default function App() {
               </span>
             </div>
           </footer>
+
+          {/* PWA Floating Install Banner at the bottom */}
+          <PWAInstallBanner />
 
           {/* Supabase Migration & SQL Export Modal */}
           <SupabaseMigrationModal

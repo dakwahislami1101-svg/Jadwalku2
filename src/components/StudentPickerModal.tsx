@@ -4,7 +4,8 @@ import {
   X, 
   Users, 
   HeartPulse, 
-  DoorOpen
+  DoorOpen,
+  Moon
 } from 'lucide-react';
 import { Student } from '../types';
 import { ALL_STUDENTS_DATA } from '../data/studentsData';
@@ -13,7 +14,7 @@ interface StudentPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectStudent: (student: Student) => void;
-  mode?: 'sick' | 'permit';
+  mode?: 'sick' | 'permit' | 'fasting';
   title?: string;
 }
 
@@ -80,9 +81,9 @@ export const StudentPickerModal: React.FC<StudentPickerModalProps> = ({
         }`}>
           <div className="flex items-center gap-2.5">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-              mode === 'sick' ? 'bg-rose-600 text-white' : 'bg-amber-600 text-white'
+              mode === 'sick' ? 'bg-rose-600 text-white' : mode === 'fasting' ? 'bg-amber-600 text-white' : 'bg-emerald-600 text-white'
             }`}>
-              {mode === 'sick' ? <HeartPulse className="w-5 h-5" /> : <DoorOpen className="w-5 h-5" />}
+              {mode === 'sick' ? <HeartPulse className="w-5 h-5" /> : mode === 'fasting' ? <Moon className="w-5 h-5" /> : <DoorOpen className="w-5 h-5" />}
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white">

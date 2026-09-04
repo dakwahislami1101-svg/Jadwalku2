@@ -178,7 +178,7 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
     let inTag = 'SORE';
 
     if (isPagiToSore) {
-      // 1. Pagi ke Sore (Penerima: Shift Sore dan Shift Malam)
+      // 1. Pagi ke Sore (Penerima: Shift Sore - tetap melampirkan petugas shift sore & malam)
       // Yang menyerahkan: Pagi hari ini (Tgl N)
       // Yang menerima: Sore & Malam hari ini (Tgl N)
       outgoingCodes = ['P', 'P1', 'P2', 'P3'];
@@ -186,7 +186,7 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
       outDay = activeDay;
       inDay = activeDay;
       outLabel = `Shift Pagi (Tgl ${activeDay})`;
-      nextLabel = `Shift Sore & Malam (Tgl ${activeDay})`;
+      nextLabel = `Shift Sore (Tgl ${activeDay})`;
       title = 'SERAH TERIMA SHIFT PAGI KE SORE';
       defaultTime = '15:00';
       outTag = 'PAGI';
@@ -410,6 +410,15 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
     setShowStudentPicker(true);
   };
 
+  const handleUpdateSickStudent = (id: string, field: keyof SickStudent, val: string) => {
+    setSickStudents(sickStudents.map(s => s.id === id ? { ...s, [field]: val } : s));
+  };
+
+  const handleRemoveSickStudent = (id: string) => {
+    setSickStudents(sickStudents.filter(s => s.id !== id));
+  };
+
+  // Student picked handler from database
   const handleStudentPicked = (student: Student) => {
     soundManager.playChime();
     const studentDisplayName = `${student.name} (${student.class})`;
@@ -433,14 +442,6 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
     }
     setToastMessage(`Santri ${student.name} (${student.class}) berhasil dipilih.`);
     setTimeout(() => setToastMessage(null), 3000);
-  };
-
-  const handleUpdateSickStudent = (id: string, field: keyof SickStudent, val: string) => {
-    setSickStudents(sickStudents.map(s => s.id === id ? { ...s, [field]: val } : s));
-  };
-
-  const handleRemoveSickStudent = (id: string) => {
-    setSickStudents(sickStudents.filter(s => s.id !== id));
   };
 
   // Generate WhatsApp text report
@@ -1068,22 +1069,40 @@ _Laporan Serah Terima disusun oleh Wali Asuh SRT 1 Kediri_`;
                   className="w-full text-base font-bold bg-transparent text-rose-900 dark:text-rose-100 focus:outline-none cursor-default"
                 />
               </div>
-              <div className="p-2 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20">
+              <div className="p-2 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 block truncate flex items-center gap-1">
                     <Moon className="w-2.5 h-2.5 text-amber-500" />
                     <span>Siswa Berpuasa</span>
                   </label>
+                  {studentFasting > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setStudentFasting(0)}
+                      className="text-[9px] font-bold text-amber-600 hover:text-rose-600 transition-colors"
+                      title="Reset 0"
+                    >
+                      Reset
+                    </button>
+                  )}
                 </div>
-                <input
-                  type="number"
-                  min="0"
-                  max={studentTotal}
-                  value={studentFasting}
-                  onChange={(e) => setStudentFasting(Math.max(0, Number(e.target.value)))}
-                  placeholder="0"
-                  className="w-full text-base font-bold bg-transparent text-amber-900 dark:text-amber-100 focus:outline-none"
-                />
+                <div className="flex items-center gap-1 mt-0.5">
+                  <input
+                    type="number"
+                    min="0"
+                    max={studentTotal}
+                    value={studentFasting === 0 ? '' : studentFasting}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0);
+                      setStudentFasting(val);
+                    }}
+                    placeholder="0"
+                    className="w-full text-base font-bold bg-transparent text-amber-900 dark:text-amber-100 focus:outline-none"
+                  />
+                  <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 shrink-0">
+                    anak
+                  </span>
+                </div>
               </div>
             </div>
 

@@ -117,6 +117,13 @@ export interface SickStudent {
   actionTaken: string;
 }
 
+export interface FastingStudent {
+  id: string;
+  name: string;
+  roomOrClass?: string;
+  fastingType?: string;
+}
+
 export interface StudentPermit {
   id: string;
   name: string;
@@ -146,6 +153,7 @@ export interface HandoverReport {
   studentCountSick: number;
   studentCountFasting?: number;
   sickStudents: SickStudent[];
+  fastingStudents?: FastingStudent[];
   permits: StudentPermit[];
   cleanlinessStatus: 'Sangat Bersih' | 'Cukup Bersih' | 'Perlu Perhatian';
   disciplineStatus: 'Kondusif & Tertib' | 'Ada Catatan Khusus';
