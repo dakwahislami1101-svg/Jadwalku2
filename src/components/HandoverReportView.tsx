@@ -192,14 +192,14 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
       outTag = 'PAGI';
       inTag = 'SORE';
     } else if (isSoreToMalam) {
-      // 2. Sore ke Malam (Pihak yang menyerahkan mencakup Shift Sore & Shift Malam, penerima: Shift Malam)
-      // Yang menyerahkan: Sore & Malam hari ini (Tgl N)
+      // 2. Sore ke Malam (Pihak yang menyerahkan: Shift Sore, penerima: Shift Malam)
+      // Yang menyerahkan: Sore hari ini (Tgl N)
       // Yang menerima: Malam hari ini (Tgl N)
-      outgoingCodes = ['S', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2'];
+      outgoingCodes = ['S', 'S2A', 'S3A', 'S4A'];
       incomingCodes = ['M', 'M1', 'M2'];
       outDay = activeDay;
       inDay = activeDay;
-      outLabel = `Shift Sore & Malam (Tgl ${activeDay})`;
+      outLabel = `Shift Sore (Tgl ${activeDay})`;
       nextLabel = `Shift Malam (Tgl ${activeDay})`;
       title = 'SERAH TERIMA SHIFT SORE KE MALAM';
       defaultTime = '23:00';
