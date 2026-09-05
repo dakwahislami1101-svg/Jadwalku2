@@ -260,8 +260,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Agustus 2026 (38 Petugas)
               </option>
               <option value="2026-9" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
-                September 2026 (31 Petugas)
+                September 2026 (31 Petugas) — Aktif
               </option>
+              <option value="2026-10" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
+                Oktober 2026 (31 Petugas)
+              </option>
+              <option value="2026-11" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
+                November 2026 (31 Petugas)
+              </option>
+              <option value="2026-12" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
+                Desember 2026 (31 Petugas)
+              </option>
+              {/* Fallback for any other custom selected month */}
+              {![8, 9, 10, 11, 12].includes(selectedMonth.month) && (
+                <option value={`${selectedMonth.year}-${selectedMonth.month}`} className="dark:bg-slate-800 dark:text-slate-100 font-bold">
+                  {selectedMonth.monthName} {selectedMonth.year}
+                </option>
+              )}
             </select>
           </div>
 

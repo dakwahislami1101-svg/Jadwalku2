@@ -16,7 +16,7 @@ import {
   SHIFT_DEFINITIONS,
   SHIFT_TASKS_TEMPLATE
 } from './data/initialSchedule';
-import { getActiveShiftsAtTime, INDONESIAN_MONTH_NAMES } from './utils/scheduler';
+import { getActiveShiftsAtTime, INDONESIAN_MONTH_NAMES, generateNextMonthScheduleFromPrior } from './utils/scheduler';
 import { soundManager } from './utils/audio';
 import { Navbar } from './components/Navbar';
 import { TodayDashboard } from './components/TodayDashboard';
@@ -116,8 +116,19 @@ function getInitialScheduleForMonth(year: number, month: number): MonthSchedule 
     console.warn('Failed to parse saved schedule:', e);
   }
 
-  // Default to September 2026 (Official Schedule with P1, P2, S2A, S3A, S4A, M1, M2)
-  return {
+  if (year === 2026 && month === 8) {
+    return {
+      year: 2026,
+      month: 8,
+      monthName: 'Agustus',
+      totalDays: 31,
+      staffList: INITIAL_STAFF_LIST,
+      days: getInitialAugust2026Days(),
+    };
+  }
+
+  // Official Baseline September 2026
+  const septSchedule: MonthSchedule = {
     year: 2026,
     month: 9,
     monthName: 'September',
@@ -125,6 +136,13 @@ function getInitialScheduleForMonth(year: number, month: number): MonthSchedule 
     staffList: SEPTEMBER_2026_STAFF_LIST,
     days: getInitialSeptember2026Days(),
   };
+
+  if (year === 2026 && month === 9) {
+    return septSchedule;
+  }
+
+  // If another month is requested (e.g. Oktober 2026) and not yet stored, generate dynamically
+  return generateNextMonthScheduleFromPrior(septSchedule, year, month, 'continuation');
 }
 
 export default function App() {
@@ -810,6 +828,7 @@ export default function App() {
                 setSchedule={setSchedule}
                 staffList={staffList}
                 onNavigateToMatrix={() => setCurrentTab('matrix')}
+                onSelectMonth={handleSelectMonth}
               />
             )}
 

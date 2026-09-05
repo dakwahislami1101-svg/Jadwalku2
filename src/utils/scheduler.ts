@@ -420,6 +420,103 @@ export function exportScheduleToCSV(
   return csv;
 }
 
+/**
+ * Generate Next Month Schedule derived from a Source Month Schedule.
+ * Retains exact shift definitions, roles, staff list, and distribution rules,
+ * while automatically adapting days, dates, calendar alignment, and Monday P3 ceremonies.
+ */
+export function generateNextMonthScheduleFromPrior(
+  sourceSchedule: MonthSchedule,
+  targetYear: number,
+  targetMonth: number,
+  mode: 'continuation' | 'day_matching' = 'continuation'
+): MonthSchedule {
+  const targetDaysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+  const staffList = sourceSchedule.staffList;
+  const rawDays: Record<number, Record<number, ShiftCode>> = {};
+
+  // Cycle sequence for standard rotation: M -> LP -> O -> P -> S -> S -> S (7 steps)
+  const ROTATION_CYCLE: ShiftCode[] = ['M', 'LP', 'O', 'P', 'S', 'S', 'S'];
+
+  // Build a map of staff's last known shift category in the source schedule
+  const lastKnownShift: Record<number, ShiftCode> = {};
+  const sourceLastDay = sourceSchedule.totalDays;
+
+  staffList.forEach((st) => {
+    const rawShift = sourceSchedule.days[sourceLastDay]?.[st.id] || 'O';
+    if (rawShift.startsWith('P')) lastKnownShift[st.id] = 'P';
+    else if (rawShift.startsWith('S')) lastKnownShift[st.id] = 'S';
+    else if (rawShift.startsWith('M')) lastKnownShift[st.id] = 'M';
+    else if (rawShift === 'LP') lastKnownShift[st.id] = 'LP';
+    else lastKnownShift[st.id] = 'O';
+  });
+
+  if (mode === 'continuation') {
+    // Determine starting step for each staff on day 1
+    const staffCurrentStep: Record<number, number> = {};
+
+    staffList.forEach((st, idx) => {
+      const lastShift = lastKnownShift[st.id];
+      let nextStepIndex = 0;
+
+      if (lastShift === 'M') nextStepIndex = 1; // M -> LP
+      else if (lastShift === 'LP') nextStepIndex = 2; // LP -> O
+      else if (lastShift === 'O') nextStepIndex = 3; // O -> P
+      else if (lastShift === 'P') nextStepIndex = 4; // P -> S
+      else if (lastShift === 'S') nextStepIndex = 5; // S -> S
+      else nextStepIndex = (idx * 2) % ROTATION_CYCLE.length;
+
+      staffCurrentStep[st.id] = nextStepIndex;
+    });
+
+    for (let d = 1; d <= targetDaysInMonth; d++) {
+      rawDays[d] = {};
+      staffList.forEach((st) => {
+        const step = (staffCurrentStep[st.id] + (d - 1)) % ROTATION_CYCLE.length;
+        rawDays[d][st.id] = ROTATION_CYCLE[step];
+      });
+    }
+  } else {
+    // Mode: Day-of-week matching
+    for (let d = 1; d <= targetDaysInMonth; d++) {
+      rawDays[d] = {};
+      const targetDate = new Date(targetYear, targetMonth - 1, d);
+      const jsDay = targetDate.getDay(); // 0=Minggu, 1=Senin...
+
+      // Find days in source month with same jsDay
+      const matchingSourceDays: number[] = [];
+      for (let sd = 1; sd <= sourceSchedule.totalDays; sd++) {
+        const sDate = new Date(sourceSchedule.year, sourceSchedule.month - 1, sd);
+        if (sDate.getDay() === jsDay) {
+          matchingSourceDays.push(sd);
+        }
+      }
+
+      const sourceDayToCopy = matchingSourceDays.length > 0
+        ? matchingSourceDays[(Math.floor((d - 1) / 7)) % matchingSourceDays.length]
+        : ((d - 1) % sourceSchedule.totalDays) + 1;
+
+      staffList.forEach((st) => {
+        rawDays[d][st.id] = sourceSchedule.days[sourceDayToCopy]?.[st.id] || 'O';
+      });
+    }
+  }
+
+  // Refine through fair shift distribution pipelines:
+  const soreDays = distributeSoreShiftsFairly(rawDays);
+  const morningDays = distributeSeptemberMorningShifts(soreDays, targetYear, targetMonth, staffList);
+  const finalDays = distributeSeptemberNightShifts(morningDays, targetYear, targetMonth, staffList);
+
+  return {
+    year: targetYear,
+    month: targetMonth,
+    monthName: INDONESIAN_MONTH_NAMES[targetMonth - 1],
+    totalDays: targetDaysInMonth,
+    staffList,
+    days: finalDays,
+  };
+}
+
 export function downloadCSV(filename: string, content: string) {
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

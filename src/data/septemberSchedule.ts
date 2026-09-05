@@ -246,7 +246,7 @@ export function distributeSeptemberMorningShifts(
   staffList: Staff[] = SEPTEMBER_2026_STAFF_LIST
 ): Record<number, Record<number, ShiftCode>> {
   const result: Record<number, Record<number, ShiftCode>> = {};
-  const totalDays = 30;
+  const totalDays = new Date(year, month, 0).getDate();
 
   // Track counts of P1 and P2 per staffId across the month
   const p1Counts: Record<number, number> = {};

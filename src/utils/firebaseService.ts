@@ -1,6 +1,11 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
 import { 
   getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  setLogLevel,
   doc, 
   getDoc, 
   setDoc, 
@@ -12,6 +17,9 @@ import {
 } from 'firebase/firestore';
 import firebaseConfigJson from '../../firebase-applet-config.json';
 import { MonthSchedule, ShiftCode, ShiftSwapRecord, HandoverReport, DailyTask } from '../types';
+
+// Set Firebase Firestore log level to error to avoid noisy connection retry warnings
+setLogLevel('error');
 
 // Initialize Firebase App
 const firebaseConfig = {
@@ -25,13 +33,89 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore with specific databaseId if provided
-export const db: Firestore = firebaseConfigJson.firestoreDatabaseId 
-  ? getFirestore(app, firebaseConfigJson.firestoreDatabaseId)
-  : getFirestore(app);
+// Optional Firebase Auth instance
+export const auth: Auth = getAuth(app);
+
+// Initialize Firestore with robust long-polling and multi-tab local cache
+let dbInstance: Firestore;
+try {
+  dbInstance = initializeFirestore(
+    app,
+    {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      experimentalForceLongPolling: true,
+    },
+    firebaseConfigJson.firestoreDatabaseId || undefined
+  );
+} catch {
+  dbInstance = firebaseConfigJson.firestoreDatabaseId 
+    ? getFirestore(app, firebaseConfigJson.firestoreDatabaseId)
+    : getFirestore(app);
+}
+
+export const db: Firestore = dbInstance;
 
 export const FIREBASE_DB_NAME = firebaseConfigJson.firestoreDatabaseId || '(default)';
 export const FIREBASE_PROJECT_ID = firebaseConfigJson.projectId;
+
+// ==================== FIRESTORE ERROR HANDLING ====================
+
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errMessage = error instanceof Error ? error.message : String(error);
+  const errCode = (error as any)?.code;
+
+  if (errCode === 'resource-exhausted' || errMessage.includes('Quota limit exceeded')) {
+    markQuotaExhausted();
+  }
+
+  const errInfo: FirestoreErrorInfo = {
+    error: errMessage,
+    operationType,
+    path,
+    authInfo: {
+      userId: auth.currentUser?.uid || null,
+      email: auth.currentUser?.email || null,
+      emailVerified: auth.currentUser?.emailVerified || null,
+      isAnonymous: auth.currentUser?.isAnonymous || null,
+      tenantId: auth.currentUser?.tenantId || null,
+      providerInfo: auth.currentUser?.providerData?.map((p) => ({
+        providerId: p.providerId,
+        email: p.email,
+      })) || [],
+    },
+  };
+
+  // Only log if not a standard silent offline fallback
+  if (errCode !== 'unavailable') {
+    console.warn('[Firestore Diagnostic]', JSON.stringify(errInfo));
+  }
+}
 
 // ==================== QUOTA & OFFLINE RESILIENCE ====================
 

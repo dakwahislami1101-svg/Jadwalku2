@@ -75,8 +75,8 @@ export const SHIFT_DEFINITIONS: Record<ShiftCode, ShiftInfo> = {
   },
   P3: {
     code: 'P3',
-    name: 'Jaga Pagi Upacara (P3)',
-    fullName: 'Jaga Pagi Khusus Upacara / Senin',
+    name: 'Jaga Pagi Khusus (P3)',
+    fullName: 'Jaga Pagi Khusus (Upacara / Sabtu / Pendampingan)',
     startTime: '07:00',
     endTime: '16:00',
     hours: 9,
