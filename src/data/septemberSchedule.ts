@@ -106,7 +106,6 @@ export function isGroup2Staff(name: string): boolean {
 export function isGroup3Staff(name: string): boolean {
   const n = (name || '').toLowerCase();
   return (
-    n.includes('aris mahmud') ||
     n.includes('rindani') ||
     n.includes('mufid') ||
     n.includes('rafif') ||
@@ -131,10 +130,11 @@ export function distributeSeptemberSoreShifts(
   rawDays: Record<number, Record<number, ShiftCode>>,
   year: number = 2026,
   month: number = 9,
-  staffList: Staff[] = SEPTEMBER_2026_STAFF_LIST
+  staffList: Staff[] = SEPTEMBER_2026_STAFF_LIST,
+  sourceSchedule?: { totalDays: number; days: Record<number, Record<number, ShiftCode>> }
 ): Record<number, Record<number, ShiftCode>> {
   const result: Record<number, Record<number, ShiftCode>> = {};
-  const totalDays = 30;
+  const totalDays = new Date(year, month, 0).getDate();
 
   // Track counts of S2A, S3A, S4A across the month to ensure fair rotation
   const s2aCounts: Record<number, number> = {};
@@ -146,6 +146,29 @@ export function distributeSeptemberSoreShifts(
     s3aCounts[s.id] = 0;
     s4aCounts[s.id] = 0;
   });
+
+  // Calculate historical shift profile from sourceSchedule if provided (e.g. September reference)
+  const historicalProfiles: Record<number, { s2Ratio: number; s3Ratio: number; s4Ratio: number; totalSore: number }> = {};
+  if (sourceSchedule && sourceSchedule.days) {
+    staffList.forEach((st) => {
+      let s2 = 0;
+      let s3 = 0;
+      let s4 = 0;
+      for (let d = 1; d <= sourceSchedule.totalDays; d++) {
+        const sh = sourceSchedule.days[d]?.[st.id];
+        if (sh === 'S2A') s2++;
+        else if (sh === 'S3A') s3++;
+        else if (sh === 'S4A') s4++;
+      }
+      const totalSore = s2 + s3 + s4;
+      historicalProfiles[st.id] = {
+        s2Ratio: totalSore > 0 ? s2 / totalSore : 0,
+        s3Ratio: totalSore > 0 ? s3 / totalSore : 0,
+        s4Ratio: totalSore > 0 ? s4 / totalSore : 0,
+        totalSore,
+      };
+    });
+  }
 
   for (let d = 1; d <= totalDays; d++) {
     result[d] = { ...(rawDays[d] || {}) };
@@ -167,26 +190,38 @@ export function distributeSeptemberSoreShifts(
     const N = soreStaffList.length;
     if (N === 0) continue;
 
-    // Rule: Exactly 2 people for S2A, 2 people for S3A, and remainder for S4A
+    // Rule: Exactly 2 people for S2A (Kantin SMP), 2 people for S3A (Kantin SMA), and remainder for S4A (Jaga Masjid)
     const s2aQuota = N >= 4 ? 2 : Math.min(2, Math.floor(N / 2));
     const s3aQuota = N >= 4 ? 2 : Math.min(2, N - s2aQuota);
-    // All remaining will be S4A
 
     // --- Step 1: Allocate S2A (Kantin SMP - exactly 2 people) ---
-    // Sort soreStaffList by suitability for S2A (Group 2 prioritized)
     soreStaffList.sort((a, b) => {
       let scoreA = 0;
       let scoreB = 0;
+      const profA = historicalProfiles[a.id];
+      const profB = historicalProfiles[b.id];
 
-      if (isGroup2Staff(a.name)) scoreA += 100;
-      if (isGroup3Staff(a.name)) scoreA -= 40;
-      if (isGroup1Staff(a.name) && !isGroup2Staff(a.name)) scoreA -= 20;
+      if (profA && profA.totalSore > 0) {
+        scoreA += profA.s2Ratio * 150;
+        scoreA -= profA.s4Ratio * 100;
+        scoreA -= profA.s3Ratio * 50;
+      } else {
+        if (isGroup2Staff(a.name)) scoreA += 100;
+        if (isGroup3Staff(a.name)) scoreA -= 40;
+        if (isGroup1Staff(a.name) && !isGroup2Staff(a.name)) scoreA -= 30;
+      }
 
-      if (isGroup2Staff(b.name)) scoreB += 100;
-      if (isGroup3Staff(b.name)) scoreB -= 40;
-      if (isGroup1Staff(b.name) && !isGroup2Staff(b.name)) scoreB -= 20;
+      if (profB && profB.totalSore > 0) {
+        scoreB += profB.s2Ratio * 150;
+        scoreB -= profB.s4Ratio * 100;
+        scoreB -= profB.s3Ratio * 50;
+      } else {
+        if (isGroup2Staff(b.name)) scoreB += 100;
+        if (isGroup3Staff(b.name)) scoreB -= 40;
+        if (isGroup1Staff(b.name) && !isGroup2Staff(b.name)) scoreB -= 30;
+      }
 
-      // Penalize higher prior S2A counts for fair rotation
+      // Penalize higher prior S2A counts in current month for fair rotation
       scoreA -= (s2aCounts[a.id] || 0) * 15;
       scoreB -= (s2aCounts[b.id] || 0) * 15;
 
@@ -202,19 +237,29 @@ export function distributeSeptemberSoreShifts(
     });
 
     // --- Step 2: Allocate S3A (Kantin SMA - exactly 2 people) ---
-    // Sort remaining staff by suitability for S3A (Group 3 prioritized)
-    remainingAfterS3A_sorting:
     remainingAfterS2A.sort((a, b) => {
       let scoreA = 0;
       let scoreB = 0;
+      const profA = historicalProfiles[a.id];
+      const profB = historicalProfiles[b.id];
 
-      if (isGroup3Staff(a.name)) scoreA += 100;
-      if (isGroup1Staff(a.name) && !isGroup3Staff(a.name)) scoreA -= 30;
+      if (profA && profA.totalSore > 0) {
+        scoreA += profA.s3Ratio * 150;
+        scoreA -= profA.s4Ratio * 100;
+      } else {
+        if (isGroup3Staff(a.name)) scoreA += 100;
+        if (isGroup1Staff(a.name) && !isGroup3Staff(a.name)) scoreA -= 40;
+      }
 
-      if (isGroup3Staff(b.name)) scoreB += 100;
-      if (isGroup1Staff(b.name) && !isGroup3Staff(b.name)) scoreB -= 30;
+      if (profB && profB.totalSore > 0) {
+        scoreB += profB.s3Ratio * 150;
+        scoreB -= profB.s4Ratio * 100;
+      } else {
+        if (isGroup3Staff(b.name)) scoreB += 100;
+        if (isGroup1Staff(b.name) && !isGroup3Staff(b.name)) scoreB -= 40;
+      }
 
-      // Penalize higher prior S3A counts for fair rotation
+      // Penalize higher prior S3A counts in current month for fair rotation
       scoreA -= (s3aCounts[a.id] || 0) * 15;
       scoreB -= (s3aCounts[b.id] || 0) * 15;
 
@@ -229,7 +274,7 @@ export function distributeSeptemberSoreShifts(
       s3aCounts[st.id] = (s3aCounts[st.id] || 0) + 1;
     });
 
-    // --- Step 3: Allocate S4A (Jaga Masjid - ALL remaining staff) ---
+    // --- Step 3: Allocate S4A (Jaga Masjid & Ibadah Santri - ALL remaining staff) ---
     s4aAssigned.forEach((st) => {
       result[d][st.id] = 'S4A';
       s4aCounts[st.id] = (s4aCounts[st.id] || 0) + 1;

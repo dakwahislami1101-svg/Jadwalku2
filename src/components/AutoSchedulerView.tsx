@@ -522,7 +522,11 @@ export const AutoSchedulerView: React.FC<AutoSchedulerViewProps> = ({
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span><strong>Keseimbangan Dinas:</strong> S2A (Kantin SMP), S3A (Kantin SMA), S4A (Masjid), M1 dan M2 terdistribusi secara proporsional.</span>
+                  <span><strong>Konsistensi Spesialisasi Pos Tugas:</strong> Pola penugasan September diselaraskan (misal: <strong>Ust. Aris Mahmud</strong> tetap dominan di <strong>S4A (Masjid)</strong>, petugas kantin SMP di <strong>S2A</strong>, dan kantin SMA di <strong>S3A</strong>).</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span><strong>Keseimbangan Dinas:</strong> M1 (pria s.d 00:00) dan M2 (wanita subuh s.d 07:00) terbagi proporsional.</span>
                 </div>
               </div>
             </div>
@@ -584,6 +588,7 @@ export const AutoSchedulerView: React.FC<AutoSchedulerViewProps> = ({
               <div>• <strong>Bulan Sumber Acuan:</strong> {schedule.monthName} {schedule.year}</div>
               <div>• <strong>Metode Rotasi:</strong> {generationMode === 'continuation' ? 'Rotasi Estafet Berkesinambungan' : 'Sinkronisasi Hari Kalender'}</div>
               <div>• <strong>Hari Senin (P3 Upacara):</strong> Tgl {mondayDates.join(', ')} ({mondayDates.length} kali)</div>
+              <div>• <strong>Konsistensi Pos Tugas:</strong> Spesialisasi September diselaraskan (Ust. Aris Mahmud tetap dominan S4A Masjid, kantin SMP S2A, kantin SMA S3A).</div>
             </div>
 
             {/* Pilihan Tampilan Layar Setelah Dibuat */}

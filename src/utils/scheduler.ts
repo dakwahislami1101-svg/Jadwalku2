@@ -383,7 +383,7 @@ export function generateAutoSchedule(
     });
   }
 
-  const soreDays = distributeSoreShiftsFairly(rawDays);
+  const soreDays = distributeSoreShiftsFairly(rawDays, staffList, year, month);
   const morningDays = distributeSeptemberMorningShifts(soreDays, year, month, staffList);
   const days = distributeSeptemberNightShifts(morningDays, year, month, staffList);
 
@@ -503,7 +503,8 @@ export function generateNextMonthScheduleFromPrior(
   }
 
   // Refine through fair shift distribution pipelines:
-  const soreDays = distributeSoreShiftsFairly(rawDays);
+  // Preserves staff's characteristic specialization (e.g. Ust. Aris Mahmud dominant in S4A Masjid, Kantin SMP in S2A, Kantin SMA in S3A)
+  const soreDays = distributeSoreShiftsFairly(rawDays, staffList, targetYear, targetMonth, sourceSchedule);
   const morningDays = distributeSeptemberMorningShifts(soreDays, targetYear, targetMonth, staffList);
   const finalDays = distributeSeptemberNightShifts(morningDays, targetYear, targetMonth, staffList);
 

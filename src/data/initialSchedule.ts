@@ -309,15 +309,12 @@ export const RAW_AUGUST_2026_SCHEDULE: Record<number, ShiftCode[]> = {};
 // Build structure day -> staffId -> ShiftCode with Fair Sore Rotation (S2A, S3A, S4A)
 export function distributeSoreShiftsFairly(
   rawDays: Record<number, Record<number, ShiftCode>>,
-  staffList: Staff[] = INITIAL_STAFF_LIST
+  staffList: Staff[] = INITIAL_STAFF_LIST,
+  year: number = 2026,
+  month: number = 9,
+  sourceSchedule?: { totalDays: number; days: Record<number, Record<number, ShiftCode>> }
 ): Record<number, Record<number, ShiftCode>> {
-  const result: Record<number, Record<number, ShiftCode>> = {};
-  const totalDays = Object.keys(rawDays).length || 31;
-
-  for (let d = 1; d <= totalDays; d++) {
-    result[d] = { ...(rawDays[d] || {}) };
-  }
-  return result;
+  return distributeSeptemberSoreShifts(rawDays, year, month, staffList, sourceSchedule);
 }
 
 export const getInitialAugust2026Days = (totalDays = 31): Record<number, Record<number, ShiftCode>> => {
