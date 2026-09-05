@@ -276,8 +276,8 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               <div className="flex items-center gap-2">
                 <img 
                   src="/logo.svg" 
-                  alt="Logo" 
-                  className="w-8 h-8 rounded-lg border border-emerald-500/30 object-cover shadow-xs" 
+                  alt="Logo Sekolah Rakyat" 
+                  className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 bg-white object-contain p-0.5 shadow-xs" 
                 />
                 <div>
                   <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">

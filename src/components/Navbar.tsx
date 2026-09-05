@@ -225,8 +225,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentTab('dashboard')}>
           <img 
             src="/logo.svg" 
-            alt="Logo Wali Asuh" 
-            className="w-8 h-8 rounded-lg shadow-xs object-cover border border-emerald-500/30 shrink-0" 
+            alt="Logo Sekolah Rakyat" 
+            className="w-8 h-8 rounded-lg shadow-xs object-contain bg-white border border-slate-200 dark:border-slate-700 p-0.5 shrink-0" 
           />
           <div>
             <div className="flex items-center gap-1.5">

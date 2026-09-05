@@ -82,10 +82,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onShowSpla
           <div className="flex flex-col items-center justify-center gap-3 pt-1">
             <img 
               src="/logo.svg" 
-              alt="Logo Resmi Wali Asuh" 
+              alt="Logo Resmi Sekolah Rakyat" 
               onClick={onShowSplash}
               title={onShowSplash ? "Klik untuk melihat animasi Splash Screen" : undefined}
-              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl shadow-xl shadow-emerald-950/50 border border-emerald-500/30 object-cover ${onShowSplash ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`} 
+              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl shadow-xl shadow-emerald-950/50 bg-white border border-slate-200 p-1.5 object-contain ${onShowSplash ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`} 
             />
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               Sistem Informasi Wali Asuh
