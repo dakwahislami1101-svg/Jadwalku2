@@ -30,14 +30,56 @@ import { StudentPickerModal } from './StudentPickerModal';
 import { soundManager } from '../utils/audio';
 import { subscribeToHandoverReports, saveHandoverReportsToFirestore } from '../utils/firebaseService';
 
-export const DEFAULT_COMPLETED_ACTIVITIES = [
-  'Pendampingan konseling anak asuh',
-  'Pendampingan makan malam',
-  'Perawatan anak sakit',
-  'Pendampingan ibadah',
-  'Pendampingan laundry time',
-  'Pendampingan mengaji',
-];
+export const DEFAULT_ACTIVITIES_BY_SHIFT: Record<string, string[]> = {
+  PAGI_KE_SORE: [
+    'Mendata siswa sakit',
+    'Mengantarkan siswa sakit ke UKS',
+    'Pendampingan Makan Siang',
+    'Pendampingan loundry time siswa SD',
+  ],
+  SORE_KE_MALAM: [
+    'Mendampingi siswa ibadah sholat Asar berjamaah di Masjid',
+    'Mendampingi siswa ibadah sholat Maghrib berjamaah di Masjid',
+    'Pendampingan Mengaji',
+    'Mendampingi siswa ibadah sholat Isak berjamaah di Masjid',
+    'Pendampingan Makan Malam',
+    'Evaluasi Malam',
+    'Pendampingan Belajar',
+  ],
+  MALAM_KE_PAGI: [
+    'Memastikan siswa telah istirahat tepat waktu.',
+    'Membangunkan siswa',
+    'Mendampingi siswa ibadah sholat Subuh berjamaah di Masjid',
+    'Mendampingi siswa Makan Pagi',
+  ],
+  PAGI: [
+    'Mendata siswa sakit',
+    'Mengantarkan siswa sakit ke UKS',
+    'Pendampingan Makan Siang',
+    'Pendampingan loundry time siswa SD',
+  ],
+  SORE: [
+    'Mendampingi siswa ibadah sholat Asar berjamaah di Masjid',
+    'Mendampingi siswa ibadah sholat Maghrib berjamaah di Masjid',
+    'Pendampingan Mengaji',
+    'Mendampingi siswa ibadah sholat Isak berjamaah di Masjid',
+    'Pendampingan Makan Malam',
+    'Evaluasi Malam',
+    'Pendampingan Belajar',
+  ],
+  MALAM: [
+    'Memastikan siswa telah istirahat tepat waktu.',
+    'Membangunkan siswa',
+    'Mendampingi siswa ibadah sholat Subuh berjamaah di Masjid',
+    'Mendampingi siswa Makan Pagi',
+  ],
+};
+
+export const getDefaultActivitiesForShift = (mode: string): string[] => {
+  return DEFAULT_ACTIVITIES_BY_SHIFT[mode] || DEFAULT_ACTIVITIES_BY_SHIFT.PAGI_KE_SORE;
+};
+
+export const DEFAULT_COMPLETED_ACTIVITIES = DEFAULT_ACTIVITIES_BY_SHIFT.PAGI_KE_SORE;
 
 interface HandoverReportViewProps {
   schedule: MonthSchedule;
@@ -85,8 +127,10 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
     'lakukan perawatan siswa sakit dan kegiatan pendampingan'
   );
 
-  // Activities executed during shift
-  const [completedActivities, setCompletedActivities] = useState<string[]>(DEFAULT_COMPLETED_ACTIVITIES);
+  // Activities executed during shift - initialized to active shift preset
+  const [completedActivities, setCompletedActivities] = useState<string[]>(() =>
+    getDefaultActivitiesForShift('PAGI_KE_SORE')
+  );
   const [newActivityInput, setNewActivityInput] = useState<string>('');
 
   const handleAddActivity = (text?: string) => {
@@ -106,9 +150,10 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
   };
 
   const handleResetActivities = () => {
-    setCompletedActivities([...DEFAULT_COMPLETED_ACTIVITIES]);
+    setCompletedActivities([...getDefaultActivitiesForShift(shiftType)]);
     soundManager.playChime();
-    showToast('Daftar kegiatan dikembalikan ke 6 kegiatan default.');
+    const shiftLabel = (shiftType === 'PAGI_KE_SORE' || shiftType === 'PAGI') ? 'Shif Pagi' : (shiftType === 'SORE_KE_MALAM' || shiftType === 'SORE') ? 'Shif Sore' : 'Shif Malam';
+    showToast(`Daftar kegiatan dikembalikan ke standar ${shiftLabel}.`);
   };
 
   // Copy and save feedback
@@ -253,7 +298,7 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
     };
   }, [schedule, staffList, activeDay, shiftType]);
 
-  // Switch shift mode handler with auto-time suggestion
+  // Switch shift mode handler with auto-time suggestion and auto-shift activities
   const handleSelectShiftMode = (newMode: HandoverShiftMode) => {
     setShiftType(newMode);
     if (newMode === 'PAGI_KE_SORE' || newMode === 'PAGI') {
@@ -263,6 +308,8 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
     } else if (newMode === 'MALAM_KE_PAGI' || newMode === 'MALAM') {
       setHandoverTime('07:00');
     }
+    // Automatically switch default activities to match chosen shift
+    setCompletedActivities(getDefaultActivitiesForShift(newMode));
     soundManager.playChime();
   };
 
@@ -1317,7 +1364,7 @@ _Laporan Serah Terima disusun oleh Wali Asuh SRT 1 Kediri_`;
                   type="button"
                   onClick={handleResetActivities}
                   className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1 text-[10px]"
-                  title="Kembalikan ke 6 kegiatan default"
+                  title="Kembalikan ke daftar kegiatan standar shif ini"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span className="hidden sm:inline">Reset Default</span>
@@ -1639,7 +1686,7 @@ _Laporan Serah Terima disusun oleh Wali Asuh SRT 1 Kediri_`;
                           if (rep.completedActivities && rep.completedActivities.length > 0) {
                             setCompletedActivities(rep.completedActivities);
                           } else {
-                            setCompletedActivities(DEFAULT_COMPLETED_ACTIVITIES);
+                            setCompletedActivities(getDefaultActivitiesForShift(rep.shiftType || shiftType));
                           }
                           if (rep.outgoingStaffNames) setOutgoingStaffList(rep.outgoingStaffNames);
                           if (rep.incomingStaffNames) setIncomingStaffList(rep.incomingStaffNames);

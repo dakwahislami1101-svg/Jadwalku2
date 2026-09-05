@@ -23,7 +23,6 @@ import {
   FileDown,
   Download,
   Share2,
-  ArrowLeftRight,
   Edit3
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode, DailyTask } from '../types';
@@ -303,16 +302,6 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-1.5">
-          {/* Tombol Tukar Shif (Admin) */}
-          <button
-            onClick={() => onNavigateToTab('admin')}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 text-xs font-bold shadow-xs transition-all cursor-pointer"
-            title="Buka panel Admin untuk menukar shif wali asuh hari ini"
-          >
-            <ArrowLeftRight className="w-3.5 h-3.5 text-slate-950" />
-            <span>Tukar Shif</span>
-          </button>
-
           {/* Tombol Laporan Serah Terima Shift */}
           <button
             onClick={() => onNavigateToTab('handover')}
