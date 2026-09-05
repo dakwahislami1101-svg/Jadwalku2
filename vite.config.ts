@@ -14,7 +14,7 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['logo.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
         manifest: {
-          id: '/',
+          id: './',
           name: 'Sistem Jadwal Shif & Pengingat Wali Asuh',
           short_name: 'WaliAsuh',
           description: 'Aplikasi manajemen jadwal shif otomatis, notifikasi pengingat tugas harian, dan monitoring petugas jaga real-time.',

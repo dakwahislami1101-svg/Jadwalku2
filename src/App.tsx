@@ -30,7 +30,6 @@ import { AdminShiftSwapView } from './components/AdminShiftSwapView';
 import { AdminChecklistConfigView } from './components/AdminChecklistConfigView';
 import { LoginPage } from './components/LoginPage';
 import { SplashScreen } from './components/SplashScreen';
-import { SupabaseMigrationModal } from './components/SupabaseMigrationModal';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { 
   isSupabaseConfigured, 
@@ -267,7 +266,6 @@ export default function App() {
   const [cloudStatus, setCloudStatus] = useState<'connected' | 'syncing' | 'offline' | 'error'>('syncing');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [refreshToast, setRefreshToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
-  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
   const isCloudSyncedRef = React.useRef<boolean>(false);
   const isIncomingRemoteUpdateRef = React.useRef<boolean>(false);
   const lastSyncedScheduleHashRef = React.useRef<string>('');
@@ -717,7 +715,6 @@ export default function App() {
             onShowSplash={() => setShowSplash(true)}
             isRefreshing={isRefreshing}
             onRefreshServer={handleRefreshDataFromServer}
-            onOpenSupabaseMigration={() => setIsSupabaseModalOpen(true)}
           />
 
           {/* Floating Cloud Refresh Toast Notification */}
@@ -857,15 +854,6 @@ export default function App() {
 
           {/* PWA Floating Install Banner at the bottom */}
           <PWAInstallBanner />
-
-          {/* Supabase Migration & SQL Export Modal */}
-          <SupabaseMigrationModal
-            isOpen={isSupabaseModalOpen}
-            onClose={() => setIsSupabaseModalOpen(false)}
-            schedule={schedule}
-            staffList={staffList}
-            sopTasks={sopTasks}
-          />
         </div>
       )}
     </>
