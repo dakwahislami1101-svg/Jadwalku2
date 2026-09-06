@@ -185,3 +185,10 @@ export interface ShiftSwapRecord {
   autoLpApplied?: boolean;
   undone?: boolean;
 }
+
+export interface AnnouncementData {
+  text: string;
+  enabled: boolean;
+  updatedAt?: string;
+  updatedBy?: string;
+}

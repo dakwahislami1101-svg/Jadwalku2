@@ -23,14 +23,23 @@ import {
   FileDown,
   Download,
   Share2,
-  Edit3
+  Edit3,
+  Megaphone,
+  X,
+  Radio
 } from 'lucide-react';
-import { MonthSchedule, Staff, ShiftCode, DailyTask } from '../types';
+import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
 import { calculateDailyStats, INDONESIAN_MONTH_NAMES, INDONESIAN_DAY_NAMES } from '../utils/scheduler';
 import { generateDailySchedulePDF } from '../utils/pdfExport';
 import { soundManager } from '../utils/audio';
 import { notificationService } from '../utils/notification';
+import { 
+  subscribeToAnnouncement, 
+  saveAnnouncementToFirestore, 
+  getLocalAnnouncement, 
+  DEFAULT_ANNOUNCEMENT 
+} from '../utils/firebaseService';
 
 interface TodayDashboardProps {
   schedule: MonthSchedule;
@@ -74,6 +83,43 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   const [downloadToast, setDownloadToast] = useState<string | null>(null);
   const [currentTimeMinutes, setCurrentTimeMinutes] = useState(0);
   const [currentTimeFormatted, setCurrentTimeFormatted] = useState('');
+
+  // Running text announcement state
+  const [announcement, setAnnouncement] = useState<AnnouncementData>(() => getLocalAnnouncement());
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState<boolean>(false);
+  const [tempAnnouncementText, setTempAnnouncementText] = useState<string>('');
+  const [tempAnnouncementEnabled, setTempAnnouncementEnabled] = useState<boolean>(true);
+  const [isSavingAnnouncement, setIsSavingAnnouncement] = useState<boolean>(false);
+  const [announcementToast, setAnnouncementToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsub = subscribeToAnnouncement((data) => {
+      setAnnouncement(data);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleOpenAnnouncementModal = () => {
+    setTempAnnouncementText(announcement.text);
+    setTempAnnouncementEnabled(announcement.enabled);
+    setShowAnnouncementModal(true);
+  };
+
+  const handleSaveAnnouncement = async () => {
+    setIsSavingAnnouncement(true);
+    const newText = tempAnnouncementText.trim() || DEFAULT_ANNOUNCEMENT.text;
+    await saveAnnouncementToFirestore(
+      {
+        text: newText,
+        enabled: tempAnnouncementEnabled,
+      },
+      userRole === 'admin' ? 'Administrator SRT 1' : 'Admin'
+    );
+    setIsSavingAnnouncement(false);
+    setShowAnnouncementModal(false);
+    setAnnouncementToast('Pengumuman berjalan berhasil diperbarui dan tersinkronisasi!');
+    setTimeout(() => setAnnouncementToast(null), 3500);
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -341,17 +387,82 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
             <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">CSV</span>
           </button>
-
-          {/* Tombol Kirim WhatsApp */}
-          <button
-            onClick={handleShareWhatsApp}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-            title="Bagikan jadwal tugas hari ini ke grup WhatsApp"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Kirim WA</span>
-          </button>
         </div>
+
+        {/* Running Text Announcement / Ticker Berjalan Pengumuman */}
+        {announcement.enabled && announcement.text ? (
+          <div className="w-full mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-700/60">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-amber-50 via-orange-50/40 to-amber-50 dark:from-amber-950/40 dark:via-slate-900/60 dark:to-amber-950/40 border border-amber-300/80 dark:border-amber-700/60 rounded-lg px-2.5 py-1.5 shadow-2xs overflow-hidden">
+              <div className="flex items-center gap-1 shrink-0 text-amber-800 dark:text-amber-300 font-bold text-[11px] select-none">
+                <span className="p-1 rounded bg-amber-200/90 dark:bg-amber-800/80 text-amber-900 dark:text-amber-100 shadow-2xs">
+                  <Megaphone className="w-3 h-3 animate-pulse" />
+                </span>
+                <span className="hidden sm:inline font-black uppercase text-[10px] tracking-wider text-amber-900 dark:text-amber-200">
+                  INFO PENGUMUMAN:
+                </span>
+              </div>
+
+              {/* Running Marquee Text Area - Continuous Endless Loop */}
+              <div className="relative flex-1 overflow-hidden h-5 flex items-center">
+                <div 
+                  className="animate-continuous-marquee text-xs font-semibold text-amber-950 dark:text-amber-100 cursor-pointer select-none whitespace-nowrap"
+                  title="Klik untuk membaca detail pengumuman (teks berjalan terus berulang)"
+                  onClick={() => {
+                    if (userRole === 'admin') {
+                      handleOpenAnnouncementModal();
+                    } else {
+                      setShowAnnouncementModal(true);
+                    }
+                  }}
+                >
+                  <span className="inline-flex items-center gap-5 pr-8">
+                    <span>{announcement.text}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+                    <span>{announcement.text}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+                  </span>
+                  <span className="inline-flex items-center gap-5 pr-8" aria-hidden="true">
+                    <span>{announcement.text}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+                    <span>{announcement.text}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Button: Edit for Admin / Detail for Staff */}
+              {userRole === 'admin' ? (
+                <button
+                  onClick={handleOpenAnnouncementModal}
+                  className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-2xs transition-colors cursor-pointer"
+                  title="Atur teks pengumuman berjalan ini (Khusus Admin)"
+                >
+                  <Edit3 className="w-2.5 h-2.5" />
+                  <span>Atur</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowAnnouncementModal(true)}
+                  className="shrink-0 text-[10.5px] font-bold text-amber-700 dark:text-amber-400 hover:underline px-1 py-0.5 cursor-pointer"
+                  title="Lihat teks pengumuman lengkap"
+                >
+                  Detail
+                </button>
+              )}
+            </div>
+          </div>
+        ) : userRole === 'admin' ? (
+          <div className="w-full mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+            <span className="italic text-[10.5px]">Pengumuman berjalan saat ini dinonaktifkan.</span>
+            <button
+              onClick={handleOpenAnnouncementModal}
+              className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-semibold text-[10px] hover:bg-amber-200 transition-colors cursor-pointer"
+            >
+              <Megaphone className="w-2.5 h-2.5" />
+              <span>+ Pasang Pengumuman (Admin)</span>
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* User's Assigned Shift Banner */}
@@ -757,6 +868,170 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Toast Notification for Announcement */}
+      {announcementToast && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-lg border border-slate-700 animate-bounce">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{announcementToast}</span>
+        </div>
+      )}
+
+      {/* Modal Pengumuman Berjalan (Admin / Staf) */}
+      {showAnnouncementModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+                  <Megaphone className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    {userRole === 'admin' ? 'Pengaturan Pengumuman Berjalan' : 'Pemberitahuan & Informasi Resmi'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {userRole === 'admin' 
+                      ? 'Kelola teks berjalan yang tampil di bagian atas dashboard' 
+                      : 'Informasi dan instruksi operasional kedinasan dari Admin'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAnnouncementModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {userRole === 'admin' ? (
+              /* Admin Edit Form */
+              <div className="space-y-3.5">
+                {/* Status Toggle */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80">
+                  <div className="space-y-0.5">
+                    <label className="text-xs font-bold text-slate-900 dark:text-white">
+                      Status Tampilan Ticker
+                    </label>
+                    <p className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                      Tampilkan teks berjalan di dashboard utama semua pengguna
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={tempAnnouncementEnabled}
+                      onChange={(e) => setTempAnnouncementEnabled(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                </div>
+
+                {/* Textarea */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Isi Teks Pengumuman
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {tempAnnouncementText.length} karakter
+                    </span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={tempAnnouncementText}
+                    onChange={(e) => setTempAnnouncementText(e.target.value)}
+                    placeholder="Tuliskan teks pengumuman yang akan berjalan di dashboard..."
+                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none leading-relaxed"
+                  />
+                </div>
+
+                {/* Template / Quick Presets */}
+                <div className="space-y-1.5">
+                  <span className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Contoh Cepat / Rekomendasi Aturan:
+                  </span>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setTempAnnouncementText('📢 Pengumuman: Shif Sore tidak dapat ditukar dengan Shif Malam (M), karena memiliki jam kerja yang sama & ketentuan operasional asrama.')}
+                      className="text-left text-[11px] p-2 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                    >
+                      <strong className="text-amber-700 dark:text-amber-400 block mb-0.5">Aturan Tukar Shif Sore & Malam:</strong>
+                      "Shif Sore tidak dapat ditukar dengan Shif Malam (M), karena memiliki jam kerja yang sama & ketentuan operasional asrama."
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTempAnnouncementText('⚠️ Perhatian: Serah terima tugas dan buku jaga wajib diisi lengkap setiap pergantian shif melalui menu Laporan Serah Terima.')}
+                      className="text-left text-[11px] p-2 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                    >
+                      <strong className="text-amber-700 dark:text-amber-400 block mb-0.5">Kewajiban Serah Terima:</strong>
+                      "Serah terima tugas dan buku jaga wajib diisi lengkap setiap pergantian shif melalui menu Laporan Serah Terima."
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTempAnnouncementText('⏱️ Disiplin Piket: Seluruh Wali Asuh wajib hadir 15 menit sebelum jam shif dimulai untuk apel operan jaga.')}
+                      className="text-left text-[11px] p-2 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                    >
+                      <strong className="text-amber-700 dark:text-amber-400 block mb-0.5">Ketepatan Waktu:</strong>
+                      "Seluruh Wali Asuh wajib hadir 15 menit sebelum jam shif dimulai untuk apel operan jaga."
+                    </button>
+                  </div>
+                </div>
+
+                {/* Footer Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowAnnouncementModal(false)}
+                    className="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSavingAnnouncement}
+                    onClick={handleSaveAnnouncement}
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{isSavingAnnouncement ? 'Menyimpan...' : 'Simpan & Publikasikan'}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Staff View Modal */
+              <div className="space-y-4">
+                <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 space-y-2">
+                  <span className="text-[10.5px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 animate-pulse text-amber-600" />
+                    Pengumuman Saat Ini:
+                  </span>
+                  <p className="text-sm font-medium text-amber-950 dark:text-amber-100 leading-relaxed whitespace-pre-wrap">
+                    {announcement.text}
+                  </p>
+                  {announcement.updatedAt && (
+                    <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80 pt-1 border-t border-amber-200/60 dark:border-amber-800/40 font-mono">
+                      Diperbarui oleh: {announcement.updatedBy || 'Admin'}
+                    </p>
+                  )}
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowAnnouncementModal(false)}
+                    className="px-4 py-1.5 rounded-lg bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

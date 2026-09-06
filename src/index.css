@@ -46,3 +46,25 @@ html, body, #root {
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.75));
 }
+
+/* Running Text / Marquee Ticker - Seamless Infinite Continuous Loop */
+@keyframes continuousTicker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-continuous-marquee {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: max-content;
+  will-change: transform;
+  animation: continuousTicker 26s linear infinite;
+}
+
+.animate-continuous-marquee:hover {
+  animation-play-state: paused;
+}

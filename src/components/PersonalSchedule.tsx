@@ -112,6 +112,12 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
     };
   });
 
+  // Calendar calculation: Day offset of 1st day of the month (0 = Min, 1 = Sen, ..., 6 = Sab)
+  const firstDayIndex = new Date(schedule.year, schedule.month - 1, 1).getDay();
+  const todayObj = new Date();
+  const isCurrentMonthYear = todayObj.getFullYear() === schedule.year && todayObj.getMonth() === schedule.month - 1;
+  const todayDate = isCurrentMonthYear ? todayObj.getDate() : -1;
+
   return (
     <div className="space-y-2.5">
       {/* Profile Switcher Card */}
@@ -265,15 +271,32 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
           {/* Monthly Day Grid */}
           <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
             {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map((dayH, i) => (
-              <div key={i} className="text-center text-[10px] font-bold text-slate-400 uppercase py-0.5">
+              <div 
+                key={i} 
+                className={`text-center text-[10px] font-bold uppercase py-0.5 ${
+                  i === 0 ? 'text-rose-500 font-extrabold' : 'text-slate-400'
+                }`}
+              >
                 {dayH}
               </div>
+            ))}
+
+            {/* Empty slots for days prior to the 1st of the month */}
+            {Array.from({ length: firstDayIndex }, (_, i) => (
+              <div
+                key={`empty-${i}`}
+                className="rounded-lg p-1.5 border border-dashed border-slate-100 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-900/20 min-h-[50px] opacity-30 select-none"
+                aria-hidden="true"
+              />
             ))}
 
             {Array.from({ length: schedule.totalDays }, (_, i) => i + 1).map((day) => {
               const shift = schedule.days[day]?.[selectedStaff.id] || 'O';
               const meta = SHIFT_DEFINITIONS[shift];
               const isSelected = day === activeDay;
+              const isToday = isCurrentMonthYear && day === todayDate;
+              const dayOfWeek = (firstDayIndex + day - 1) % 7;
+              const isSunday = dayOfWeek === 0;
 
               return (
                 <div
@@ -284,13 +307,17 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
                   }}
                   className={`cursor-pointer rounded-lg p-1.5 border transition-all text-center flex flex-col justify-between min-h-[50px] ${
                     isSelected
-                      ? 'ring-1 ring-blue-600 shadow-xs bg-blue-50/70 dark:bg-blue-950/50 border-blue-400'
+                      ? 'ring-2 ring-blue-600 shadow-sm bg-blue-50/70 dark:bg-blue-950/50 border-blue-400'
+                      : isToday
+                      ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/30 shadow-2xs'
                       : 'border-slate-200 dark:border-slate-700 hover:border-slate-400 bg-white dark:bg-slate-800/80 hover:shadow-xs'
                   }`}
                 >
-                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
-                    <span>Tgl {day}</span>
-                    {day === 22 && (
+                  <div className="flex items-center justify-between text-[10px] font-bold">
+                    <span className={isSunday ? 'text-rose-600 dark:text-rose-400' : 'text-slate-600 dark:text-slate-300'}>
+                      Tgl {day}
+                    </span>
+                    {isToday && (
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Hari Ini"></span>
                     )}
                   </div>

@@ -20,13 +20,22 @@ import {
   FileSpreadsheet,
   ArrowRight,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Megaphone,
+  Save
 } from 'lucide-react';
-import { MonthSchedule, Staff, ShiftCode, ShiftSwapRecord } from '../types';
+import { MonthSchedule, Staff, ShiftCode, ShiftSwapRecord, AnnouncementData } from '../types';
 import { SHIFT_DEFINITIONS } from '../data/initialSchedule';
 import { INDONESIAN_DAY_NAMES, INDONESIAN_MONTH_NAMES } from '../utils/scheduler';
 import { soundManager } from '../utils/audio';
-import { subscribeToSwapLogs, saveSwapLogsToFirestore } from '../utils/firebaseService';
+import { 
+  subscribeToSwapLogs, 
+  saveSwapLogsToFirestore,
+  subscribeToAnnouncement,
+  saveAnnouncementToFirestore,
+  getLocalAnnouncement,
+  DEFAULT_ANNOUNCEMENT
+} from '../utils/firebaseService';
 
 interface AdminShiftSwapViewProps {
   schedule: MonthSchedule;
@@ -122,6 +131,37 @@ export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
     setTimeout(() => {
       setToastMessage((prev) => (prev?.text === text ? null : prev));
     }, 4500);
+  };
+
+  // Announcement Ticker state & synchronization
+  const [announcement, setAnnouncement] = useState<AnnouncementData>(() => getLocalAnnouncement());
+  const [announcementInput, setAnnouncementInput] = useState<string>(() => getLocalAnnouncement().text);
+  const [announcementEnabled, setAnnouncementEnabled] = useState<boolean>(() => getLocalAnnouncement().enabled);
+  const [isSavingAnnouncement, setIsSavingAnnouncement] = useState<boolean>(false);
+
+  useEffect(() => {
+    const unsub = subscribeToAnnouncement((data) => {
+      setAnnouncement(data);
+      setAnnouncementInput(data.text);
+      setAnnouncementEnabled(data.enabled);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleSaveAnnouncement = async () => {
+    setIsSavingAnnouncement(true);
+    const newText = announcementInput.trim() || DEFAULT_ANNOUNCEMENT.text;
+    const ok = await saveAnnouncementToFirestore({
+      text: newText,
+      enabled: announcementEnabled,
+    }, 'Admin SRT 1');
+    setIsSavingAnnouncement(false);
+    if (ok) {
+      soundManager.playChime();
+      showToast('success', 'Pengumuman berjalan berhasil disimpan & langsung tersinkron ke Beranda!');
+    } else {
+      showToast('info', 'Pengumuman disimpan secara lokal.');
+    }
   };
 
   // Current day string representation
@@ -494,6 +534,136 @@ export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
               <span>Buka Matriks Roster</span>
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Pengumuman Berjalan (Ticker) Management Card */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-3.5 sm:p-4 border border-amber-300/80 dark:border-amber-700/60 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300">
+              <Megaphone className="w-4 h-4" />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Pengumuman Berjalan (Ticker Dashboard)</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded font-black uppercase tracking-wider ${
+                  announcementEnabled 
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' 
+                    : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                }`}>
+                  {announcementEnabled ? 'Aktif' : 'Nonaktif'}
+                </span>
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Teks berjalan yang tampil di bagian atas dashboard beranda untuk seluruh wali asuh.
+              </p>
+            </div>
+          </div>
+
+          {/* Toggle Switch */}
+          <div className="flex items-center gap-2 self-end sm:self-center">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {announcementEnabled ? 'Tampilkan di Beranda' : 'Sembunyikan'}
+            </span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={announcementEnabled}
+                onChange={(e) => setAnnouncementEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+            </label>
+          </div>
+        </div>
+
+        {/* Live Preview Box */}
+        {announcementEnabled && announcementInput && (
+          <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-lg px-2.5 py-1.5 flex items-center gap-2 overflow-hidden shadow-2xs">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 shrink-0 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+              Pratinjau:
+            </span>
+            <div className="relative flex-1 overflow-hidden h-5 flex items-center">
+              <div className="animate-continuous-marquee text-xs font-semibold text-amber-950 dark:text-amber-100 whitespace-nowrap select-none">
+                <span className="inline-flex items-center gap-5 pr-8">
+                  <span>{announcementInput}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+                  <span>{announcementInput}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+                </span>
+                <span className="inline-flex items-center gap-5 pr-8" aria-hidden="true">
+                  <span>{announcementInput}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+                  <span>{announcementInput}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Input Textarea & Controls */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Isi Teks Pengumuman
+            </label>
+            <span className="text-[10px] text-slate-400 font-mono">
+              {announcementInput.length} karakter
+            </span>
+          </div>
+
+          <textarea
+            rows={2}
+            value={announcementInput}
+            onChange={(e) => setAnnouncementInput(e.target.value)}
+            placeholder="Tuliskan pengumuman resmi atau aturan operasional kedinasan..."
+            className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none leading-relaxed"
+          />
+
+          {/* Quick Presets */}
+          <div className="space-y-1">
+            <span className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Pilihan Cepat / Rekomendasi:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setAnnouncementInput('📢 Pengumuman: Shif Sore tidak dapat ditukar dengan Shif Malam (M), karena memiliki jam kerja yang sama & ketentuan operasional asrama.')}
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+              >
+                ⚠️ Shif Sore tidak dapat ditukar dengan Shif M
+              </button>
+              <button
+                type="button"
+                onClick={() => setAnnouncementInput('⚠️ Perhatian: Serah terima tugas dan buku jaga wajib diisi lengkap setiap pergantian shif melalui menu Laporan Serah Terima.')}
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+              >
+                📋 Kewajiban Isi Laporan Serah Terima
+              </button>
+              <button
+                type="button"
+                onClick={() => setAnnouncementInput('⏱️ Disiplin Piket: Seluruh Wali Asuh wajib hadir 15 menit sebelum jam shif dimulai untuk apel operan jaga.')}
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 font-medium transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+              >
+                ⏱️ Hadir 15 Menit Sebelum Shif
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end pt-1">
+            <button
+              type="button"
+              disabled={isSavingAnnouncement}
+              onClick={handleSaveAnnouncement}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{isSavingAnnouncement ? 'Menyimpan...' : 'Simpan & Publikasikan Pengumuman'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

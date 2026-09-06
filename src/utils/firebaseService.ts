@@ -16,7 +16,7 @@ import {
   enableNetwork
 } from 'firebase/firestore';
 import firebaseConfigJson from '../../firebase-applet-config.json';
-import { MonthSchedule, ShiftCode, ShiftSwapRecord, HandoverReport, DailyTask } from '../types';
+import { MonthSchedule, ShiftCode, ShiftSwapRecord, HandoverReport, DailyTask, AnnouncementData } from '../types';
 
 // Set Firebase Firestore log level to silent to suppress internal connection retry messages in offline/iframe environments
 setLogLevel('silent');
@@ -660,6 +660,104 @@ export async function fetchSopTasksFromFirestore(): Promise<DailyTask[] | null> 
     }
     console.warn('[Firestore] Failed to fetch SOP checklist tasks:', err);
     return null;
+  }
+}
+
+// ==================== ANNOUNCEMENT TICKER SYNC ====================
+
+export const DEFAULT_ANNOUNCEMENT: AnnouncementData = {
+  text: '📢 Pengumuman: Shif Sore tidak dapat ditukar dengan Shif Malam (M), karena memiliki jam kerja yang sama & ketentuan operasional asrama.',
+  enabled: true,
+  updatedAt: new Date().toISOString(),
+  updatedBy: 'Admin',
+};
+
+const ANNOUNCEMENT_STORAGE_KEY = 'wali_asuh_announcement_ticker_v1';
+
+export function getLocalAnnouncement(): AnnouncementData {
+  try {
+    const saved = localStorage.getItem(ANNOUNCEMENT_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed.text === 'string') {
+        return parsed;
+      }
+    }
+  } catch {}
+  return DEFAULT_ANNOUNCEMENT;
+}
+
+export function subscribeToAnnouncement(
+  onData: (data: AnnouncementData) => void
+): Unsubscribe {
+  // Emit local value immediately for instant zero-latency UI display
+  onData(getLocalAnnouncement());
+
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    return () => {};
+  }
+
+  try {
+    const docRef = doc(db, 'settings', 'announcement_ticker');
+    return onSnapshot(
+      docRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          const parsed: AnnouncementData = {
+            text: typeof data.text === 'string' ? data.text : DEFAULT_ANNOUNCEMENT.text,
+            enabled: typeof data.enabled === 'boolean' ? data.enabled : true,
+            updatedAt: data.updatedAt || new Date().toISOString(),
+            updatedBy: data.updatedBy || 'Admin',
+          };
+          try {
+            localStorage.setItem(ANNOUNCEMENT_STORAGE_KEY, JSON.stringify(parsed));
+          } catch {}
+          onData(parsed);
+        }
+      },
+      (err) => {
+        if (err?.code === 'resource-exhausted' || err?.message?.includes('Quota limit exceeded')) {
+          markQuotaExhausted();
+        }
+      }
+    );
+  } catch {
+    return () => {};
+  }
+}
+
+export async function saveAnnouncementToFirestore(
+  announcement: Partial<AnnouncementData>,
+  updaterName: string = 'Admin'
+): Promise<boolean> {
+  const current = getLocalAnnouncement();
+  const updated: AnnouncementData = {
+    ...current,
+    ...announcement,
+    updatedAt: new Date().toISOString(),
+    updatedBy: updaterName,
+  };
+
+  try {
+    localStorage.setItem(ANNOUNCEMENT_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    return true;
+  }
+
+  try {
+    const docRef = doc(db, 'settings', 'announcement_ticker');
+    await setDoc(docRef, updated, { merge: true });
+    return true;
+  } catch (err: any) {
+    if (err?.code === 'resource-exhausted' || err?.message?.includes('Quota limit exceeded')) {
+      markQuotaExhausted();
+      return false;
+    }
+    console.warn('[Firestore] Failed to save announcement:', err);
+    return false;
   }
 }
 
