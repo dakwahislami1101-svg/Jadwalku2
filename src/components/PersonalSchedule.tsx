@@ -142,15 +142,15 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
         </div>
 
         {/* Change Profile Dropdown */}
-        <div className="flex items-center gap-1.5">
-          <label htmlFor="staff-profile-select" className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-start">
+          <label htmlFor="staff-profile-select" className="text-xs font-medium text-slate-500 dark:text-slate-400 shrink-0">
             Profil:
           </label>
           <select
             id="staff-profile-select"
             value={selectedStaffId}
             onChange={(e) => setSelectedStaffId(Number(e.target.value))}
-            className="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-blue-500"
+            className="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 max-w-[220px] sm:max-w-xs truncate cursor-pointer"
           >
             {staffList.map((st) => (
               <option key={st.id} value={st.id}>

@@ -95,7 +95,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
             <select
               value={groupFilter}
               onChange={(e) => setGroupFilter(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none"
+              className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none max-w-[160px] sm:max-w-none truncate"
             >
               <option value="ALL">Semua Petugas ({staffList.length})</option>
               {schedule.month === 9 ? (

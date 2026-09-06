@@ -8,7 +8,13 @@ import {
   Moon
 } from 'lucide-react';
 import { Student } from '../types';
-import { ALL_STUDENTS_DATA } from '../data/studentsData';
+import { 
+  ALL_STUDENTS_DATA, 
+  TOTAL_STUDENTS_COUNT, 
+  SD_STUDENTS_COUNT, 
+  SMP_STUDENTS_COUNT, 
+  SMA_STUDENTS_COUNT 
+} from '../data/studentsData';
 
 interface StudentPickerModalProps {
   isOpen: boolean;
@@ -87,10 +93,10 @@ export const StudentPickerModal: React.FC<StudentPickerModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                {title || 'Pilih Anak Asuh (346 Siswa)'}
+                {title || `Pilih Anak Asuh (${TOTAL_STUDENTS_COUNT} Siswa)`}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Pilih dari database resmi 346 Siswa SRT 1 Kabupaten Kediri
+                Pilih dari database resmi {TOTAL_STUDENTS_COUNT} Siswa SRT 1 Kabupaten Kediri
               </p>
             </div>
           </div>
@@ -138,7 +144,7 @@ export const StudentPickerModal: React.FC<StudentPickerModalProps> = ({
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'
                   }`}
                 >
-                  {lvl === 'ALL' ? 'Semua (346)' : lvl === 'SD' ? 'SD (20)' : lvl === 'SMP' ? 'SMP (111)' : 'SMA (215)'}
+                  {lvl === 'ALL' ? `Semua (${TOTAL_STUDENTS_COUNT})` : lvl === 'SD' ? `SD (${SD_STUDENTS_COUNT})` : lvl === 'SMP' ? `SMP (${SMP_STUDENTS_COUNT})` : `SMA (${SMA_STUDENTS_COUNT})`}
                 </button>
               ))}
             </div>
@@ -234,7 +240,7 @@ export const StudentPickerModal: React.FC<StudentPickerModalProps> = ({
 
         {/* Footer */}
         <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <span>Menampilkan <strong>{filteredStudents.length}</strong> dari 346 Anak Asuh</span>
+          <span>Menampilkan <strong>{filteredStudents.length}</strong> dari {TOTAL_STUDENTS_COUNT} Anak Asuh</span>
           <button
             onClick={onClose}
             className="px-4 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700 text-xs font-semibold"

@@ -18,8 +18,8 @@ import {
 import firebaseConfigJson from '../../firebase-applet-config.json';
 import { MonthSchedule, ShiftCode, ShiftSwapRecord, HandoverReport, DailyTask } from '../types';
 
-// Set Firebase Firestore log level to error to avoid noisy connection retry warnings
-setLogLevel('error');
+// Set Firebase Firestore log level to silent to suppress internal connection retry messages in offline/iframe environments
+setLogLevel('silent');
 
 // Initialize Firebase App
 const firebaseConfig = {
@@ -36,14 +36,14 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Optional Firebase Auth instance
 export const auth: Auth = getAuth(app);
 
-// Initialize Firestore with robust long-polling and multi-tab local cache
+// Initialize Firestore with robust auto-detect long polling and multi-tab local cache
 let dbInstance: Firestore;
 try {
   dbInstance = initializeFirestore(
     app,
     {
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-      experimentalForceLongPolling: true,
+      experimentalAutoDetectLongPolling: true,
     },
     firebaseConfigJson.firestoreDatabaseId || undefined
   );

@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode, HandoverReport, SickStudent, Student, HandoverShiftMode } from '../types';
 import { SHIFT_DEFINITIONS } from '../data/initialSchedule';
-import { ALL_STUDENTS_DATA } from '../data/studentsData';
+import { ALL_STUDENTS_DATA, TOTAL_STUDENTS_COUNT } from '../data/studentsData';
 import { StudentPickerModal } from './StudentPickerModal';
 import { soundManager } from '../utils/audio';
 import { subscribeToHandoverReports, saveHandoverReportsToFirestore } from '../utils/firebaseService';
@@ -113,8 +113,8 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
   const [handoverTime, setHandoverTime] = useState<string>('15:00');
 
   // Student summary counts
-  const [studentTotal, setStudentTotal] = useState<number>(346);
-  const [studentPresent, setStudentPresent] = useState<number>(346);
+  const [studentTotal, setStudentTotal] = useState<number>(TOTAL_STUDENTS_COUNT);
+  const [studentPresent, setStudentPresent] = useState<number>(TOTAL_STUDENTS_COUNT);
   const [studentFasting, setStudentFasting] = useState<number>(0);
 
   // Sick students list - default empty
@@ -237,10 +237,10 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
       outTag = 'PAGI';
       inTag = 'SORE';
     } else if (isSoreToMalam) {
-      // 2. Sore ke Malam (Pihak yang menyerahkan: Shift Sore, penerima: Shift Malam)
-      // Yang menyerahkan: Sore hari ini (Tgl N)
+      // 2. Sore ke Malam (Pihak yang menyerahkan: judulnya tetap Shift Sore, tetapi isinya petugas shift Sore & Malam)
+      // Yang menyerahkan: Sore & Malam hari ini (Tgl N)
       // Yang menerima: Malam hari ini (Tgl N)
-      outgoingCodes = ['S', 'S2A', 'S3A', 'S4A'];
+      outgoingCodes = ['S', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2'];
       incomingCodes = ['M', 'M1', 'M2'];
       outDay = activeDay;
       inDay = activeDay;
@@ -386,7 +386,7 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
     showToast('Daftar petugas menerima dikembalikan sesuai jadwal roster.');
   };
 
-  // Quick search results for sick students from 346 students database
+  // Quick search results for sick students from database
   const quickSickResults = useMemo(() => {
     if (!quickSickSearch.trim()) return [];
     const q = quickSickSearch.toLowerCase();
@@ -512,7 +512,7 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
           const actionDesc = s.actionTaken ? ` [Tindakan: ${s.actionTaken}]` : '';
           return `  ${idx + 1}. ${studentName}${illnessDesc}${actionDesc}`;
         }).join('\n')
-      : '  _Nihil (Seluruh 346 anak asuh dalam keadaan sehat & bugar)_';
+      : `  _Nihil (Seluruh ${studentTotal || TOTAL_STUDENTS_COUNT} anak asuh dalam keadaan sehat & bugar)_`;
 
     const activitiesText = completedActivities.length > 0
       ? completedActivities.map((act, idx) => `  ${idx + 1}. ${act}`).join('\n')
@@ -1076,8 +1076,8 @@ _Laporan Serah Terima disusun oleh Wali Asuh SRT 1 Kediri_`;
                 <button
                   type="button"
                   onClick={() => {
-                    setStudentTotal(346);
-                    setStudentPresent(346);
+                    setStudentTotal(TOTAL_STUDENTS_COUNT);
+                    setStudentPresent(TOTAL_STUDENTS_COUNT);
                     setSickStudents([]);
                     soundManager.playChime();
                   }}
@@ -1177,7 +1177,7 @@ _Laporan Serah Terima disusun oleh Wali Asuh SRT 1 Kediri_`;
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 transition-colors"
                   >
                     <Users className="w-3.5 h-3.5" />
-                    Pilih dari 346 Siswa
+                    Pilih dari {TOTAL_STUDENTS_COUNT} Siswa
                   </button>
                   <button
                     type="button"
@@ -1236,7 +1236,7 @@ _Laporan Serah Terima disusun oleh Wali Asuh SRT 1 Kediri_`;
                   <div className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-800 rounded-xl shadow-xl z-40 max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/60">
                     {quickSickResults.length === 0 ? (
                       <div className="p-3 text-center text-xs text-slate-500 dark:text-slate-400">
-                        <span>Nama "{quickSickSearch}" tidak ada di daftar 346 siswa.</span>
+                        <span>Nama "{quickSickSearch}" tidak ada di daftar {TOTAL_STUDENTS_COUNT} siswa.</span>
                         <button
                           type="button"
                           onClick={handleQuickAddCustomSick}
@@ -1705,7 +1705,7 @@ _Laporan Serah Terima disusun oleh Wali Asuh SRT 1 Kediri_`;
           </div>
         </div>
       )}
-      {/* Student Picker Modal from 346 Students Database */}
+      {/* Student Picker Modal from Students Database */}
       <StudentPickerModal
         isOpen={showStudentPicker}
         onClose={() => {
@@ -1714,7 +1714,7 @@ _Laporan Serah Terima disusun oleh Wali Asuh SRT 1 Kediri_`;
         }}
         onSelectStudent={handleStudentPicked}
         mode="sick"
-        title="Pilih Anak Asuh yang Sakit (Database 346 Siswa)"
+        title={`Pilih Anak Asuh yang Sakit (Database ${TOTAL_STUDENTS_COUNT} Siswa)`}
       />
 
       {/* Datalist for autocomplete on direct typing */}

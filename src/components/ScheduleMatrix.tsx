@@ -136,9 +136,9 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
     <div className="space-y-2">
       {/* Top Filter & Action Bar */}
       <div className="bg-white dark:bg-slate-800 p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs flex flex-wrap items-center justify-between gap-1.5">
-        <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-[240px]">
+        <div className="flex flex-wrap items-center gap-1.5 flex-1 w-full sm:w-auto">
           {/* Search Box */}
-          <div className="relative min-w-[140px] max-w-xs">
+          <div className="relative w-full sm:w-auto sm:min-w-[140px] sm:max-w-xs">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400" />
             <input
               type="text"
@@ -158,13 +158,13 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
           </div>
 
           {/* Filter by Group */}
-          <div className="flex items-center gap-1 text-xs">
+          <div className="flex-1 sm:flex-initial min-w-0 flex items-center gap-1 text-xs">
             <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Grup:</span>
             <select
               aria-label="Filter grup wali asuh"
               value={groupFilter}
               onChange={(e) => setGroupFilter(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none"
+              className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none w-full sm:w-auto max-w-[140px] sm:max-w-none truncate"
             >
               <option value="ALL">Semua Petugas ({staffList.length})</option>
               <option value="LAKI">Petugas Laki-laki (17)</option>
@@ -173,14 +173,14 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
           </div>
 
           {/* Filter by Shift */}
-          <div className="flex items-center gap-1 text-xs">
-            <Filter className="w-3 h-3 text-slate-400" />
+          <div className="flex-1 sm:flex-initial min-w-0 flex items-center gap-1 text-xs">
+            <Filter className="w-3 h-3 text-slate-400 shrink-0" />
             <span className="text-slate-500 dark:text-slate-400 hidden sm:inline">Shif Tgl {activeDay}:</span>
             <select
               aria-label="Filter jenis shif"
               value={shiftFilter}
               onChange={(e) => setShiftFilter(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none"
+              className="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none w-full sm:w-auto max-w-[150px] sm:max-w-none truncate"
             >
               <option value="ALL">Semua Shif</option>
               <option value="PAGI_ALL">Semua Pagi (P1/P2/P 07:00-16:00)</option>

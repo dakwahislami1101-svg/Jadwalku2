@@ -243,9 +243,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* User Identity & Quick Controls (Ringkas, Pas Layar HP Tanpa Geser) */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-between sm:justify-end">
           {/* Month Selector Switcher */}
-          <div className="flex items-center gap-1 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/60 dark:to-indigo-950/60 px-2 py-1 rounded-lg border border-blue-200 dark:border-blue-800 text-[11px] shadow-2xs">
+          <div className="flex-1 sm:flex-initial min-w-0 max-w-[52%] sm:max-w-none flex items-center gap-1 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/60 dark:to-indigo-950/60 px-2 py-1 rounded-lg border border-blue-200 dark:border-blue-800 text-[11px] shadow-2xs">
             <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
             <select
               aria-label="Pilih Periode Bulan Jadwal"
@@ -254,22 +254,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                 const [y, m] = e.target.value.split('-').map(Number);
                 onSelectMonth(y, m);
               }}
-              className="bg-transparent font-bold text-blue-900 dark:text-blue-200 focus:outline-none cursor-pointer pr-1 text-[11px]"
+              className="bg-transparent font-bold text-blue-900 dark:text-blue-200 focus:outline-none cursor-pointer pr-1 text-[11px] w-full truncate"
             >
               <option value="2026-8" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
-                Agustus 2026 (38 Petugas)
+                Agustus 2026
               </option>
               <option value="2026-9" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
-                September 2026 (31 Petugas) — Aktif
+                September 2026 (Aktif)
               </option>
               <option value="2026-10" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
-                Oktober 2026 (31 Petugas)
+                Oktober 2026
               </option>
               <option value="2026-11" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
-                November 2026 (31 Petugas)
+                November 2026
               </option>
               <option value="2026-12" className="dark:bg-slate-800 dark:text-slate-100 font-bold">
-                Desember 2026 (31 Petugas)
+                Desember 2026
               </option>
               {/* Fallback for any other custom selected month */}
               {![8, 9, 10, 11, 12].includes(selectedMonth.month) && (
@@ -281,14 +281,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Active Staff Profile Selector */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px]">
+          <div className="flex-1 sm:flex-initial min-w-0 max-w-[48%] sm:max-w-none flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px]">
             <User className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
             <span className="text-slate-500 dark:text-slate-400 font-medium hidden sm:inline">Saya:</span>
             <select
               aria-label="Pilih Profil Wali Asuh"
               value={selectedStaffId}
               onChange={(e) => setSelectedStaffId(Number(e.target.value))}
-              className="bg-transparent font-semibold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer pr-0.5 text-[11px] max-w-[130px] truncate"
+              className="bg-transparent font-semibold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer pr-0.5 text-[11px] w-full truncate"
             >
               {staffList.map((st) => (
                 <option key={st.id} value={st.id} className="dark:bg-slate-800 dark:text-slate-100">

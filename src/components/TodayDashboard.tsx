@@ -262,7 +262,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
       {/* Date Switcher & Live Status Header */}
       <div className="bg-white dark:bg-slate-800 rounded-xl p-2.5 sm:p-3 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-slate-100 dark:bg-slate-700/60 rounded-lg p-0.5 border border-slate-200 dark:border-slate-600">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-700/60 rounded-lg p-0.5 border border-slate-200 dark:border-slate-600 shadow-2xs">
             <button
               onClick={() => setActiveDay(Math.max(1, activeDay - 1))}
               disabled={activeDay === 1}
@@ -271,9 +271,19 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="px-2 py-0.5 font-bold text-xs text-slate-900 dark:text-white">
-              Tgl {activeDay}
-            </span>
+            <select
+              id="jump-day-select"
+              aria-label="Pilih Hari"
+              value={activeDay}
+              onChange={(e) => setActiveDay(Number(e.target.value))}
+              className="bg-white dark:bg-slate-800 font-bold text-xs text-slate-900 dark:text-white px-1.5 py-0.5 rounded border-0 focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            >
+              {Array.from({ length: schedule.totalDays }, (_, i) => i + 1).map((d) => (
+                <option key={d} value={d}>
+                  Tgl {d}
+                </option>
+              ))}
+            </select>
             <button
               onClick={() => setActiveDay(Math.min(schedule.totalDays, activeDay + 1))}
               disabled={activeDay === schedule.totalDays}
@@ -341,22 +351,6 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
             <Share2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Kirim WA</span>
           </button>
-
-          {/* Quick Day Selector Dropdown */}
-          <div className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-slate-700">
-            <select
-              id="jump-day-select"
-              value={activeDay}
-              onChange={(e) => setActiveDay(Number(e.target.value))}
-              className="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 cursor-pointer"
-            >
-              {Array.from({ length: schedule.totalDays }, (_, i) => i + 1).map((d) => (
-                <option key={d} value={d}>
-                  Tgl {d}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </div>
 

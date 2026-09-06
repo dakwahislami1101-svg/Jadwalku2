@@ -711,7 +711,7 @@ export default function App() {
           onShowSplash={() => setShowSplash(true)}
         />
       ) : (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors flex flex-col font-sans selection:bg-blue-500 selection:text-white">
+        <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors flex flex-col font-sans selection:bg-blue-500 selection:text-white">
           {/* Header & Main Navigation */}
           <Navbar
             userRole={currentUserRole}

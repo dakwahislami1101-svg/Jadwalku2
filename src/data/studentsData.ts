@@ -94,7 +94,6 @@ const RAW_STUDENTS_DATA: [number, string, string, 'Laki-laki' | 'Perempuan', str
   [90,"Mikaela Primaisha","VII-3","Perempuan","3508126112110001","LUMAJANG","21-12-2011","ENDANG LARASATI","Kras, Kras, KAB. KEDIRI"],
   [91,"Mochamad Fairuz Akmal Pasya","VII-3","Laki-laki","3506082707100001","KEDIRI","27-07-2010","ZUZUN NURKHOLIDAH","Sidomulyo, Puncu, KAB. KEDIRI"],
   [92,"Mohhamat Reya Dafit Alriano","VII-3","Laki-laki","3506182905130004","KEDIRI","29-05-2013","BINTI INDASAH","Jarak, Plosoklaten, KAB. KEDIRI"],
-  [93,"Muhamad Javier Risqullah","VII-3","Laki-laki","3506142709120004","KEDIRI","27-09-2012","PRATNAWATI","PURWOTENGAH, KEC. PAPAR, KAB. KEDIRI"],
   [94,"Muhammad Bashith Annafi","VII-3","Laki-laki","3506252202130001","KEDIRI","22-02-2013","SITI JAENAB","PARON, KEC. NGASEM, KAB. KEDIRI"],
   [95,"Muhammad Romadhon","VII-3","Laki-laki","3506011407130002","KEDIRI","14-07-2013","NAWIYAH","Bulu, Semen, KAB. KEDIRI"],
   [96,"Muslimah","VII-3","Perempuan","3506065902130010","KEDIRI","19-02-2013","ENDANG SUSMIATI","Pagu, Wates, KAB. KEDIRI"],
@@ -350,8 +349,8 @@ const RAW_STUDENTS_DATA: [number, string, string, 'Laki-laki' | 'Perempuan', str
   [346,"ZASKIA INDAH DEWANTARI","XI 3-IPS","Perempuan","3302145002100003","KEDIRI","10-02-2010","YULI PRASTIWI","Jl. Slumbung, RT 001/RW 002, Dusun Slumbung, Desa/Kelurahan Mlancu, Kecamatan Kandangan, Kabupaten Kediri"]
 ];
 
-export const ALL_STUDENTS_DATA: Student[] = RAW_STUDENTS_DATA.map((row) => ({
-  no: row[0],
+export const ALL_STUDENTS_DATA: Student[] = RAW_STUDENTS_DATA.map((row, idx) => ({
+  no: idx + 1,
   name: row[1],
   class: row[2],
   gender: row[3],
@@ -362,7 +361,14 @@ export const ALL_STUDENTS_DATA: Student[] = RAW_STUDENTS_DATA.map((row) => ({
   address: row[8],
 }));
 
-export const TOTAL_STUDENTS_COUNT = ALL_STUDENTS_DATA.length; // 346
+export const TOTAL_STUDENTS_COUNT = ALL_STUDENTS_DATA.length; // 345
+export const SD_STUDENTS_COUNT = ALL_STUDENTS_DATA.filter((s) => s.class.startsWith('SD')).length; // 20
+export const SMP_STUDENTS_COUNT = ALL_STUDENTS_DATA.filter(
+  (s) => s.class.startsWith('VII') || s.class.startsWith('VIII') || s.class.startsWith('IX')
+).length; // 110
+export const SMA_STUDENTS_COUNT = ALL_STUDENTS_DATA.filter(
+  (s) => s.class.startsWith('X') || s.class.startsWith('XI') || s.class.startsWith('XII')
+).length; // 215
 
 export const getStudentByName = (name: string): Student | undefined => {
   const q = name.toLowerCase().trim();
