@@ -108,18 +108,37 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 transition-colors shadow-xs">
       {/* Top Banner / Institution Title */}
       <div className="bg-slate-100/95 dark:bg-slate-950 text-slate-700 dark:text-slate-300 px-3 py-1 text-[11px] font-medium border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1.5 transition-colors">
-        <div className="flex items-center gap-1.5">
-          {userRole === 'admin' ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider shadow-2xs">
-              👑 Administrator SRT 1
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Badge Kemensos RI */}
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-600 text-[10px] font-bold uppercase tracking-wider text-white shadow-2xs shrink-0">
+            <ShieldCheck className="w-2.5 h-2.5" /> Kemensos RI
+          </span>
+
+          {/* Tulisan SRT 1 Kab Kediri - Nuansa Bendera Merah Putih Berkibar (Sejajar Kemensos RI) */}
+          <div 
+            className="animate-flag-wave inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border border-red-500/30 shadow-2xs select-none shrink-0 cursor-default"
+            title="SRT 1 Kab Kediri - Nuansa Sang Saka Merah Putih Berkibar"
+          >
+            {/* SVG Bendera Merah Putih Berkibar */}
+            <svg className="w-3.5 h-3.5 shrink-0 -ml-0.5" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="2" y1="1" x2="2" y2="19" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="2" cy="1.5" r="1.2" fill="#fbbf24"/>
+              <path d="M 2 2.5 C 6.5 1.2, 10.5 4.2, 15 3 C 18 2.2, 20.5 2.8, 22 3.2 L 22 8.5 C 20.5 8.1, 18 7.5, 15 8.3 C 10.5 9.5, 6.5 6.5, 2 7.8 Z" fill="#EF4444"/>
+              <path d="M 2 7.8 C 6.5 6.5, 10.5 9.5, 15 8.3 C 18 7.5, 20.5 8.1, 22 8.5 L 22 13.8 C 20.5 13.4, 18 12.8, 15 13.6 C 10.5 14.8, 6.5 11.8, 2 13.1 Z" fill="#FFFFFF" stroke="#e2e8f0" strokeWidth="0.3"/>
+            </svg>
+            <span className="text-flag-merah-putih font-black tracking-wider text-[11px]">
+              SRT 1 Kab Kediri
             </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-600 text-[10px] font-bold uppercase tracking-wider text-white shadow-2xs">
-              <ShieldCheck className="w-2.5 h-2.5" /> Kemensos RI
+          </div>
+
+          {userRole === 'admin' && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider shadow-2xs shrink-0">
+              👑 Admin
             </span>
           )}
-          <span className="hidden sm:inline text-slate-800 dark:text-slate-200 font-bold text-[11px]">{INSTITUTION_INFO.sekolah}</span>
-          <span className="text-slate-500 dark:text-slate-400 hidden md:inline text-[10.5px]">• {INSTITUTION_INFO.gedung}</span>
+
+          <span className="hidden md:inline text-slate-400 dark:text-slate-600">•</span>
+          <span className="hidden md:inline text-slate-600 dark:text-slate-400 text-[10.5px] truncate max-w-[260px]">{INSTITUTION_INFO.sekolah}</span>
         </div>
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-[11px]">
           {/* Cloud Database Status Badge */}
