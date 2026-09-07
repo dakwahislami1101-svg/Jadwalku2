@@ -75,7 +75,7 @@ const POS_CONFIG: Record<PosCategory, {
   kantin_smp: {
     id: 'kantin_smp',
     title: 'Pos Kantin SMP',
-    codeTag: 'S3A',
+    codeTag: 'S2A',
     icon: Utensils,
     accentColor: 'blue',
     badgeBg: 'bg-blue-600 text-white',
@@ -348,7 +348,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
   // Add staff to pos
   const handleAddStaffToPos = (pos: PosCategory, staff: Staff) => {
     const dayShifts = schedule.days[safeDay] || {};
-    const currentShift = dayShifts[staff.id] || (pos === 'mobile' ? 'M1' : pos === 'masjid' ? 'S4A' : 'S3A');
+    const currentShift = dayShifts[staff.id] || (pos === 'mobile' ? 'M1' : pos === 'masjid' ? 'S4A' : pos === 'kantin_smp' ? 'S2A' : 'S3A');
 
     const newItem: PosStaffItem = {
       id: `manual-${staff.id}-${Date.now()}`,
@@ -426,8 +426,8 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
       });
     }
 
-    // Pos Kantin SMP (S3A)
-    lines.push('pos kantin smp ( S3A ):');
+    // Pos Kantin SMP (S2A)
+    lines.push('pos kantin smp ( S2A ):');
     if (posData.kantin_smp.length === 0) {
       lines.push('- Belum ada petugas');
     } else {
@@ -543,7 +543,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                 )}
               </div>
               <p className="text-xs text-emerald-100/90 leading-tight mt-0.5">
-                Otomatis mengelompokkan petugas Pos Masjid (S4A), Kantin SMP (S3A), Kantin SMA (S3A), dan Mobile Jaga Malam (M1, M2).
+                Otomatis mengelompokkan petugas Pos Masjid (S4A), Kantin SMP (S2A), Kantin SMA (S3A), dan Mobile Jaga Malam (M1, M2).
               </p>
             </div>
           </div>
@@ -638,7 +638,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
           </div>
 
           <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5 flex items-center justify-between">
-            <span className="text-[10px] text-emerald-100 font-medium">Kantin SMP (S3A)</span>
+            <span className="text-[10px] text-emerald-100 font-medium">Kantin SMP (S2A)</span>
             <span className="font-extrabold text-sm">{totalKantinSMP} <span className="text-[10px] font-normal text-emerald-200">orang</span></span>
           </div>
 
