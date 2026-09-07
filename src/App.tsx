@@ -29,6 +29,7 @@ import { HandoverReportView } from './components/HandoverReportView';
 import { AdminShiftSwapView } from './components/AdminShiftSwapView';
 import { AdminChecklistConfigView } from './components/AdminChecklistConfigView';
 import { StudentMedicalView } from './components/StudentMedicalView';
+import { AssignmentReminderView } from './components/AssignmentReminderView';
 import { MedicalNotificationsModal } from './components/MedicalNotificationsModal';
 import { LoginPage } from './components/LoginPage';
 import { SplashScreen } from './components/SplashScreen';
@@ -202,7 +203,7 @@ export default function App() {
 
   // Active view tab (defaults to admin swap view if admin, or dashboard if staff)
   const [currentTab, setCurrentTab] = useState<
-    'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical'
+    'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment'
   >(() => {
     try {
       const local = localStorage.getItem('sr_auth_session');
@@ -970,6 +971,17 @@ export default function App() {
                 selectedStaffId={selectedStaffId}
                 activeDay={activeDay}
                 setActiveDay={setActiveDay}
+              />
+            )}
+
+            {currentTab === 'assignment' && (
+              <AssignmentReminderView
+                schedule={schedule}
+                staffList={staffList}
+                selectedStaffId={selectedStaffId}
+                activeDay={activeDay}
+                setActiveDay={setActiveDay}
+                onNavigateToTab={(tab) => setCurrentTab(tab as any)}
               />
             )}
           </main>

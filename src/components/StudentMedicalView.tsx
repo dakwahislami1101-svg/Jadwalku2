@@ -504,7 +504,7 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
   };
 
   return (
-    <div className="space-y-2.5 pb-8">
+    <div className="space-y-1.5 sm:space-y-2 pb-6">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-700 text-white text-xs font-semibold shadow-xl animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -513,23 +513,23 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
         </div>
       )}
 
-      {/* Header Banner - Slim & Dense */}
-      <div className="bg-gradient-to-r from-rose-600 via-rose-500 to-amber-600 text-white rounded-xl p-3 sm:p-3.5 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
-              <Pill className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+      {/* Header Banner - Rapat & Padat (Padding & Margin Dirapatkan) */}
+      <div className="bg-gradient-to-r from-rose-600 via-rose-500 to-amber-600 text-white rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3 sm:py-2 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
+              <Pill className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div>
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h2 className="text-sm sm:text-base font-bold tracking-tight">
+                <h2 className="text-xs sm:text-sm font-bold tracking-tight">
                   Rencana Berobat & Kontrol Siswa
                 </h2>
-                <span className="px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-white/25 text-white border border-white/30 backdrop-blur-xs">
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-white/25 text-white border border-white/30 backdrop-blur-xs">
                   UKS • Puskesmas • RS
                 </span>
               </div>
-              <p className="text-[11px] text-rose-100 leading-tight">
+              <p className="text-[10px] sm:text-[10.5px] text-rose-100 leading-none mt-0.5">
                 Pencatatan rujukan faskes, jadwal kontrol dokter, dan notifikasi H-1 wali asuh
               </p>
             </div>
@@ -539,9 +539,9 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
             <button
               type="button"
               onClick={() => handleOpenAddModal()}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white text-rose-700 hover:bg-rose-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold bg-white text-rose-700 hover:bg-rose-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-rose-600" />
+              <Plus className="w-3 h-3 text-rose-600" />
               <span>+ Catat Rencana</span>
             </button>
 
@@ -549,49 +549,49 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
               type="button"
               onClick={() => window.print()}
               title="Cetak Rekap Rujukan Siswa"
-              className="p-1.5 rounded-lg text-white bg-white/20 hover:bg-white/30 active:scale-95 transition-all cursor-pointer"
+              className="p-1 rounded-md text-white bg-white/20 hover:bg-white/30 active:scale-95 transition-all cursor-pointer"
             >
-              <Printer className="w-3.5 h-3.5" />
+              <Printer className="w-3 h-3" />
             </button>
           </div>
         </div>
 
-        {/* 4 Summary Stat Cards - Slim & Sleek */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 mt-2 pt-2 border-t border-white/20">
-          <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5 flex items-center justify-between">
+        {/* 4 Summary Stat Cards - Rapat, Padat & Ringkas */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-1.5 mt-1.5 pt-1.5 border-t border-white/20">
+          <div className="bg-white/10 backdrop-blur-xs rounded-md px-2 py-1 flex items-center justify-between">
             <div>
-              <span className="text-[9.5px] font-medium text-rose-100 block leading-tight">Hari Ini</span>
+              <span className="text-[9px] font-medium text-rose-100 block leading-none">Hari Ini</span>
               <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-base font-extrabold">{stats.todayCount}</span>
-                <span className="text-[9.5px] text-rose-200">siswa</span>
+                <span className="text-sm sm:text-base font-black leading-none">{stats.todayCount}</span>
+                <span className="text-[9px] text-rose-200">siswa</span>
               </div>
             </div>
             {stats.todayCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-amber-300 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />
             )}
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5">
-            <span className="text-[9.5px] font-medium text-rose-100 block leading-tight">Besok (H-1)</span>
+          <div className="bg-white/10 backdrop-blur-xs rounded-md px-2 py-1">
+            <span className="text-[9px] font-medium text-rose-100 block leading-none">Besok (H-1)</span>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-base font-extrabold">{stats.tomorrowCount}</span>
-              <span className="text-[9.5px] text-rose-200">siswa</span>
+              <span className="text-sm sm:text-base font-black leading-none">{stats.tomorrowCount}</span>
+              <span className="text-[9px] text-rose-200">siswa</span>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5">
-            <span className="text-[9.5px] font-medium text-rose-100 block leading-tight">Rencana Aktif</span>
+          <div className="bg-white/10 backdrop-blur-xs rounded-md px-2 py-1">
+            <span className="text-[9px] font-medium text-rose-100 block leading-none">Rencana Aktif</span>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-base font-extrabold">{stats.totalPlanned}</span>
-              <span className="text-[9.5px] text-rose-200">agenda</span>
+              <span className="text-sm sm:text-base font-black leading-none">{stats.totalPlanned}</span>
+              <span className="text-[9px] text-rose-200">agenda</span>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5">
-            <span className="text-[9.5px] font-medium text-rose-100 block leading-tight">Selesai Berobat</span>
+          <div className="bg-white/10 backdrop-blur-xs rounded-md px-2 py-1">
+            <span className="text-[9px] font-medium text-rose-100 block leading-none">Selesai Berobat</span>
             <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-base font-extrabold">{stats.totalCompleted}</span>
-              <span className="text-[9.5px] text-rose-200">riwayat</span>
+              <span className="text-sm sm:text-base font-black leading-none">{stats.totalCompleted}</span>
+              <span className="text-[9px] text-rose-200">riwayat</span>
             </div>
           </div>
         </div>

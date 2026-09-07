@@ -21,7 +21,8 @@ import {
   RefreshCw,
   ListTodo,
   Pill,
-  HeartPulse
+  HeartPulse,
+  Send
 } from 'lucide-react';
 import { Staff } from '../types';
 import { INSTITUTION_INFO } from '../data/initialSchedule';
@@ -29,8 +30,8 @@ import { soundManager } from '../utils/audio';
 
 interface NavbarProps {
   userRole?: 'admin' | 'staff';
-  currentTab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical';
-  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical') => void;
+  currentTab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment';
+  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment') => void;
   staffList: Staff[];
   selectedStaffId: number;
   setSelectedStaffId: (id: number) => void;
@@ -391,6 +392,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               <button
+                onClick={() => setCurrentTab('assignment')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'assignment'
+                    ? 'bg-teal-700 text-white shadow-xs font-bold'
+                    : 'text-teal-800 dark:text-teal-300 bg-teal-50/70 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 border border-teal-200 dark:border-teal-800'
+                }`}
+                title="Buka Pengingat Penugasan Pos Sore & Malam (Siap Kirim WhatsApp)"
+              >
+                <Send className="w-3.5 h-3.5 text-teal-600 dark:text-teal-300" />
+                <span>Pengingat Penugasan</span>
+              </button>
+
+              <button
                 onClick={() => setCurrentTab('handover')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   currentTab === 'handover'
@@ -505,6 +519,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <User className="w-3.5 h-3.5" />
                 <span>Jadwal Personal ({selectedStaff?.name.split(' ')[0]})</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('assignment')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'assignment'
+                    ? 'bg-teal-700 text-white shadow-xs font-bold'
+                    : 'text-teal-800 dark:text-teal-300 bg-teal-50/70 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 border border-teal-200 dark:border-teal-800'
+                }`}
+                title="Buka Pengingat Penugasan Pos Sore & Malam (Siap Kirim WhatsApp)"
+              >
+                <Send className="w-3.5 h-3.5 text-teal-600 dark:text-teal-300" />
+                <span>Pengingat Penugasan</span>
               </button>
 
               <button

@@ -26,7 +26,8 @@ import {
   Edit3,
   Megaphone,
   X,
-  Radio
+  Radio,
+  Send
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
@@ -47,7 +48,7 @@ interface TodayDashboardProps {
   selectedStaffId: number;
   activeDay: number;
   setActiveDay: (day: number) => void;
-  onNavigateToTab: (tab: 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical') => void;
+  onNavigateToTab: (tab: 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment') => void;
   sopTasks?: DailyTask[];
   userRole?: 'admin' | 'staff';
   medicalPlans?: StudentMedicalPlan[];
@@ -362,6 +363,16 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-1.5">
+          {/* Tombol Pengingat Penugasan (Share WA) */}
+          <button
+            onClick={() => onNavigateToTab('assignment')}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+            title="Buka Pengingat Penugasan Pos Sore & Malam (Siap Kirim WhatsApp)"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Pengingat Penugasan</span>
+          </button>
+
           {/* Tombol Laporan Serah Terima Shift */}
           <button
             onClick={() => onNavigateToTab('handover')}
