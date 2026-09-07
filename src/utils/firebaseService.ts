@@ -16,7 +16,7 @@ import {
   enableNetwork
 } from 'firebase/firestore';
 import firebaseConfigJson from '../../firebase-applet-config.json';
-import { MonthSchedule, ShiftCode, ShiftSwapRecord, HandoverReport, DailyTask, AnnouncementData } from '../types';
+import { MonthSchedule, ShiftCode, ShiftSwapRecord, HandoverReport, DailyTask, AnnouncementData, StudentMedicalPlan } from '../types';
 
 // Set Firebase Firestore log level to silent to suppress internal connection retry messages in offline/iframe environments
 setLogLevel('silent');
@@ -760,5 +760,183 @@ export async function saveAnnouncementToFirestore(
     return false;
   }
 }
+
+// ==================== STUDENT MEDICAL PLANS (UKS / PUSKESMAS / RS) ====================
+
+const MEDICAL_PLANS_STORAGE_KEY = 'wali_asuh_student_medical_plans_v1';
+
+export function getInitialDefaultMedicalPlans(): StudentMedicalPlan[] {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const toDateStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+  const todayStr = toDateStr(now);
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const tomorrowStr = toDateStr(tomorrow);
+  const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const in3DaysStr = toDateStr(in3Days);
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const yesterdayStr = toDateStr(yesterday);
+
+  return [
+    {
+      id: 'med-plan-1',
+      studentName: 'Mokhamad Yoga Abi Rama',
+      studentClassOrRoom: 'SD 1-2 (Kamar Abu Bakar)',
+      facility: 'Puskesmas',
+      facilityDetail: 'Puskesmas Semen Kediri',
+      date: tomorrowStr,
+      time: '08:30',
+      planType: 'kontrol_kembali',
+      complaint: 'Kontrol luka jahitan siku pasca terjatuh saat olahraga & ganti perban steril',
+      accompanyingStaffName: 'Miftahudin',
+      accompanyingStaffId: 1,
+      notes: 'Bawa kartu KIS/BPJS dan resep obat sebelumnya dari dokter',
+      status: 'rencana',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'Wali Asuh Shif',
+    },
+    {
+      id: 'med-plan-2',
+      studentName: 'Azzura Fauziah',
+      studentClassOrRoom: 'SD 1-2 (Asrama Putri Flamboyan)',
+      facility: 'UKS',
+      facilityDetail: 'Ruang UKS Asrama Utama',
+      date: todayStr,
+      time: '09:15',
+      planType: 'berobat',
+      complaint: 'Demam ringan 38.1°C, pusing dan badan lemas',
+      accompanyingStaffName: 'Siti Masitoh',
+      accompanyingStaffId: 21,
+      notes: 'Sudah diberi kompres hangat, cek suhu berkala dan berikan paracetamol',
+      status: 'rencana',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'Wali Asuh Shif Pagi',
+    },
+    {
+      id: 'med-plan-3',
+      studentName: 'Rashky Anugrah Afrilieo',
+      studentClassOrRoom: 'VII-1 (Kamar Umar Bin Khattab)',
+      facility: 'Rumah Sakit',
+      facilityDetail: 'RSUD Gambiran Kota Kediri (Poli THT)',
+      date: in3DaysStr,
+      time: '09:00',
+      planType: 'rujukan',
+      complaint: 'Konsultasi dokter spesialis THT untuk pemeriksaan telinga berdenging pasca flu',
+      accompanyingStaffName: 'Eko Wahyudi',
+      accompanyingStaffId: 2,
+      notes: 'Surat rujukan faskes tingkat 1 sudah siap di pos administrasi',
+      status: 'rencana',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'Koordinator Kesehatan',
+    },
+    {
+      id: 'med-plan-4',
+      studentName: 'Adam Julian Shano',
+      studentClassOrRoom: 'SD 1-2 (Kamar Ali Bin Abi Thalib)',
+      facility: 'Puskesmas',
+      facilityDetail: 'Puskesmas Semen',
+      date: yesterdayStr,
+      time: '10:00',
+      planType: 'berobat',
+      complaint: 'Batuk pilek & sakit tenggorokan',
+      accompanyingStaffName: 'Ahmad Muzani',
+      accompanyingStaffId: 3,
+      notes: 'Pemeriksaan rutin dokter jaga puskesmas',
+      status: 'selesai',
+      actionResult: 'Diberikan antibiotik amoxicillin & sirup batuk, dianjurkan minum air hangat dan istirahat',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: 'Wali Asuh',
+    },
+  ];
+}
+
+export function getLocalStudentMedicalPlans(): StudentMedicalPlan[] {
+  try {
+    const saved = localStorage.getItem(MEDICAL_PLANS_STORAGE_KEY);
+    if (saved !== null) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch {}
+
+  const defaults = getInitialDefaultMedicalPlans();
+  try {
+    localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(defaults));
+  } catch {}
+  return defaults;
+}
+
+export function subscribeToStudentMedicalPlans(
+  onData: (plans: StudentMedicalPlan[]) => void,
+  onError?: (err: any) => void
+): Unsubscribe {
+  // Emit local value immediately
+  onData(getLocalStudentMedicalPlans());
+
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    if (onError) onError(new Error('Firestore offline/quota-exceeded'));
+    return () => {};
+  }
+
+  try {
+    const docRef = doc(db, 'settings', 'student_medical_plans');
+    return onSnapshot(
+      docRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          if (Array.isArray(data.plans)) {
+            try {
+              localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(data.plans));
+            } catch {}
+            onData(data.plans);
+          }
+        }
+      },
+      (err) => {
+        if (err?.code === 'resource-exhausted' || err?.message?.includes('Quota limit exceeded')) {
+          markQuotaExhausted();
+        }
+        if (onError) onError(err);
+      }
+    );
+  } catch (err) {
+    if (onError) onError(err);
+    return () => {};
+  }
+}
+
+export async function saveAllStudentMedicalPlansToFirestore(
+  plans: StudentMedicalPlan[]
+): Promise<boolean> {
+  try {
+    localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(plans));
+  } catch {}
+
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    return true;
+  }
+
+  try {
+    const docRef = doc(db, 'settings', 'student_medical_plans');
+    await setDoc(docRef, { plans, updatedAt: new Date().toISOString() }, { merge: true });
+    return true;
+  } catch (err: any) {
+    if (err?.code === 'resource-exhausted' || err?.message?.includes('Quota limit exceeded')) {
+      markQuotaExhausted();
+      return false;
+    }
+    console.warn('[Firestore] Failed to save medical plans:', err);
+    return false;
+  }
+}
+
 
 

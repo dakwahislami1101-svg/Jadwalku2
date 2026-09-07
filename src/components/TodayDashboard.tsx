@@ -28,7 +28,7 @@ import {
   X,
   Radio
 } from 'lucide-react';
-import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData } from '../types';
+import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
 import { calculateDailyStats, INDONESIAN_MONTH_NAMES, INDONESIAN_DAY_NAMES } from '../utils/scheduler';
 import { generateDailySchedulePDF } from '../utils/pdfExport';
@@ -47,9 +47,11 @@ interface TodayDashboardProps {
   selectedStaffId: number;
   activeDay: number;
   setActiveDay: (day: number) => void;
-  onNavigateToTab: (tab: 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop') => void;
+  onNavigateToTab: (tab: 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical') => void;
   sopTasks?: DailyTask[];
   userRole?: 'admin' | 'staff';
+  medicalPlans?: StudentMedicalPlan[];
+  onOpenMedicalModal?: () => void;
 }
 
 export const TodayDashboard: React.FC<TodayDashboardProps> = ({
@@ -61,6 +63,8 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   onNavigateToTab,
   sopTasks,
   userRole = 'staff',
+  medicalPlans = [],
+  onOpenMedicalModal,
 }) => {
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
     try {

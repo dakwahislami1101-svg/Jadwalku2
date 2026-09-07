@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { MonthSchedule, Staff, ShiftCode, DailyTask } from './types';
+import { MonthSchedule, Staff, ShiftCode, DailyTask, StudentMedicalPlan } from './types';
 import { 
   INITIAL_STAFF_LIST, 
   getInitialAugust2026Days, 
@@ -28,6 +28,8 @@ import { PrintReportModal } from './components/PrintReportModal';
 import { HandoverReportView } from './components/HandoverReportView';
 import { AdminShiftSwapView } from './components/AdminShiftSwapView';
 import { AdminChecklistConfigView } from './components/AdminChecklistConfigView';
+import { StudentMedicalView } from './components/StudentMedicalView';
+import { MedicalNotificationsModal } from './components/MedicalNotificationsModal';
 import { LoginPage } from './components/LoginPage';
 import { SplashScreen } from './components/SplashScreen';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
@@ -48,6 +50,9 @@ import {
   isFirestoreOfflineOrQuotaExhausted,
   resetQuotaExhausted,
   subscribeQuotaStatus,
+  subscribeToStudentMedicalPlans,
+  saveAllStudentMedicalPlansToFirestore,
+  getLocalStudentMedicalPlans,
   db,
   FIREBASE_DB_NAME
 } from './utils/firebaseService';
@@ -197,7 +202,7 @@ export default function App() {
 
   // Active view tab (defaults to admin swap view if admin, or dashboard if staff)
   const [currentTab, setCurrentTab] = useState<
-    'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop'
+    'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical'
   >(() => {
     try {
       const local = localStorage.getItem('sr_auth_session');
@@ -217,6 +222,83 @@ export default function App() {
       setCurrentTab('dashboard');
     }
   }, [currentUserRole, currentTab]);
+
+  // Student medical plans state (persisted in Firestore & localStorage)
+  const [medicalPlans, setMedicalPlans] = useState<StudentMedicalPlan[]>(() => {
+    return getLocalStudentMedicalPlans();
+  });
+  const [isMedicalNotificationsOpen, setIsMedicalNotificationsOpen] = useState(false);
+
+  // Realtime subscription to student medical plans
+  useEffect(() => {
+    const unsubscribe = subscribeToStudentMedicalPlans(
+      (remotePlans) => {
+        if (remotePlans && remotePlans.length > 0) {
+          setMedicalPlans(remotePlans);
+          try {
+            localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(remotePlans));
+          } catch {}
+        }
+      },
+      (err) => {
+        console.warn('Medical plans subscription fallback to local cache:', err);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  const handleSaveMedicalPlan = useCallback(async (plan: StudentMedicalPlan): Promise<boolean> => {
+    let updatedList: StudentMedicalPlan[] = [];
+    setMedicalPlans((prev) => {
+      const idx = prev.findIndex((p) => p.id === plan.id);
+      if (idx >= 0) {
+        updatedList = [...prev];
+        updatedList[idx] = plan;
+      } else {
+        updatedList = [plan, ...prev];
+      }
+      try {
+        localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(updatedList));
+      } catch {}
+      return updatedList;
+    });
+    try {
+      await saveAllStudentMedicalPlansToFirestore(updatedList);
+      soundManager.playChime();
+    } catch (e) {
+      console.warn('Failed to sync saved plan to Firestore:', e);
+    }
+    return true;
+  }, []);
+
+  const handleDeleteMedicalPlan = useCallback(async (planId: string): Promise<boolean> => {
+    let updatedList: StudentMedicalPlan[] = [];
+    setMedicalPlans((prev) => {
+      updatedList = prev.filter((p) => p.id !== planId);
+      try {
+        localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(updatedList));
+      } catch {}
+      return updatedList;
+    });
+    try {
+      await saveAllStudentMedicalPlansToFirestore(updatedList);
+      soundManager.playChime();
+    } catch (e) {
+      console.warn('Failed to sync deleted plan to Firestore:', e);
+    }
+    return true;
+  }, []);
+
+  const handleMarkMedicalPlanCompleted = useCallback(async (planId: string) => {
+    setMedicalPlans((prev) => {
+      const updated = prev.map((p) => (p.id === planId ? { ...p, status: 'selesai' as const } : p));
+      try {
+        localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(updated));
+      } catch {}
+      saveAllStudentMedicalPlansToFirestore(updated).catch(console.error);
+      return updated;
+    });
+  }, []);
 
   // Customizable SOP checklist tasks state (persisted in Firestore & localStorage)
   const [sopTasks, setSopTasks] = useState<DailyTask[]>(() => {
@@ -733,6 +815,27 @@ export default function App() {
             onShowSplash={() => setShowSplash(true)}
             isRefreshing={isRefreshing}
             onRefreshServer={handleRefreshDataFromServer}
+            medicalNotificationCount={(() => {
+              const padTwo = (n: number) => String(n).padStart(2, '0');
+              const activeTodayKey = `${schedule.year}-${padTwo(schedule.month)}-${padTwo(activeDay)}`;
+              const nextDayNum = activeDay < schedule.totalDays ? activeDay + 1 : 1;
+              const activeTomorrowKey = `${schedule.year}-${padTwo(schedule.month)}-${padTwo(nextDayNum)}`;
+              
+              const now = new Date();
+              const realTodayStr = `${now.getFullYear()}-${padTwo(now.getMonth() + 1)}-${padTwo(now.getDate())}`;
+              const realTomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+              const realTomorrowStr = `${realTomorrow.getFullYear()}-${padTwo(realTomorrow.getMonth() + 1)}-${padTwo(realTomorrow.getDate())}`;
+
+              return medicalPlans.filter(
+                (p) => p.status === 'rencana' && (
+                  p.date === activeTodayKey || 
+                  p.date === activeTomorrowKey ||
+                  p.date === realTodayStr ||
+                  p.date === realTomorrowStr
+                )
+              ).length;
+            })()}
+            onOpenMedicalNotifications={() => setIsMedicalNotificationsOpen(true)}
           />
 
           {/* Floating Cloud Refresh Toast Notification */}
@@ -769,6 +872,8 @@ export default function App() {
                 onNavigateToTab={(tab) => setCurrentTab(tab as any)}
                 sopTasks={sopTasks}
                 userRole={currentUserRole}
+                medicalPlans={medicalPlans}
+                onOpenMedicalModal={() => setIsMedicalNotificationsOpen(true)}
               />
             )}
 
@@ -797,6 +902,16 @@ export default function App() {
                 activeDay={activeDay}
                 setActiveDay={setActiveDay}
                 onNavigateToTab={(tab) => setCurrentTab(tab as any)}
+              />
+            )}
+
+            {currentTab === 'medical' && (
+              <StudentMedicalView
+                plans={medicalPlans}
+                onSavePlan={handleSaveMedicalPlan}
+                onDeletePlan={handleDeleteMedicalPlan}
+                staffList={staffList}
+                selectedStaffId={selectedStaffId}
               />
             )}
 
@@ -873,6 +988,19 @@ export default function App() {
 
           {/* PWA Floating Install Banner at the bottom */}
           <PWAInstallBanner />
+
+          {/* Modal Pop-up Notifikasi Rencana Berobat Siswa (UKS, Puskesmas, RS) */}
+          <MedicalNotificationsModal
+            isOpen={isMedicalNotificationsOpen}
+            onClose={() => setIsMedicalNotificationsOpen(false)}
+            plans={medicalPlans}
+            referenceDate={`${schedule.year}-${String(schedule.month).padStart(2, '0')}-${String(activeDay).padStart(2, '0')}`}
+            onOpenFullMedicalView={() => {
+              setIsMedicalNotificationsOpen(false);
+              setCurrentTab('medical');
+            }}
+            onMarkPlanCompleted={handleMarkMedicalPlanCompleted}
+          />
         </div>
       )}
     </>

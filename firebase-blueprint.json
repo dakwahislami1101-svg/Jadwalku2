@@ -61,6 +61,29 @@
         "updatedAt": { "type": "string", "required": true },
         "updatedBy": { "type": "string", "required": false }
       }
+    },
+    "student_medical_plans": {
+      "description": "Plans for students taken to UKS, Puskesmas, or Hospital, and follow-up medical controls",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "studentName": { "type": "string", "required": true },
+        "studentClassOrRoom": { "type": "string", "required": true },
+        "facility": { "type": "string", "required": true },
+        "facilityDetail": { "type": "string", "required": false },
+        "date": { "type": "string", "required": true },
+        "time": { "type": "string", "required": false },
+        "planType": { "type": "string", "required": true },
+        "complaint": { "type": "string", "required": true },
+        "accompanyingStaffName": { "type": "string", "required": true },
+        "accompanyingStaffId": { "type": "number", "required": false },
+        "notes": { "type": "string", "required": false },
+        "status": { "type": "string", "required": true },
+        "actionResult": { "type": "string", "required": false },
+        "nextControlDate": { "type": "string", "required": false },
+        "createdAt": { "type": "string", "required": true },
+        "updatedAt": { "type": "string", "required": true },
+        "createdBy": { "type": "string", "required": false }
+      }
     }
   }
 }

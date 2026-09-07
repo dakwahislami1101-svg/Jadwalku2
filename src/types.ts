@@ -192,3 +192,29 @@ export interface AnnouncementData {
   updatedAt?: string;
   updatedBy?: string;
 }
+
+export type MedicalFacility = 'UKS' | 'Puskesmas' | 'Rumah Sakit' | 'Klinik' | 'Lainnya';
+export type MedicalPlanType = 'berobat' | 'kontrol_kembali' | 'rujukan' | 'perawatan_rutin';
+export type MedicalStatus = 'rencana' | 'selesai' | 'dibatalkan';
+
+export interface StudentMedicalPlan {
+  id: string;
+  studentName: string;
+  studentClassOrRoom: string;
+  facility: MedicalFacility;
+  facilityDetail?: string;
+  date: string; // YYYY-MM-DD
+  time?: string; // HH:mm
+  planType: MedicalPlanType;
+  complaint: string;
+  accompanyingStaffName: string;
+  accompanyingStaffId?: number;
+  notes?: string;
+  status: MedicalStatus;
+  actionResult?: string;
+  nextControlDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+}
+

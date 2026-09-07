@@ -19,7 +19,9 @@ import {
   ArrowLeftRight,
   Database,
   RefreshCw,
-  ListTodo
+  ListTodo,
+  Pill,
+  HeartPulse
 } from 'lucide-react';
 import { Staff } from '../types';
 import { INSTITUTION_INFO } from '../data/initialSchedule';
@@ -27,8 +29,8 @@ import { soundManager } from '../utils/audio';
 
 interface NavbarProps {
   userRole?: 'admin' | 'staff';
-  currentTab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop';
-  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop') => void;
+  currentTab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical';
+  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical') => void;
   staffList: Staff[];
   selectedStaffId: number;
   setSelectedStaffId: (id: number) => void;
@@ -45,7 +47,10 @@ interface NavbarProps {
   onShowSplash?: () => void;
   isRefreshing?: boolean;
   onRefreshServer?: () => void;
+  medicalNotificationCount?: number;
+  onOpenMedicalNotifications?: () => void;
 }
+
 
 export const Navbar: React.FC<NavbarProps> = ({
   userRole = 'staff',
@@ -67,6 +72,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onShowSplash,
   isRefreshing = false,
   onRefreshServer,
+  medicalNotificationCount = 0,
+  onOpenMedicalNotifications,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -108,37 +115,59 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 transition-colors shadow-xs">
       {/* Top Banner / Institution Title */}
       <div className="bg-slate-100/95 dark:bg-slate-950 text-slate-700 dark:text-slate-300 px-3 py-1 text-[11px] font-medium border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1.5 transition-colors">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Badge Kemensos RI */}
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-600 text-[10px] font-bold uppercase tracking-wider text-white shadow-2xs shrink-0">
-            <ShieldCheck className="w-2.5 h-2.5" /> Kemensos RI
-          </span>
-
-          {/* Tulisan SRT 1 Kab Kediri - Nuansa Bendera Merah Putih Berkibar (Sejajar Kemensos RI) */}
-          <div 
-            className="animate-flag-wave inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border border-red-500/30 shadow-2xs select-none shrink-0 cursor-default"
-            title="SRT 1 Kab Kediri - Nuansa Sang Saka Merah Putih Berkibar"
-          >
-            {/* SVG Bendera Merah Putih Berkibar */}
-            <svg className="w-3.5 h-3.5 shrink-0 -ml-0.5" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <line x1="2" y1="1" x2="2" y2="19" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="2" cy="1.5" r="1.2" fill="#fbbf24"/>
-              <path d="M 2 2.5 C 6.5 1.2, 10.5 4.2, 15 3 C 18 2.2, 20.5 2.8, 22 3.2 L 22 8.5 C 20.5 8.1, 18 7.5, 15 8.3 C 10.5 9.5, 6.5 6.5, 2 7.8 Z" fill="#EF4444"/>
-              <path d="M 2 7.8 C 6.5 6.5, 10.5 9.5, 15 8.3 C 18 7.5, 20.5 8.1, 22 8.5 L 22 13.8 C 20.5 13.4, 18 12.8, 15 13.6 C 10.5 14.8, 6.5 11.8, 2 13.1 Z" fill="#FFFFFF" stroke="#e2e8f0" strokeWidth="0.3"/>
-            </svg>
-            <span className="text-flag-merah-putih font-black tracking-wider text-[11px]">
-              SRT 1 Kab Kediri
+        {/* Left Side: Brand Badges & Medical Notifications (Proporsional 1 Baris) */}
+        <div className="flex items-center gap-2 min-w-0 flex-nowrap shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
+            {/* Badge Kemensos RI */}
+            <span className="inline-flex items-center gap-1 h-[22px] px-2 rounded bg-emerald-600 text-[10px] font-bold uppercase tracking-wider text-white shadow-2xs shrink-0 select-none border border-emerald-500/50">
+              <ShieldCheck className="w-2.5 h-2.5 shrink-0" /> Kemensos RI
             </span>
+
+            {/* Tulisan SRT 1 Kab Kediri - Nuansa Bendera Merah Putih Berkibar (Sejajar Kemensos RI) */}
+            <div 
+              className="animate-flag-wave inline-flex items-center gap-1.5 h-[22px] px-2 rounded bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border border-red-500/30 shadow-2xs select-none shrink-0 cursor-default"
+              title="SRT 1 Kab Kediri - Nuansa Sang Saka Merah Putih Berkibar"
+            >
+              {/* SVG Bendera Merah Putih Berkibar */}
+              <svg className="w-3.5 h-3.5 shrink-0 -ml-0.5" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="2" y1="1" x2="2" y2="19" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="2" cy="1.5" r="1.2" fill="#fbbf24"/>
+                <path d="M 2 2.5 C 6.5 1.2, 10.5 4.2, 15 3 C 18 2.2, 20.5 2.8, 22 3.2 L 22 8.5 C 20.5 8.1, 18 7.5, 15 8.3 C 10.5 9.5, 6.5 6.5, 2 7.8 Z" fill="#EF4444"/>
+                <path d="M 2 7.8 C 6.5 6.5, 10.5 9.5, 15 8.3 C 18 7.5, 20.5 8.1, 22 8.5 L 22 13.8 C 20.5 13.4, 18 12.8, 15 13.6 C 10.5 14.8, 6.5 11.8, 2 13.1 Z" fill="#FFFFFF" stroke="#e2e8f0" strokeWidth="0.3"/>
+              </svg>
+              <span className="text-flag-merah-putih font-black tracking-wider text-[11px] leading-none">
+                SRT 1 Kab Kediri
+              </span>
+            </div>
+
+            {/* Ikon Notifikasi Rencana Berobat / Kontrol Siswa (Sejajar & Proporsional 1 Baris dengan Kemensos RI & SRT 1) */}
+            <button
+              type="button"
+              onClick={onOpenMedicalNotifications}
+              className="inline-flex items-center gap-1.5 h-[22px] px-2 rounded bg-gradient-to-r from-rose-600 via-rose-500 to-amber-500 hover:from-rose-700 hover:to-amber-600 text-white font-bold text-[10px] shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer border border-rose-400/40 select-none shrink-0"
+              title="Klik untuk membuka Pengingat Rencana Kontrol & Rujukan Siswa (UKS, Puskesmas, Rumah Sakit)"
+            >
+              <Pill className="w-3 h-3 shrink-0 animate-pulse text-rose-100" />
+              <span className="tracking-tight hidden xs:inline">Rencana Kontrol</span>
+              <span className="tracking-tight xs:hidden">Kontrol</span>
+              {medicalNotificationCount > 0 ? (
+                <span className="inline-flex items-center justify-center min-w-[14px] h-[14px] px-1 rounded-full text-[8.5px] font-black bg-white text-rose-700 shadow-2xs leading-none">
+                  {medicalNotificationCount}
+                </span>
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 shrink-0" title="Semua rencana terpantau" />
+              )}
+            </button>
           </div>
 
           {userRole === 'admin' && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider shadow-2xs shrink-0">
+            <span className="hidden sm:inline-flex items-center gap-1 h-[22px] px-1.5 rounded bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 text-amber-800 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider shadow-2xs shrink-0">
               👑 Admin
             </span>
           )}
 
-          <span className="hidden md:inline text-slate-400 dark:text-slate-600">•</span>
-          <span className="hidden md:inline text-slate-600 dark:text-slate-400 text-[10.5px] truncate max-w-[260px]">{INSTITUTION_INFO.sekolah}</span>
+          <span className="hidden lg:inline text-slate-400 dark:text-slate-600">•</span>
+          <span className="hidden lg:inline text-slate-600 dark:text-slate-400 text-[10.5px] truncate max-w-[240px]">{INSTITUTION_INFO.sekolah}</span>
         </div>
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-[11px]">
           {/* Cloud Database Status Badge */}
@@ -386,6 +415,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               <button
+                onClick={() => setCurrentTab('medical')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'medical'
+                    ? 'bg-rose-600 text-white shadow-xs font-bold'
+                    : 'text-rose-700 dark:text-rose-300 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800'
+                }`}
+              >
+                <Pill className="w-3.5 h-3.5 text-rose-500 dark:text-rose-300" />
+                <span>Rencana Berobat (UKS/RS)</span>
+                {medicalNotificationCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[9.5px] font-black bg-rose-500 text-white animate-pulse">
+                    {medicalNotificationCount}
+                  </span>
+                )}
+              </button>
+
+              <button
                 onClick={() => setCurrentTab('auto')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   currentTab === 'auto'
@@ -471,6 +517,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>Laporan Serah Terima Shift</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('medical')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'medical'
+                    ? 'bg-rose-600 text-white shadow-xs font-bold'
+                    : 'text-rose-700 dark:text-rose-300 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800'
+                }`}
+              >
+                <Pill className="w-3.5 h-3.5 text-rose-500 dark:text-rose-300" />
+                <span>Rencana Berobat (UKS/RS)</span>
+                {medicalNotificationCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[9.5px] font-black bg-rose-500 text-white animate-pulse">
+                    {medicalNotificationCount}
+                  </span>
+                )}
               </button>
 
               <button

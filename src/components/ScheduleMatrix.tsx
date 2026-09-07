@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { 
   Search, 
   Download, 
@@ -14,7 +14,11 @@ import {
   FileDown,
   FileSpreadsheet,
   CheckCircle2,
-  ArrowLeftRight
+  ArrowLeftRight,
+  ChevronLeft,
+  ChevronRight,
+  MoveHorizontal,
+  CalendarDays
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode, ShiftSummary } from '../types';
 import { SHIFT_DEFINITIONS, getStaffInitials, distributeSeptemberMorningShifts, distributeSeptemberNightShifts } from '../data/initialSchedule';
@@ -55,6 +59,58 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
   const [shiftFilter, setShiftFilter] = useState<string>('ALL');
   const [editingCell, setEditingCell] = useState<{ day: number; staffId: number } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Ref & states for smooth horizontal scrolling and sticky headers
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  // Determine current day if matching current schedule month
+  const todayDate = useMemo(() => {
+    const now = new Date();
+    if (now.getFullYear() === schedule.year && (now.getMonth() + 1) === schedule.month) {
+      return now.getDate();
+    }
+    return null;
+  }, [schedule.year, schedule.month]);
+
+  const handleScroll = useCallback(() => {
+    if (!tableContainerRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
+    setCanScrollLeft(scrollLeft > 8);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 8);
+  }, []);
+
+  useEffect(() => {
+    handleScroll();
+    const handleResize = () => handleScroll();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [handleScroll, schedule.totalDays]);
+
+  const scrollByAmount = useCallback((amount: number) => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+  }, []);
+
+  const scrollToDay = useCallback((day: number) => {
+    if (tableContainerRef.current) {
+      const approxColWidth = 28;
+      const targetLeft = Math.max(0, (day - 1) * approxColWidth - 10);
+      tableContainerRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' });
+      setActiveDay(day);
+    }
+  }, [setActiveDay]);
+
+  const scrollToSummary = useCallback(() => {
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTo({
+        left: tableContainerRef.current.scrollWidth,
+        behavior: 'smooth',
+      });
+    }
+  }, []);
 
   // Calculate summaries for all staff
   const staffSummaries = useMemo(() => {
@@ -361,17 +417,142 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
         </span>
       </div>
 
+      {/* Mobile-Friendly Quick Jump & Horizontal Scroll Toolbar */}
+      <div className="bg-white dark:bg-slate-800 p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 pr-1">
+            <MoveHorizontal className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 animate-pulse shrink-0" />
+            <span className="hidden xs:inline">Navigasi:</span>
+          </div>
+
+          {/* Quick Jump to Today if applicable */}
+          {todayDate && (
+            <button
+              type="button"
+              onClick={() => scrollToDay(todayDate)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10.5px] shadow-xs cursor-pointer active:scale-95 transition-all"
+              title={`Lompat ke tanggal hari ini (${todayDate})`}
+            >
+              <CalendarDays className="w-3 h-3" />
+              <span>Hari Ini ({todayDate})</span>
+            </button>
+          )}
+
+          {/* Week / Period Quick Jump Buttons */}
+          <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar">
+            <button
+              type="button"
+              onClick={() => scrollToDay(1)}
+              className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors cursor-pointer border ${
+                activeDay >= 1 && activeDay <= 7
+                  ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
+                  : 'bg-slate-100 dark:bg-slate-750 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              Tgl 1-7
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToDay(8)}
+              className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors cursor-pointer border ${
+                activeDay >= 8 && activeDay <= 14
+                  ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
+                  : 'bg-slate-100 dark:bg-slate-750 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              Tgl 8-14
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToDay(15)}
+              className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors cursor-pointer border ${
+                activeDay >= 15 && activeDay <= 21
+                  ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
+                  : 'bg-slate-100 dark:bg-slate-750 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              Tgl 15-21
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToDay(22)}
+              className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors cursor-pointer border ${
+                activeDay >= 22 && activeDay <= 28
+                  ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
+                  : 'bg-slate-100 dark:bg-slate-750 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+              }`}
+            >
+              Tgl 22-28
+            </button>
+            {schedule.totalDays > 28 && (
+              <button
+                type="button"
+                onClick={() => scrollToDay(29)}
+                className={`px-2 py-1 rounded-md text-[10.5px] font-semibold transition-colors cursor-pointer border ${
+                  activeDay >= 29
+                    ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
+                    : 'bg-slate-100 dark:bg-slate-750 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                }`}
+              >
+                Tgl 29-{schedule.totalDays}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={scrollToSummary}
+              className="px-2 py-1 rounded-md text-[10.5px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 transition-colors cursor-pointer shrink-0"
+              title="Lompat ke kolom rekap jam kerja & total shif"
+            >
+              Rekap & Jam
+            </button>
+          </div>
+        </div>
+
+        {/* Step Arrow Buttons (Geser Kiri / Kanan) */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          <button
+            type="button"
+            onClick={() => scrollByAmount(-220)}
+            disabled={!canScrollLeft}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:pointer-events-none text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-2xs transition-all cursor-pointer active:scale-95"
+            title="Geser ke kiri"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span className="text-[11px]">Kiri</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollByAmount(220)}
+            disabled={!canScrollRight}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-40 disabled:pointer-events-none text-slate-700 dark:text-slate-200 text-xs font-semibold shadow-2xs transition-all cursor-pointer active:scale-95"
+            title="Geser ke kanan"
+          >
+            <span className="text-[11px]">Kanan</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
       {/* Main Schedule Matrix Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs relative overflow-hidden">
+        {/* Subtle Right Shadow Hint when scrollable */}
+        {canScrollRight && (
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-slate-900/10 dark:from-slate-950/40 to-transparent z-35 transition-opacity" />
+        )}
+
+        <div 
+          ref={tableContainerRef}
+          onScroll={handleScroll}
+          className="max-h-[70vh] sm:max-h-[76vh] overflow-auto smooth-scroll-container custom-scrollbar relative select-none sm:select-text"
+        >
           <table className="w-full text-xs text-center border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-30 shadow-xs">
               {/* Main Column Header */}
-              <tr className="bg-slate-100 dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 font-bold border-b border-slate-300 dark:border-slate-700">
-                <th className="p-1 border-r border-slate-300 dark:border-slate-700 sticky left-0 z-20 bg-slate-100 dark:bg-slate-900 w-7 text-[10px]">
+              <tr className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-bold border-b border-slate-300 dark:border-slate-700">
+                <th className="p-1 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 left-0 z-40 bg-slate-100 dark:bg-slate-900 w-7 min-w-[28px] max-w-[28px] text-[10px]">
                   No
                 </th>
-                <th className="p-1 border-r border-slate-300 dark:border-slate-700 sticky left-7 z-20 bg-slate-100 dark:bg-slate-900 text-left min-w-[135px] max-w-[155px] truncate shadow-xs text-[11px]">
+                <th className="p-1 border-r-2 border-b border-slate-300 dark:border-slate-700 sticky top-0 left-7 z-40 bg-slate-100 dark:bg-slate-900 text-left min-w-[135px] max-w-[155px] truncate shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)] text-[11px]">
                   Nama Wali Asuh
                 </th>
 
@@ -387,12 +568,12 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     <th
                       key={day}
                       onClick={() => setActiveDay(day)}
-                      className={`p-0.5 border-r border-slate-300 dark:border-slate-700 cursor-pointer transition-colors w-7 min-w-[26px] ${
+                      className={`p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 cursor-pointer transition-colors w-7 min-w-[26px] ${
                         isSelectedDay
                           ? 'bg-blue-600 text-white font-extrabold ring-1 ring-blue-500'
                           : isSunday
-                          ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/80 font-bold'
-                          : 'hover:bg-slate-200 dark:hover:bg-slate-800'
+                          ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900 font-bold'
+                          : 'bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800'
                       }`}
                       title={`Klik untuk fokus tanggal ${day} (${dayNames[dayOfWeek]})`}
                     >
@@ -413,31 +594,31 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                 })}
 
                 {/* Statistical Summary Column Headers */}
-                <th className="p-0.5 border-r border-slate-300 dark:border-slate-700 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-extrabold text-[9.5px] min-w-[28px]" title="Pagi Full (P + P2 + P3)">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-extrabold text-[9.5px] min-w-[28px]" title="Pagi Full (P + P2 + P3)">
                   P FUL
                 </th>
-                <th className="p-0.5 border-r border-slate-300 dark:border-slate-700 bg-orange-50 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 font-extrabold text-[9.5px] min-w-[24px]" title="Jaga Sore">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-orange-50 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold text-[9.5px] min-w-[24px]" title="Jaga Sore">
                   S
                 </th>
-                <th className="p-0.5 border-r border-slate-300 dark:border-slate-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 font-extrabold text-[9.5px] min-w-[24px]" title="Jaga Malam">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-extrabold text-[9.5px] min-w-[24px]" title="Jaga Malam">
                   M
                 </th>
-                <th className="p-0.5 border-r border-slate-300 dark:border-slate-700 bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 font-extrabold text-[9.5px] min-w-[24px]" title="Lepas Piket">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-sky-50 dark:bg-sky-950 text-sky-800 dark:text-sky-300 font-extrabold text-[9.5px] min-w-[24px]" title="Lepas Piket">
                   LP
                 </th>
-                <th className="p-0.5 border-r border-slate-300 dark:border-slate-700 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 font-extrabold text-[9.5px] min-w-[26px]" title="Libur / Off">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-300 font-extrabold text-[9.5px] min-w-[26px]" title="Libur / Off">
                   OFF
                 </th>
-                <th className="p-0.5 border-r border-slate-300 dark:border-slate-700 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 1 (07:00-15:00)">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 1 (07:00-15:00)">
                   P1
                 </th>
-                <th className="p-0.5 border-r border-slate-300 dark:border-slate-700 bg-teal-50/50 dark:bg-teal-950/20 text-teal-800 dark:text-teal-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 2 (08:00-16:00)">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 2 (08:00-16:00)">
                   P2
                 </th>
-                <th className="p-0.5 border-r border-slate-300 dark:border-slate-700 bg-yellow-50/50 dark:bg-yellow-950/20 text-yellow-800 dark:text-yellow-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 3 (07:00-15:00)">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-yellow-50 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 3 (07:00-15:00)">
                   P3
                 </th>
-                <th className="p-0.5 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-extrabold text-[9.5px] min-w-[32px]" title="Total Jam Kerja (JK)">
+                <th className="p-0.5 border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-extrabold text-[9.5px] min-w-[32px]" title="Total Jam Kerja (JK)">
                   JK
                 </th>
               </tr>
@@ -464,6 +645,13 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                 filteredStaff.map((staff, idx) => {
                 const isSelectedStaff = staff.id === selectedStaffId;
                 const summary = staffSummaries.find((s) => s.staffId === staff.id);
+                const isEven = idx % 2 === 0;
+
+                const stickyBg = isSelectedStaff
+                  ? 'bg-blue-50 dark:bg-slate-900'
+                  : isEven
+                  ? 'bg-white dark:bg-slate-800'
+                  : 'bg-slate-50 dark:bg-slate-850';
 
                 return (
                   <tr
@@ -471,20 +659,20 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     className={`border-b border-slate-200 dark:border-slate-700/80 transition-colors ${
                       isSelectedStaff
                         ? 'bg-blue-50/80 dark:bg-blue-950/30'
-                        : idx % 2 === 0
+                        : isEven
                         ? 'bg-white dark:bg-slate-800'
                         : 'bg-slate-50/50 dark:bg-slate-850/50'
                     } hover:bg-amber-50/40 dark:hover:bg-slate-700/50`}
                   >
                     {/* No */}
-                    <td className="p-0.5 border-r border-slate-200 dark:border-slate-700/80 sticky left-0 z-10 bg-inherit font-medium text-slate-500 text-[10px]">
+                    <td className={`p-0.5 border-r border-slate-200 dark:border-slate-700/80 sticky left-0 z-20 ${stickyBg} font-medium text-slate-500 text-[10px]`}>
                       {staff.id}
                     </td>
 
                     {/* Name */}
                     <td
                       onClick={() => setSelectedStaffId(staff.id)}
-                      className={`p-1 border-r border-slate-200 dark:border-slate-700/80 sticky left-7 z-10 bg-inherit text-left font-semibold cursor-pointer truncate text-[11px] ${
+                      className={`p-1 border-r-2 border-slate-300 dark:border-slate-700 sticky left-7 z-20 ${stickyBg} text-left font-semibold cursor-pointer truncate text-[11px] shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)] ${
                         isSelectedStaff
                           ? 'text-blue-700 dark:text-blue-300 underline decoration-blue-400'
                           : 'text-slate-800 dark:text-slate-200 hover:text-blue-600'
@@ -508,7 +696,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                           </span>
                         )}
                         {schedule.month !== 9 && staff.id > 20 && (
-                          <span className="shrink-0 px-1 py-0.2 text-[8px] rounded font-medium bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+                          <span className="shrink-0 px-1 py-0.2 text-[8px] rounded font-medium bg-purple-100 dark:purple-950/70 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
                             Baru
                           </span>
                         )}
@@ -576,7 +764,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
             <tfoot>
               {/* (P1) 07:00 - 15:00 */}
               <tr className="bg-sky-50/80 dark:bg-sky-950/40 text-slate-800 dark:text-slate-200 border-t-2 border-slate-400 dark:border-slate-600 font-semibold text-[10px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-sky-50 dark:bg-sky-950 font-bold text-sky-900 dark:text-sky-200">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-sky-50 dark:bg-sky-950 font-bold text-sky-900 dark:text-sky-200 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   (P1) 07:00 - 15:00
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -589,7 +777,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* (P2) 08:00 - 16:00 */}
               <tr className="bg-teal-50/80 dark:bg-teal-950/40 text-slate-800 dark:text-slate-200 border-t border-slate-300 dark:border-slate-700 font-semibold text-[10px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-teal-50 dark:bg-teal-950 font-bold">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-teal-50 dark:bg-teal-950 font-bold shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   (P2) 08:00 - 16:00
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -602,7 +790,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* (P3) 07:00 - 16:00 (Upacara) */}
               <tr className="bg-yellow-50/80 dark:bg-yellow-950/40 text-slate-800 dark:text-slate-200 border-t border-slate-300 dark:border-slate-700 font-semibold text-[10px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-yellow-50 dark:bg-yellow-950 font-bold">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-yellow-50 dark:bg-yellow-950 font-bold shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   (P3) 07:00 - 16:00 (Upacara)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -615,7 +803,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* (PAGI FULL) */}
               <tr className="bg-sky-100 dark:bg-sky-900/70 text-slate-900 dark:text-white border-t border-sky-300 dark:border-sky-700 font-extrabold text-[10px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-sky-100 dark:bg-sky-900 font-bold text-sky-950 dark:text-sky-100">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-sky-100 dark:bg-sky-900 font-bold text-sky-950 dark:text-sky-100 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   (PAGI FULL)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -628,7 +816,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* (S) 15:00 - 23:00 */}
               <tr className="bg-orange-100/70 dark:bg-orange-950/60 text-slate-900 dark:text-white border-t border-slate-300 dark:border-slate-700 font-extrabold text-[10px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-orange-100 dark:bg-orange-950 font-bold">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-orange-100 dark:bg-orange-950 font-bold shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   (S) TOTAL SORE (15:00-23:00)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -641,7 +829,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* (S2A) Kantin SMP */}
               <tr className="bg-purple-50/80 dark:bg-purple-950/30 text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 text-[9.5px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-purple-50 dark:bg-purple-950 font-semibold text-purple-900 dark:text-purple-300">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-purple-50 dark:bg-purple-950 font-semibold text-purple-900 dark:text-purple-300 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   - S2A (Kantin SMP)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -654,7 +842,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* (S3A) Kantin SMA */}
               <tr className="bg-orange-50/70 dark:bg-orange-950/30 text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 text-[9.5px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-orange-50 dark:bg-orange-950 font-semibold text-orange-900 dark:text-orange-300">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-orange-50 dark:bg-orange-950 font-semibold text-orange-900 dark:text-orange-300 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   - S3A (Kantin SMA)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -667,7 +855,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* (S4A) Jaga Masjid */}
               <tr className="bg-emerald-50/80 dark:bg-emerald-950/30 text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 text-[9.5px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-emerald-50 dark:bg-emerald-950 font-semibold text-emerald-900 dark:text-emerald-300">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-emerald-50 dark:bg-emerald-950 font-semibold text-emerald-900 dark:text-emerald-300 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   - S4A (Jaga Masjid)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -680,7 +868,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* (M) 15:00 - 07:00 */}
               <tr className="bg-blue-100/70 dark:bg-blue-950/60 text-slate-900 dark:text-white border-t border-slate-300 dark:border-slate-700 font-extrabold">
-                <td colSpan={2} className="p-1.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-blue-100 dark:bg-blue-950 font-bold">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-blue-100 dark:bg-blue-950 font-bold shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   (M) TOTAL MALAM (15:00-07:00)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -693,7 +881,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* M1 (Malam Sesi 1) */}
               <tr className="bg-indigo-50/70 dark:bg-indigo-950/30 text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 text-[9.5px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-indigo-50 dark:bg-indigo-950 font-semibold text-indigo-900 dark:text-indigo-300">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-indigo-50 dark:bg-indigo-950 font-semibold text-indigo-900 dark:text-indigo-300 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   - M1 (Malam Sesi 1)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -706,7 +894,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* M2 (Malam Sesi 2) */}
               <tr className="bg-blue-50/70 dark:bg-blue-950/30 text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 text-[9.5px]">
-                <td colSpan={2} className="p-0.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-blue-50 dark:bg-blue-950 font-semibold text-blue-900 dark:text-blue-300">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-blue-50 dark:bg-blue-950 font-semibold text-blue-900 dark:text-blue-300 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   - M2 (Malam Sesi 2)
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -719,7 +907,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* CUTI */}
               <tr className="bg-teal-50/70 dark:bg-teal-950/40 text-slate-800 dark:text-slate-200 border-t border-slate-300 dark:border-slate-700 font-semibold">
-                <td colSpan={2} className="p-1.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-teal-50 dark:bg-teal-950 font-bold">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-teal-50 dark:bg-teal-950 font-bold shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   CUTI
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -732,7 +920,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* OFF / LIBUR + LEPAS */}
               <tr className="bg-red-50/70 dark:bg-red-950/40 text-slate-800 dark:text-slate-200 border-t border-slate-300 dark:border-slate-700 font-semibold">
-                <td colSpan={2} className="p-1.5 border-r border-slate-300 dark:border-slate-700 text-right sticky left-0 z-10 bg-red-50 dark:bg-red-950 font-bold text-red-900 dark:text-red-200">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-red-50 dark:bg-red-950 font-bold text-red-900 dark:text-red-200 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   OFF / LIBUR + LEPAS
                 </td>
                 {dailyStatsList.map((st, i) => (
@@ -745,7 +933,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
 
               {/* JUMLAH */}
               <tr className="bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white border-t-2 border-slate-500 font-black">
-                <td colSpan={2} className="p-1.5 border-r border-slate-400 text-right sticky left-0 z-10 bg-slate-200 dark:bg-slate-900 font-black">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-400 text-right sticky left-0 z-20 bg-slate-200 dark:bg-slate-900 font-black shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
                   JUMLAH
                 </td>
                 {dailyStatsList.map((st, i) => (
