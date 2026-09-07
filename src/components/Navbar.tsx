@@ -247,7 +247,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             onClick={() => setDarkMode(!darkMode)}
             title={darkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
-            className="p-1 rounded bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-amber-600 hover:bg-slate-50 transition-colors cursor-pointer flex items-center shadow-2xs"
+            aria-label={darkMode ? 'Beralih ke Mode Terang' : 'Beralih ke Mode Gelap'}
+            className={`p-1 rounded text-xs transition-all cursor-pointer flex items-center shadow-2xs active:scale-95 ${
+              darkMode
+                ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40'
+                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+            }`}
           >
             {darkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
           </button>

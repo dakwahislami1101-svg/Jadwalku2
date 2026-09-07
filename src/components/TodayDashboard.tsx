@@ -361,47 +361,49 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {/* Tombol Pengingat Penugasan (Share WA) */}
-          <button
-            onClick={() => onNavigateToTab('assignment')}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
-            title="Buka Pengingat Penugasan Pos Sore & Malam (Siap Kirim WhatsApp)"
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>Pengingat Penugasan</span>
-          </button>
+        {/* Action Buttons (1 Baris Rapi, Dapat Digeser ke Kiri & Kanan) */}
+        <div className="w-full sm:w-auto overflow-x-auto no-scrollbar scroll-smooth -mx-1 px-1 py-0.5">
+          <div className="flex items-center gap-1.5 flex-nowrap min-w-max">
+            {/* Tombol Pengingat Penugasan (Share WA) */}
+            <button
+              onClick={() => onNavigateToTab('assignment')}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0 whitespace-nowrap"
+              title="Buka Pengingat Penugasan Pos Sore & Malam (Siap Kirim WhatsApp)"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Pengingat Penugasan</span>
+            </button>
 
-          {/* Tombol Laporan Serah Terima Shift */}
-          <button
-            onClick={() => onNavigateToTab('handover')}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
-            title="Buat Laporan Serah Terima Pergantian Shift & Kirim ke WhatsApp"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Laporan Serah Terima</span>
-          </button>
+            {/* Tombol Laporan Serah Terima Shift */}
+            <button
+              onClick={() => onNavigateToTab('handover')}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0 whitespace-nowrap"
+              title="Buat Laporan Serah Terima Pergantian Shift & Kirim ke WhatsApp"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Laporan Serah Terima</span>
+            </button>
 
-          {/* Tombol Unduh PDF Hari Ini */}
-          <button
-            onClick={handleDownloadTodayPDF}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
-            title="Unduh jadwal penugasan hari ini langsung ke file PDF resmi"
-          >
-            <FileDown className="w-3.5 h-3.5" />
-            <span>Unduh PDF</span>
-          </button>
+            {/* Tombol Unduh PDF Hari Ini */}
+            <button
+              onClick={handleDownloadTodayPDF}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0 whitespace-nowrap"
+              title="Unduh jadwal penugasan hari ini langsung ke file PDF resmi"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span>Unduh PDF</span>
+            </button>
 
-          {/* Tombol Ekspor CSV */}
-          <button
-            onClick={handleDownloadTodayCSV}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
-            title="Ekspor daftar petugas hari ini ke Excel / CSV"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">CSV</span>
-          </button>
+            {/* Tombol Ekspor CSV */}
+            <button
+              onClick={handleDownloadTodayCSV}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+              title="Ekspor daftar petugas hari ini ke Excel / CSV"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>CSV</span>
+            </button>
+          </div>
         </div>
 
         {/* Running Text Announcement / Ticker Berjalan Pengumuman */}
