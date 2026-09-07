@@ -511,62 +511,62 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
     realNow.getFullYear() === schedule.year;
 
   return (
-    <div className="space-y-3 pb-8 max-w-[1600px] mx-auto">
+    <div className="space-y-1.5 sm:space-y-2 pb-4 max-w-[1600px] mx-auto">
       {/* Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-700 text-white text-xs font-semibold shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
+        <div className="fixed bottom-3 right-3 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-xs font-semibold shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
           <span>{toastMsg}</span>
         </div>
       )}
 
       {/* Top Banner & Control Bar */}
-      <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-slate-800 text-white rounded-xl p-3 sm:p-4 shadow-xs border border-emerald-600/30">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-slate-800 text-white rounded-lg p-2 sm:p-2.5 shadow-xs border border-emerald-600/30">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-1.5 sm:gap-2">
           {/* Title and description */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner border border-white/20">
-              <Send className="w-5 h-5 text-emerald-200" />
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/15 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner border border-white/20">
+              <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-200" />
             </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-bold tracking-tight">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h2 className="text-xs sm:text-sm font-bold tracking-tight leading-tight">
                   Pengingat Penugasan Shif Sore & Malam
                 </h2>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/30 text-emerald-100 border border-emerald-400/40">
-                  Format WhatsApp Otomatis
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/30 text-emerald-100 border border-emerald-400/40 leading-none">
+                  Format WA Otomatis
                 </span>
                 {isSelectedDayRealToday && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-amber-950 animate-pulse">
+                  <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-amber-400 text-amber-950 animate-pulse leading-none">
                     ● HARI INI
                   </span>
                 )}
               </div>
-              <p className="text-xs text-emerald-100/90 leading-tight mt-0.5">
-                Otomatis mengelompokkan petugas Pos Masjid (S4A), Kantin SMP (S2A), Kantin SMA (S3A), dan Mobile Jaga Malam (M1, M2).
+              <p className="text-[11px] text-emerald-100/90 leading-none mt-0.5">
+                Pos Masjid (S4A), Kantin SMP (S2A), Kantin SMA (S3A), dan Mobile Jaga Malam (M1, M2).
               </p>
             </div>
           </div>
 
           {/* Date Selector & Primary Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {/* Quick Day Switcher */}
-            <div className="flex items-center bg-black/25 backdrop-blur-md rounded-lg p-1 border border-white/15">
+            <div className="flex items-center bg-black/25 backdrop-blur-md rounded-md p-0.5 border border-white/15">
               <button
                 type="button"
                 onClick={() => setActiveDay(Math.max(1, safeDay - 1))}
                 disabled={safeDay <= 1}
                 title="Hari Sebelumnya"
-                className="p-1 rounded hover:bg-white/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-white"
+                className="p-0.5 rounded hover:bg-white/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-white"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
               </button>
 
-              <div className="px-2.5 py-0.5 text-center min-w-[150px] sm:min-w-[170px]">
-                <div className="text-[10px] text-emerald-200 font-medium leading-none">
+              <div className="px-2 py-0 text-center min-w-[130px] sm:min-w-[145px]">
+                <div className="text-[9px] text-emerald-200 font-medium leading-none">
                   {dayName}
                 </div>
-                <div className="text-xs sm:text-sm font-black tracking-wide leading-tight mt-0.5">
+                <div className="text-[11px] sm:text-xs font-black tracking-wide leading-tight">
                   {dayStr} {schedule.monthName} {schedule.year}
                 </div>
               </div>
@@ -576,9 +576,9 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                 onClick={() => setActiveDay(Math.min(schedule.totalDays, safeDay + 1))}
                 disabled={safeDay >= schedule.totalDays}
                 title="Hari Berikutnya"
-                className="p-1 rounded hover:bg-white/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-white"
+                className="p-0.5 rounded hover:bg-white/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-white"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -592,7 +592,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                     setActiveDay(todayNum);
                   }
                 }}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer ${
+                className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all shadow-2xs cursor-pointer leading-tight ${
                   isSelectedDayRealToday
                     ? 'bg-amber-400 text-amber-950 shadow-inner'
                     : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
@@ -610,7 +610,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                     setActiveDay(tomDay);
                   }
                 }}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-all shadow-2xs cursor-pointer"
+                className="px-2 py-1 rounded-md text-[11px] font-bold bg-white/15 hover:bg-white/25 text-white border border-white/20 transition-all shadow-2xs cursor-pointer leading-tight"
               >
                 Besok (H-1)
               </button>
@@ -620,49 +620,49 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
             <button
               type="button"
               onClick={handleShareToWhatsApp}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold bg-[#25D366] hover:bg-[#20bd5a] text-white transition-all shadow-xs active:scale-95 cursor-pointer ml-auto sm:ml-0"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-[#25D366] hover:bg-[#20bd5a] text-white transition-all shadow-xs active:scale-95 cursor-pointer ml-auto sm:ml-0 leading-tight"
               title="Buka WhatsApp & Kirim Teks Penugasan"
             >
-              <MessageCircle className="w-4 h-4 fill-white text-[#25D366]" />
-              <span>Bagikan ke WA</span>
-              <ExternalLink className="w-3 h-3 text-white/80" />
+              <MessageCircle className="w-3.5 h-3.5 fill-white text-[#25D366]" />
+              <span>Bagikan WA</span>
+              <ExternalLink className="w-2.5 h-2.5 text-white/80" />
             </button>
           </div>
         </div>
 
         {/* 4 Summary Stats Pills */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2 mt-3 pt-2.5 border-t border-white/15 text-xs">
-          <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5 flex items-center justify-between">
-            <span className="text-[10px] text-emerald-100 font-medium">Pos Masjid (S4A)</span>
-            <span className="font-extrabold text-sm">{totalMasjid} <span className="text-[10px] font-normal text-emerald-200">orang</span></span>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1 sm:gap-1.5 mt-1.5 pt-1.5 border-t border-white/15 text-xs">
+          <div className="bg-white/10 backdrop-blur-xs rounded px-2 py-1 flex items-center justify-between">
+            <span className="text-[9.5px] text-emerald-100 font-medium leading-none">Pos Masjid (S4A)</span>
+            <span className="font-extrabold text-xs leading-none">{totalMasjid} <span className="text-[9px] font-normal text-emerald-200">org</span></span>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5 flex items-center justify-between">
-            <span className="text-[10px] text-emerald-100 font-medium">Kantin SMP (S2A)</span>
-            <span className="font-extrabold text-sm">{totalKantinSMP} <span className="text-[10px] font-normal text-emerald-200">orang</span></span>
+          <div className="bg-white/10 backdrop-blur-xs rounded px-2 py-1 flex items-center justify-between">
+            <span className="text-[9.5px] text-emerald-100 font-medium leading-none">Kantin SMP (S2A)</span>
+            <span className="font-extrabold text-xs leading-none">{totalKantinSMP} <span className="text-[9px] font-normal text-emerald-200">org</span></span>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5 flex items-center justify-between">
-            <span className="text-[10px] text-emerald-100 font-medium">Kantin SMA (S3A)</span>
-            <span className="font-extrabold text-sm">{totalKantinSMA} <span className="text-[10px] font-normal text-emerald-200">orang</span></span>
+          <div className="bg-white/10 backdrop-blur-xs rounded px-2 py-1 flex items-center justify-between">
+            <span className="text-[9.5px] text-emerald-100 font-medium leading-none">Kantin SMA (S3A)</span>
+            <span className="font-extrabold text-xs leading-none">{totalKantinSMA} <span className="text-[9px] font-normal text-emerald-200">org</span></span>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-xs rounded-lg px-2.5 py-1.5 flex items-center justify-between">
-            <span className="text-[10px] text-purple-200 font-medium">Mobile (Jaga Malam)</span>
-            <span className="font-extrabold text-sm text-purple-100">{totalMobile} <span className="text-[10px] font-normal text-purple-200">orang</span></span>
+          <div className="bg-white/10 backdrop-blur-xs rounded px-2 py-1 flex items-center justify-between">
+            <span className="text-[9.5px] text-purple-200 font-medium leading-none">Mobile (Jaga Malam)</span>
+            <span className="font-extrabold text-xs text-purple-100 leading-none">{totalMobile} <span className="text-[9px] font-normal text-purple-200">org</span></span>
           </div>
 
-          <div className="col-span-2 sm:col-span-1 bg-white/15 backdrop-blur-xs rounded-lg px-2.5 py-1.5 flex items-center justify-between border border-white/20">
-            <span className="text-[10px] text-amber-200 font-bold">Total Bertugas</span>
-            <span className="font-black text-sm text-amber-300">{totalAssigned} <span className="text-[10px] font-normal text-white">staf</span></span>
+          <div className="col-span-2 sm:col-span-1 bg-white/15 backdrop-blur-xs rounded px-2 py-1 flex items-center justify-between border border-white/20">
+            <span className="text-[9.5px] text-amber-200 font-bold leading-none">Total Tugas</span>
+            <span className="font-black text-xs text-amber-300 leading-none">{totalAssigned} <span className="text-[9px] font-normal text-white">staf</span></span>
           </div>
         </div>
       </div>
 
       {/* Main Content Layout: 2 Columns on Desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 sm:gap-2.5 items-start">
         {/* Left Column: The 4 Pos Cards (col-span-7) */}
-        <div className="lg:col-span-7 space-y-3">
+        <div className="lg:col-span-7 space-y-2">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-1.5">
               <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -691,31 +691,31 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
             return (
               <div
                 key={posKey}
-                className={`rounded-xl border bg-white dark:bg-slate-900 shadow-xs overflow-hidden transition-all ${conf.borderColor}`}
+                className={`rounded-lg border bg-white dark:bg-slate-900 shadow-2xs overflow-hidden transition-all ${conf.borderColor}`}
               >
                 {/* Pos Card Header */}
-                <div className={`px-3 py-2 border-b flex items-center justify-between ${conf.lightBg} ${conf.borderColor}`}>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${conf.badgeBg}`}>
-                      <Icon className="w-3.5 h-3.5" />
+                <div className={`px-2.5 py-1.5 border-b flex items-center justify-between ${conf.lightBg} ${conf.borderColor}`}>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] ${conf.badgeBg}`}>
+                      <Icon className="w-3 h-3" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white leading-tight">
                           {conf.title}
                         </span>
-                        <span className="px-1.5 py-0.2 rounded text-[9.5px] font-black bg-slate-900 text-white dark:bg-white dark:text-slate-900 leading-none">
+                        <span className="px-1 py-0.1 rounded text-[8.5px] font-black bg-slate-900 text-white dark:bg-white dark:text-slate-900 leading-none">
                           {conf.codeTag}
                         </span>
                       </div>
-                      <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-none mt-0.5">
                         {conf.desc}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-2xs">
+                  <div className="flex items-center gap-1">
+                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-2xs leading-tight">
                       {items.length} Petugas
                     </span>
 
@@ -723,32 +723,32 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                       type="button"
                       onClick={() => setShowAddStaffModal(posKey)}
                       title={`Tambah Petugas ke ${conf.title}`}
-                      className="p-1 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
+                      className="p-0.5 rounded text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
                 {/* Staff List Inside Pos */}
-                <div className="p-2 sm:p-2.5">
+                <div className="p-1.5 sm:p-2">
                   {items.length === 0 ? (
-                    <div className="py-4 text-center text-xs text-slate-400 dark:text-slate-500 italic bg-slate-50/50 dark:bg-slate-950/30 rounded-lg border border-dashed border-slate-200 dark:border-slate-800">
+                    <div className="py-2.5 text-center text-[11px] text-slate-400 dark:text-slate-500 italic bg-slate-50/50 dark:bg-slate-950/30 rounded border border-dashed border-slate-200 dark:border-slate-800">
                       Belum ada petugas di pos ini. Klik <span className="font-semibold text-emerald-600">+ Tambah</span> atau pindahkan staf dari pos lain.
                     </div>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       {items.map((item, idx) => {
                         const isEditingThis = editingItemId === item.id;
 
                         return (
                           <div
                             key={item.id}
-                            className="flex items-center justify-between gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-50/80 hover:bg-slate-100/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 text-xs transition-colors"
+                            className="flex items-center justify-between gap-1.5 px-2 py-1 rounded bg-slate-50/80 hover:bg-slate-100/90 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 text-xs transition-colors"
                           >
                             {/* Left: Number & Name */}
-                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                              <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[10px] flex items-center justify-center shrink-0">
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                              <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[9px] flex items-center justify-center shrink-0">
                                 {idx + 1}
                               </span>
 
@@ -759,7 +759,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                                     value={editNameValue}
                                     onChange={(e) => setEditNameValue(e.target.value)}
                                     placeholder="Ubah nama tampilan..."
-                                    className="px-2 py-0.5 text-xs rounded border border-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none w-full max-w-[200px]"
+                                    className="px-1.5 py-0.5 text-xs rounded border border-emerald-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none w-full max-w-[180px]"
                                     autoFocus
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') handleSaveRename(posKey, item.id);
@@ -769,29 +769,29 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                                   <button
                                     type="button"
                                     onClick={() => handleSaveRename(posKey, item.id)}
-                                    className="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px] hover:bg-emerald-700 cursor-pointer"
+                                    className="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold text-[9.5px] hover:bg-emerald-700 cursor-pointer"
                                   >
                                     Simpan
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => setEditingItemId(null)}
-                                    className="px-1.5 py-0.5 text-slate-400 hover:text-slate-600 text-[10px] cursor-pointer"
+                                    className="px-1 py-0.5 text-slate-400 hover:text-slate-600 text-[9.5px] cursor-pointer"
                                   >
                                     Batal
                                   </button>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-1.5 min-w-0 truncate">
-                                  <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                                <div className="flex items-center gap-1 min-w-0 truncate">
+                                  <span className="font-semibold text-slate-900 dark:text-slate-100 truncate text-[11.5px]">
                                     {item.customName || item.name}
                                   </span>
                                   {item.customName && (
-                                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-medium shrink-0">
+                                    <span className="text-[8.5px] text-amber-600 dark:text-amber-400 font-medium shrink-0">
                                       (kustom)
                                     </span>
                                   )}
-                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 shrink-0">
+                                  <span className="px-1 py-0.1 rounded text-[8.5px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 shrink-0 leading-tight">
                                     {item.shiftCode}
                                   </span>
                                 </div>
@@ -805,7 +805,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                                 aria-label="Pindahkan Pos Tugas"
                                 value={posKey}
                                 onChange={(e) => handleMoveStaff(item.id, posKey, e.target.value as PosCategory)}
-                                className="text-[10px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer hover:border-emerald-500"
+                                className="text-[9px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-1 py-0.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer hover:border-emerald-500"
                                 title="Pindahkan ke pos lain"
                               >
                                 <option value="masjid">🕌 Pos Masjid</option>
@@ -821,7 +821,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                                   onClick={() => handleReorderStaff(posKey, idx, 'up')}
                                   disabled={idx === 0}
                                   title="Geser Naik"
-                                  className="px-1 py-0.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 cursor-pointer"
+                                  className="px-0.5 py-0.2 text-[9px] text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 cursor-pointer"
                                 >
                                   ▲
                                 </button>
@@ -830,7 +830,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                                   onClick={() => handleReorderStaff(posKey, idx, 'down')}
                                   disabled={idx === items.length - 1}
                                   title="Geser Turun"
-                                  className="px-1 py-0.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 cursor-pointer"
+                                  className="px-0.5 py-0.2 text-[9px] text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 cursor-pointer"
                                 >
                                   ▼
                                 </button>
@@ -844,9 +844,9 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                                   setEditNameValue(item.customName || item.name);
                                 }}
                                 title="Edit format nama yang dibagikan"
-                                className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                className="p-0.5 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                               >
-                                <Edit3 className="w-3 h-3" />
+                                <Edit3 className="w-2.5 h-2.5" />
                               </button>
 
                               {/* Remove from Pos Button */}
@@ -854,9 +854,9 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                                 type="button"
                                 onClick={() => handleRemoveStaff(posKey, item.id)}
                                 title="Hapus dari pos ini"
-                                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                className="p-0.5 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                               >
-                                <Trash2 className="w-3 h-3" />
+                                <Trash2 className="w-2.5 h-2.5" />
                               </button>
                             </div>
                           </div>
@@ -871,20 +871,20 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
         </div>
 
         {/* Right Column: WhatsApp Live Preview & Quick Actions (col-span-5) */}
-        <div className="lg:col-span-5 space-y-3 sticky top-16">
+        <div className="lg:col-span-5 space-y-2 sticky top-14">
           {/* WhatsApp Preview Card */}
-          <div className="rounded-xl border border-emerald-300 dark:border-emerald-800/70 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
+          <div className="rounded-lg border border-emerald-300 dark:border-emerald-800/70 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden">
             {/* WA Card Header */}
-            <div className="px-3.5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center font-bold">
-                  <MessageCircle className="w-3.5 h-3.5 text-white" />
+            <div className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                  <MessageCircle className="w-3 h-3 text-white" />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-bold leading-tight">
+                  <h4 className="text-xs font-bold leading-tight">
                     Pratinjau Pesan WhatsApp
                   </h4>
-                  <p className="text-[10px] text-emerald-100 leading-none">
+                  <p className="text-[9.5px] text-emerald-100 leading-none">
                     Format rapi sesuai standar dinas grup WA
                   </p>
                 </div>
@@ -892,37 +892,37 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
 
               {/* Copy quick indicator */}
               {copied && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white text-emerald-800 text-[10px] font-bold animate-in fade-in">
-                  <Check className="w-3 h-3 text-emerald-600" /> Tersalin!
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-white text-emerald-800 text-[9.5px] font-bold animate-in fade-in">
+                  <Check className="w-2.5 h-2.5 text-emerald-600" /> Tersalin!
                 </span>
               )}
             </div>
 
             {/* Simulated WhatsApp Chat Bubble */}
-            <div className="p-3 bg-[#e5ddd5]/40 dark:bg-slate-950/60">
-              <div className="bg-[#dcf8c6] dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 rounded-xl p-3 shadow-2xs font-mono text-[11px] sm:text-xs text-slate-800 dark:text-emerald-100 whitespace-pre-wrap leading-relaxed select-all">
+            <div className="p-2 bg-[#e5ddd5]/40 dark:bg-slate-950/60">
+              <div className="bg-[#dcf8c6] dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 rounded-lg p-2 shadow-2xs font-mono text-[10.5px] sm:text-[11px] text-slate-800 dark:text-emerald-100 whitespace-pre-wrap leading-relaxed select-all">
                 {waMessage}
               </div>
             </div>
 
             {/* Action Buttons Under Preview */}
-            <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-2">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="p-2 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
                 {/* Salin Teks Button */}
                 <button
                   type="button"
                   onClick={handleCopyWhatsApp}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 active:scale-95 transition-all shadow-xs cursor-pointer"
+                  className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-md font-bold text-xs bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 active:scale-95 transition-all shadow-2xs cursor-pointer leading-tight"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
-                      <span>Berhasil Disalin</span>
+                      <Check className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+                      <span>Tersalin</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4 text-slate-300 dark:text-slate-600" />
-                      <span>Salin Format WA</span>
+                      <Copy className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+                      <span>Salin WA</span>
                     </>
                   )}
                 </button>
@@ -931,37 +931,37 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                 <button
                   type="button"
                   onClick={handleShareToWhatsApp}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs bg-[#25D366] hover:bg-[#20bd5a] text-white active:scale-95 transition-all shadow-xs cursor-pointer"
+                  className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-md font-bold text-xs bg-[#25D366] hover:bg-[#20bd5a] text-white active:scale-95 transition-all shadow-2xs cursor-pointer leading-tight"
                 >
-                  <MessageCircle className="w-4 h-4 fill-white text-[#25D366]" />
-                  <span>Kirim ke WA</span>
+                  <MessageCircle className="w-3.5 h-3.5 fill-white text-[#25D366]" />
+                  <span>Kirim WA</span>
                 </button>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+              <div className="flex items-center justify-between text-[10.5px] text-slate-500 dark:text-slate-400 pt-0.5">
                 <span>Total: {totalAssigned} Petugas</span>
                 <button
                   type="button"
                   onClick={() => window.print()}
                   className="flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer font-medium"
                 >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Cetak Lembar Tugas</span>
+                  <Printer className="w-3 h-3" />
+                  <span>Cetak Lembar</span>
                 </button>
               </div>
             </div>
           </div>
 
           {/* Template & Options Accordion */}
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-xs space-y-2.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-              <Clock className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-2xs space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-200">
+              <Clock className="w-3 h-3 text-emerald-600" />
               <span>Kustomisasi Format & Waktu Tugas</span>
             </div>
 
-            <div className="space-y-2 text-xs">
+            <div className="space-y-1.5 text-xs">
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
+                <label className="block text-[9.5px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
                   Rentang Jam Dinas:
                 </label>
                 <input
@@ -969,12 +969,12 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
                   placeholder="15.00 s.d. 22.00"
-                  className="w-full px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-2 py-0.5 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
+                <label className="block text-[9.5px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
                   Kalimat Pembuka (Header):
                 </label>
                 <input
@@ -982,12 +982,12 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                   value={headerPrefix}
                   onChange={(e) => setHeaderPrefix(e.target.value)}
                   placeholder="izin share untuk pembagian pos shift sore dan m hari ini nggih"
-                  className="w-full px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-2 py-0.5 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
+                <label className="block text-[9.5px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
                   Kalimat Penutup (Footer):
                 </label>
                 <input
@@ -995,11 +995,11 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                   value={footerNote}
                   onChange={(e) => setFooterNote(e.target.value)}
                   placeholder="Mohon ditindaklanjuti"
-                  className="w-full px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full px-2 py-0.5 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
 
-              <div className="pt-1 flex justify-end">
+              <div className="pt-0.5 flex justify-end">
                 <button
                   type="button"
                   onClick={() => {
@@ -1008,7 +1008,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                     setFooterNote('Mohon ditindaklanjuti');
                     showToast('Template kalimat dikembalikan ke awal.');
                   }}
-                  className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline cursor-pointer"
+                  className="text-[9.5px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline cursor-pointer"
                 >
                   Reset Template Teks
                 </button>
