@@ -41,6 +41,7 @@ import {
   getLocalAnnouncement, 
   DEFAULT_ANNOUNCEMENT 
 } from '../utils/firebaseService';
+import { AnnouncementPopup } from './AnnouncementPopup';
 
 interface TodayDashboardProps {
   schedule: MonthSchedule;
@@ -92,6 +93,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   // Running text announcement state
   const [announcement, setAnnouncement] = useState<AnnouncementData>(() => getLocalAnnouncement());
   const [showAnnouncementModal, setShowAnnouncementModal] = useState<boolean>(false);
+  const [showPopupForce, setShowPopupForce] = useState<boolean>(false);
   const [tempAnnouncementText, setTempAnnouncementText] = useState<string>('');
   const [tempAnnouncementEnabled, setTempAnnouncementEnabled] = useState<boolean>(true);
   const [isSavingAnnouncement, setIsSavingAnnouncement] = useState<boolean>(false);
@@ -300,6 +302,15 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
 
   return (
     <div className="space-y-2.5">
+      {/* Animated Interactive Announcement Pop-up on initial device load */}
+      <AnnouncementPopup
+        announcement={announcement}
+        onOpenManagement={handleOpenAnnouncementModal}
+        userRole={userRole}
+        forceOpen={showPopupForce}
+        onCloseForceOpen={() => setShowPopupForce(false)}
+      />
+
       {/* Toast Notification for Download / Action */}
       {downloadToast && (
         <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100 text-xs flex items-center justify-between gap-2 shadow-xs animate-in fade-in slide-in-from-top-1">
@@ -423,13 +434,9 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               <div className="relative flex-1 overflow-hidden h-5 flex items-center">
                 <div 
                   className="animate-continuous-marquee text-xs font-semibold text-amber-950 dark:text-amber-100 cursor-pointer select-none whitespace-nowrap"
-                  title="Klik untuk membaca detail pengumuman (teks berjalan terus berulang)"
+                  title="Klik untuk membuka pop-up pengumuman resmi"
                   onClick={() => {
-                    if (userRole === 'admin') {
-                      handleOpenAnnouncementModal();
-                    } else {
-                      setShowAnnouncementModal(true);
-                    }
+                    setShowPopupForce(true);
                   }}
                 >
                   <span className="inline-flex items-center gap-5 pr-8">
@@ -449,19 +456,28 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
 
               {/* Action Button: Edit for Admin / Detail for Staff */}
               {userRole === 'admin' ? (
-                <button
-                  onClick={handleOpenAnnouncementModal}
-                  className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-2xs transition-colors cursor-pointer"
-                  title="Atur teks pengumuman berjalan ini (Khusus Admin)"
-                >
-                  <Edit3 className="w-2.5 h-2.5" />
-                  <span>Atur</span>
-                </button>
+                <div className="shrink-0 flex items-center gap-1">
+                  <button
+                    onClick={() => setShowPopupForce(true)}
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 text-[10px] font-bold hover:bg-amber-300 transition-colors cursor-pointer"
+                    title="Buka tampilan pop-up pengumuman"
+                  >
+                    <span>Pratinjau</span>
+                  </button>
+                  <button
+                    onClick={handleOpenAnnouncementModal}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-2xs transition-colors cursor-pointer"
+                    title="Atur teks pengumuman berjalan ini (Khusus Admin)"
+                  >
+                    <Edit3 className="w-2.5 h-2.5" />
+                    <span>Atur</span>
+                  </button>
+                </div>
               ) : (
                 <button
-                  onClick={() => setShowAnnouncementModal(true)}
+                  onClick={() => setShowPopupForce(true)}
                   className="shrink-0 text-[10.5px] font-bold text-amber-700 dark:text-amber-400 hover:underline px-1 py-0.5 cursor-pointer"
-                  title="Lihat teks pengumuman lengkap"
+                  title="Buka pop-up pengumuman"
                 >
                   Detail
                 </button>
