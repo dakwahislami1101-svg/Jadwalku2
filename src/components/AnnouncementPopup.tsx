@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Megaphone, X, BellRing, Sparkles, ChevronRight, Volume2 } from 'lucide-react';
 import { AnnouncementData } from '../types';
 
+// Reappear interval: 3 hours in milliseconds
+const REAPPEAR_INTERVAL_MS = 3 * 60 * 60 * 1000;
+
 interface AnnouncementPopupProps {
   announcement: AnnouncementData;
   onOpenManagement?: () => void;
@@ -37,7 +40,7 @@ export const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({
     }
   }, [forceOpen]);
 
-  // Check if this announcement has been read on this device on initial load
+  // Check if this announcement should show on this device (new or >= 3 hours since last seen)
   useEffect(() => {
     if (!announcement || !announcement.enabled || !announcement.text?.trim()) {
       setIsOpen(false);
@@ -45,12 +48,30 @@ export const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({
     }
 
     try {
-      // Create a unique hash / key based on text and timestamp
+      // Unique key per announcement text
       const lastDismissedKey = `announcement_seen_${encodeURIComponent(announcement.text.trim())}`;
-      const hasSeen = localStorage.getItem(lastDismissedKey);
+      const lastSeenVal = localStorage.getItem(lastDismissedKey);
 
-      // If user hasn't seen this specific announcement text on this device, show it!
-      if (!hasSeen) {
+      let shouldShow = false;
+
+      if (!lastSeenVal) {
+        // First time seeing this announcement on this device
+        shouldShow = true;
+      } else {
+        // Parse stored timestamp (supports either ISO string or epoch millis)
+        const lastSeenTime = !isNaN(Number(lastSeenVal))
+          ? Number(lastSeenVal)
+          : new Date(lastSeenVal).getTime();
+
+        const elapsedMs = Date.now() - lastSeenTime;
+
+        // If 3 hours (or invalid date) have passed since user last dismissed on this device
+        if (isNaN(lastSeenTime) || elapsedMs >= REAPPEAR_INTERVAL_MS) {
+          shouldShow = true;
+        }
+      }
+
+      if (shouldShow) {
         // Slight delay for pleasant entrance after dashboard mount
         const timer = setTimeout(() => {
           setIsOpen(true);
@@ -63,13 +84,13 @@ export const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({
     }
   }, [announcement?.text, announcement?.enabled]);
 
-  // Handle dismiss and mark as read for this device
+  // Handle dismiss and mark timestamp for this device (reappears after 3 hours)
   const handleDismiss = () => {
     setIsDismissing(true);
     try {
       if (announcement?.text) {
         const lastDismissedKey = `announcement_seen_${encodeURIComponent(announcement.text.trim())}`;
-        localStorage.setItem(lastDismissedKey, new Date().toISOString());
+        localStorage.setItem(lastDismissedKey, Date.now().toString());
       }
     } catch {
       // Ignore localStorage error
@@ -233,10 +254,10 @@ export const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({
             )}
           </div>
 
-          {/* Touch Gesture Hint */}
+          {/* Touch Gesture Hint & Periodic reminder notice */}
           <div className="flex items-center justify-center gap-1.5 text-[10.5px] text-slate-400 dark:text-slate-500 py-1 border-t border-slate-100 dark:border-slate-800 text-center">
             <span>💡</span>
-            <span>Ketuk di mana saja pada layar atau usap untuk menutup</span>
+            <span>Ketuk di mana saja / usap untuk menutup • Pengingat otomatis tiap 3 jam</span>
           </div>
 
           {/* Action Buttons */}
