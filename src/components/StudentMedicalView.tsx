@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Calendar as CalendarIcon, 
   Clock, 
@@ -26,7 +26,8 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { StudentMedicalPlan, MedicalFacility, MedicalPlanType, MedicalStatus, Staff, Student } from '../types';
 import { StudentPickerModal } from './StudentPickerModal';
@@ -38,6 +39,11 @@ interface StudentMedicalViewProps {
   onDeletePlan: (planId: string) => Promise<boolean>;
   staffList: Staff[];
   selectedStaffId: number;
+  cloudStatus?: 'connected' | 'offline' | 'error' | 'syncing';
+  onRefreshFromServer?: () => Promise<{ success: boolean; count: number; plans: StudentMedicalPlan[] } | void>;
+  scheduleYear?: number;
+  scheduleMonth?: number;
+  activeScheduleDay?: number;
 }
 
 const INDONESIAN_MONTH_NAMES = [
@@ -51,11 +57,83 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
   onDeletePlan,
   staffList,
   selectedStaffId,
+  cloudStatus = 'connected',
+  onRefreshFromServer,
+  scheduleYear,
+  scheduleMonth,
+  activeScheduleDay,
 }) => {
-  // Calendar View month & year
-  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth() + 1); // 1-12
+  // Manual server sync state
+  const [isRefreshingServer, setIsRefreshingServer] = useState(false);
+  
+  // Calendar View month & year initialized to schedule date (e.g. September 2026) or first plan's date
+  const [calendarYear, setCalendarYear] = useState<number>(() => {
+    if (scheduleYear && scheduleYear >= 2024) return scheduleYear;
+    if (plans.length > 0 && plans[0].date && /^\d{4}-\d{2}-\d{2}$/.test(plans[0].date)) {
+      return parseInt(plans[0].date.split('-')[0], 10);
+    }
+    return new Date().getFullYear();
+  });
+
+  const [calendarMonth, setCalendarMonth] = useState<number>(() => {
+    if (scheduleMonth && scheduleMonth >= 1 && scheduleMonth <= 12) return scheduleMonth;
+    if (plans.length > 0 && plans[0].date && /^\d{4}-\d{2}-\d{2}$/.test(plans[0].date)) {
+      return parseInt(plans[0].date.split('-')[1], 10);
+    }
+    return new Date().getMonth() + 1; // 1-12
+  });
+
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
+
+  // Group plans by month to know which months have scheduled medical plans
+  const monthsWithPlans = useMemo(() => {
+    const map = new Map<string, { year: number; month: number; count: number; studentNames: string[] }>();
+    plans.forEach(p => {
+      if (p.date && /^\d{4}-\d{2}-\d{2}$/.test(p.date)) {
+        const [yStr, mStr] = p.date.split('-');
+        const y = parseInt(yStr, 10);
+        const m = parseInt(mStr, 10);
+        const key = `${y}-${m}`;
+        const existing = map.get(key) || { year: y, month: m, count: 0, studentNames: [] };
+        existing.count += 1;
+        if (!existing.studentNames.includes(p.studentName)) {
+          existing.studentNames.push(p.studentName);
+        }
+        map.set(key, existing);
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      return a.month - b.month;
+    });
+  }, [plans]);
+
+  // Auto-align calendar to month that actually contains active plans if viewing an empty month
+  const autoJumpedRef = useRef(false);
+  useEffect(() => {
+    if (autoJumpedRef.current || plans.length === 0) return;
+    const currentMonthHasPlans = plans.some(p => {
+      if (!p.date || !/^\d{4}-\d{2}-\d{2}$/.test(p.date)) return false;
+      const [y, m] = p.date.split('-').map(Number);
+      return y === calendarYear && m === calendarMonth;
+    });
+
+    if (!currentMonthHasPlans) {
+      // Find the plan matching scheduleYear/Month or the first available plan
+      const schedulePlan = plans.find(p => {
+        if (!p.date) return false;
+        const [y, m] = p.date.split('-').map(Number);
+        return y === scheduleYear && m === scheduleMonth;
+      });
+      const targetPlan = schedulePlan || plans[0];
+      if (targetPlan && targetPlan.date && /^\d{4}-\d{2}-\d{2}$/.test(targetPlan.date)) {
+        const [y, m] = targetPlan.date.split('-').map(Number);
+        setCalendarYear(y);
+        setCalendarMonth(m);
+        autoJumpedRef.current = true;
+      }
+    }
+  }, [plans, scheduleYear, scheduleMonth, calendarYear, calendarMonth]);
 
   // View mode: 'calendar' | 'list'
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
@@ -88,6 +166,11 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
   // Student Picker modal
   const [isStudentPickerOpen, setIsStudentPickerOpen] = useState(false);
 
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const initialDateToUse = scheduleYear && scheduleMonth && activeScheduleDay 
+    ? `${scheduleYear}-${pad(scheduleMonth)}-${pad(activeScheduleDay)}` 
+    : new Date().toISOString().split('T')[0];
+
   // Form Fields
   const [formData, setFormData] = useState<{
     studentName: string;
@@ -106,7 +189,7 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
     studentClassOrRoom: '',
     facility: 'Puskesmas',
     facilityDetail: 'Puskesmas Semen Kediri',
-    date: new Date().toISOString().split('T')[0],
+    date: initialDateToUse,
     time: '08:30',
     planType: 'kontrol_kembali',
     complaint: '',
@@ -126,19 +209,33 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
   };
 
   const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const tomorrowStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`;
+  const realTodayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const realTomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const realTomorrowStr = `${realTomorrow.getFullYear()}-${pad(realTomorrow.getMonth() + 1)}-${pad(realTomorrow.getDate())}`;
+
+  // Also calculate active schedule date key if app is viewing September 2026
+  const scheduleTodayStr = scheduleYear && scheduleMonth && activeScheduleDay
+    ? `${scheduleYear}-${pad(scheduleMonth)}-${pad(activeScheduleDay)}`
+    : null;
+  const scheduleTomorrowStr = scheduleYear && scheduleMonth && activeScheduleDay
+    ? `${scheduleYear}-${pad(scheduleMonth)}-${pad(Math.min(activeScheduleDay + 1, 30))}`
+    : null;
+
+  const todayStr = scheduleTodayStr || realTodayStr;
+  const tomorrowStr = scheduleTomorrowStr || realTomorrowStr;
 
   // Statistics
   const stats = useMemo(() => {
-    const todayCount = plans.filter(p => p.date === todayStr && p.status === 'rencana').length;
-    const tomorrowCount = plans.filter(p => p.date === tomorrowStr && p.status === 'rencana').length;
+    const todayCount = plans.filter(p => 
+      p.status === 'rencana' && (p.date === realTodayStr || (scheduleTodayStr && p.date === scheduleTodayStr))
+    ).length;
+    const tomorrowCount = plans.filter(p => 
+      p.status === 'rencana' && (p.date === realTomorrowStr || (scheduleTomorrowStr && p.date === scheduleTomorrowStr))
+    ).length;
     const totalPlanned = plans.filter(p => p.status === 'rencana').length;
     const totalCompleted = plans.filter(p => p.status === 'selesai').length;
     return { todayCount, tomorrowCount, totalPlanned, totalCompleted };
-  }, [plans, todayStr, tomorrowStr]);
+  }, [plans, realTodayStr, realTomorrowStr, scheduleTodayStr, scheduleTomorrowStr]);
 
   // Filtered plans
   const filteredPlans = useMemo(() => {
@@ -218,12 +315,13 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
 
   const handleOpenAddModal = (defaultDate?: string) => {
     setEditingPlan(null);
+    const dateToUse = defaultDate || `${calendarYear}-${pad(calendarMonth)}-${pad(Math.min(activeScheduleDay || 1, 28))}`;
     setFormData({
       studentName: '',
       studentClassOrRoom: '',
       facility: 'Puskesmas',
       facilityDetail: 'Puskesmas Semen Kediri',
-      date: defaultDate || todayStr,
+      date: dateToUse,
       time: '08:30',
       planType: 'kontrol_kembali',
       complaint: '',
@@ -503,6 +601,33 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
     }
   };
 
+  const handleRefreshClick = async () => {
+    if (!onRefreshFromServer || isRefreshingServer) return;
+    setIsRefreshingServer(true);
+    try {
+      const res = await onRefreshFromServer();
+      if (res && typeof res === 'object' && 'count' in res) {
+        showToast(`✓ Database Cloud terhubung! Berhasil sinkron ${res.count} agenda berobat.`);
+        if (res.plans && res.plans.length > 0) {
+          const firstDate = res.plans[0].date;
+          if (firstDate && /^\d{4}-\d{2}-\d{2}$/.test(firstDate)) {
+            const [y, m] = firstDate.split('-').map(Number);
+            setCalendarYear(y);
+            setCalendarMonth(m);
+            setSelectedDateFilter(null);
+          }
+        }
+      } else {
+        showToast('✓ Data rencana berobat berhasil disinkronkan langsung dengan Cloud Firestore!');
+      }
+    } catch (err) {
+      console.warn('Manual sync failed:', err);
+      showToast('Gagal menyinkronkan dengan database. Cek koneksi internet.');
+    } finally {
+      setTimeout(() => setIsRefreshingServer(false), 600);
+    }
+  };
+
   return (
     <div className="space-y-1.5 sm:space-y-2 pb-6">
       {/* Toast Notification */}
@@ -528,14 +653,38 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-white/25 text-white border border-white/30 backdrop-blur-xs">
                   UKS • Puskesmas • RS
                 </span>
+                {/* Cloud Firestore Sync Status Badge */}
+                <span className={`flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold backdrop-blur-xs border ${
+                  cloudStatus === 'offline' 
+                    ? 'bg-amber-950/40 text-amber-200 border-amber-400/40' 
+                    : 'bg-emerald-950/40 text-emerald-200 border-emerald-400/40'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    cloudStatus === 'offline' ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'
+                  }`} />
+                  <span>{cloudStatus === 'offline' ? 'Mode Offline' : 'Database Cloud Terhubung'}</span>
+                </span>
               </div>
               <p className="text-[10px] sm:text-[10.5px] text-rose-100 leading-none mt-0.5">
-                Pencatatan rujukan faskes, jadwal kontrol dokter, dan notifikasi H-1 wali asuh
+                Tersinkronisasi otomatis antar perangkat wali asuh &bull; Notifikasi H-1 &bull; Rujukan faskes
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 self-start sm:self-center shrink-0">
+            {onRefreshFromServer && (
+              <button
+                type="button"
+                onClick={handleRefreshClick}
+                disabled={isRefreshingServer}
+                title="Sinkronkan data dengan database Cloud Firestore"
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold bg-white/20 hover:bg-white/30 text-white active:scale-95 transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${isRefreshingServer ? 'animate-spin' : ''}`} />
+                <span>{isRefreshingServer ? 'Menyinkronkan...' : 'Sinkronkan'}</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => handleOpenAddModal()}
@@ -697,28 +846,111 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
         </div>
       )}
 
+      {/* Alert banner if active plans exist in another month */}
+      {monthsWithPlans.length > 0 && !monthsWithPlans.some(m => m.year === calendarYear && m.month === calendarMonth) && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 shadow-2xs animate-in fade-in duration-200">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+              <CalendarIcon className="w-4 h-4" />
+            </div>
+            <div className="text-xs">
+              <span className="font-bold">Ditemukan agenda berobat di bulan lain: </span>
+              <span className="text-[11px] block text-amber-800 dark:text-amber-300">
+                {monthsWithPlans.map(m => `${INDONESIAN_MONTH_NAMES[m.month - 1]} ${m.year} (${m.count} agenda: ${m.studentNames.join(', ')})`).join(' • ')}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+            {monthsWithPlans.map(m => (
+              <button
+                key={`jump-alert-${m.year}-${m.month}`}
+                type="button"
+                onClick={() => {
+                  setCalendarYear(m.year);
+                  setCalendarMonth(m.month);
+                  setSelectedDateFilter(null);
+                }}
+                className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>Buka {INDONESIAN_MONTH_NAMES[m.month - 1]} {m.year}</span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ===================== VIEW MODE 1: CALENDAR VIEW ===================== */}
       {viewMode === 'calendar' && (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden">
           {/* Calendar Header Month Navigator */}
-          <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+          <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mr-1">
                 {INDONESIAN_MONTH_NAMES[calendarMonth - 1]} {calendarYear}
               </h3>
+              
+              {/* Quick Jump: Jadwal Shif Bulan Ini (if different) */}
+              {scheduleYear && scheduleMonth && (scheduleYear !== calendarYear || scheduleMonth !== calendarMonth) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalendarYear(scheduleYear);
+                    setCalendarMonth(scheduleMonth);
+                    setSelectedDateFilter(null);
+                  }}
+                  className="px-2 py-0.5 rounded text-[9.5px] font-bold bg-rose-100 dark:bg-rose-950/60 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Lihat bulan jadwal shif aktif"
+                >
+                  <CalendarDays className="w-3 h-3" />
+                  <span>Jadwal Shif ({INDONESIAN_MONTH_NAMES[scheduleMonth - 1]} {scheduleYear})</span>
+                </button>
+              )}
+
+              {/* Quick Jump Chips for Any Months with Plans */}
+              {monthsWithPlans.map(m => {
+                const isCurrent = m.year === calendarYear && m.month === calendarMonth;
+                return (
+                  <button
+                    key={`chip-${m.year}-${m.month}`}
+                    type="button"
+                    onClick={() => {
+                      setCalendarYear(m.year);
+                      setCalendarMonth(m.month);
+                      setSelectedDateFilter(null);
+                    }}
+                    className={`px-2 py-0.5 rounded-full text-[9.5px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                      isCurrent
+                        ? 'bg-rose-600 text-white shadow-2xs ring-2 ring-rose-300 dark:ring-rose-900'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                    }`}
+                    title={`${m.count} agenda: ${m.studentNames.join(', ')}`}
+                  >
+                    <span>📅 {INDONESIAN_MONTH_NAMES[m.month - 1]} {m.year}</span>
+                    <span className={`px-1 rounded-full text-[8.5px] font-black ${
+                      isCurrent ? 'bg-white/30 text-white' : 'bg-rose-600 text-white'
+                    }`}>
+                      {m.count}
+                    </span>
+                  </button>
+                );
+              })}
+
               <button
                 type="button"
                 onClick={() => {
                   setCalendarYear(new Date().getFullYear());
                   setCalendarMonth(new Date().getMonth() + 1);
+                  setSelectedDateFilter(null);
                 }}
-                className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                title="Kembali ke bulan kalender masehi saat ini"
               >
-                Bulan Ini
+                Hari Ini
               </button>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 self-end sm:self-center shrink-0">
               <button
                 type="button"
                 onClick={handlePrevMonth}
@@ -855,9 +1087,19 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
             </span>
           </h3>
 
-          {selectedDateFilter && (
-            <span className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">
-              Tanggal {selectedDateFilter}
+          {selectedDateFilter ? (
+            <button
+              type="button"
+              onClick={() => setSelectedDateFilter(null)}
+              className="text-[11px] text-rose-600 dark:text-rose-400 font-bold hover:underline flex items-center gap-1 cursor-pointer bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-md border border-rose-200 dark:border-rose-900"
+              title="Klik untuk melihat semua tanggal"
+            >
+              <span>Filter Tanggal: {selectedDateFilter}</span>
+              <X className="w-3 h-3 text-rose-500" />
+            </button>
+          ) : (
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              Menampilkan semua agenda
             </span>
           )}
         </div>
@@ -872,17 +1114,42 @@ export const StudentMedicalView: React.FC<StudentMedicalViewProps> = ({
             </h4>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
               {selectedDateFilter 
-                ? `Tidak ada agenda pada tanggal ${selectedDateFilter}. Klik tombol di bawah untuk menambahkannya.`
+                ? `Tidak ada agenda pada tanggal ${selectedDateFilter}.`
                 : 'Belum ada agenda berobat yang sesuai filter saat ini.'}
             </p>
-            <button
-              type="button"
-              onClick={() => handleOpenAddModal(selectedDateFilter || undefined)}
-              className="mt-1.5 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 transition-all cursor-pointer shadow-2xs"
-            >
-              <Plus className="w-3 h-3" />
-              <span>+ Buat Rencana Berobat</span>
-            </button>
+            <div className="flex items-center justify-center gap-2 flex-wrap mt-2">
+              {selectedDateFilter && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDateFilter(null)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition-all cursor-pointer shadow-2xs"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Lihat Semua Tanggal ({plans.length} Total)</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => handleOpenAddModal(selectedDateFilter || undefined)}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 transition-all cursor-pointer shadow-2xs"
+              >
+                <Plus className="w-3 h-3" />
+                <span>+ Buat Rencana Berobat</span>
+              </button>
+
+              {onRefreshFromServer && (
+                <button
+                  type="button"
+                  onClick={handleRefreshClick}
+                  disabled={isRefreshingServer}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isRefreshingServer ? 'animate-spin' : ''}`} />
+                  <span>{isRefreshingServer ? 'Menyinkronkan...' : 'Cek Jadwal dari Database'}</span>
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">

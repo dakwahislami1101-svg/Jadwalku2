@@ -52,6 +52,9 @@ import {
   resetQuotaExhausted,
   subscribeQuotaStatus,
   subscribeToStudentMedicalPlans,
+  fetchStudentMedicalPlansFromFirestore,
+  saveStudentMedicalPlanToFirestore,
+  deleteStudentMedicalPlanFromFirestore,
   saveAllStudentMedicalPlansToFirestore,
   getLocalStudentMedicalPlans,
   db,
@@ -230,8 +233,16 @@ export default function App() {
   });
   const [isMedicalNotificationsOpen, setIsMedicalNotificationsOpen] = useState(false);
 
-  // Realtime subscription to student medical plans
+  // Cross-device sync: fetch directly and subscribe in realtime
   useEffect(() => {
+    // 1. One-time direct fetch to guarantee latest cloud plans immediately
+    fetchStudentMedicalPlansFromFirestore().then((remotePlans) => {
+      if (remotePlans && remotePlans.length > 0) {
+        setMedicalPlans(remotePlans);
+      }
+    }).catch(() => {});
+
+    // 2. Realtime listener for live updates across all devices
     const unsubscribe = subscribeToStudentMedicalPlans(
       (remotePlans) => {
         if (remotePlans && remotePlans.length > 0) {
@@ -249,56 +260,90 @@ export default function App() {
   }, []);
 
   const handleSaveMedicalPlan = useCallback(async (plan: StudentMedicalPlan): Promise<boolean> => {
-    let updatedList: StudentMedicalPlan[] = [];
+    // Optimistic local state update
     setMedicalPlans((prev) => {
       const idx = prev.findIndex((p) => p.id === plan.id);
-      if (idx >= 0) {
-        updatedList = [...prev];
-        updatedList[idx] = plan;
-      } else {
-        updatedList = [plan, ...prev];
-      }
-      try {
-        localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(updatedList));
-      } catch {}
-      return updatedList;
-    });
-    try {
-      await saveAllStudentMedicalPlansToFirestore(updatedList);
-      soundManager.playChime();
-    } catch (e) {
-      console.warn('Failed to sync saved plan to Firestore:', e);
-    }
-    return true;
-  }, []);
-
-  const handleDeleteMedicalPlan = useCallback(async (planId: string): Promise<boolean> => {
-    let updatedList: StudentMedicalPlan[] = [];
-    setMedicalPlans((prev) => {
-      updatedList = prev.filter((p) => p.id !== planId);
-      try {
-        localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(updatedList));
-      } catch {}
-      return updatedList;
-    });
-    try {
-      await saveAllStudentMedicalPlansToFirestore(updatedList);
-      soundManager.playChime();
-    } catch (e) {
-      console.warn('Failed to sync deleted plan to Firestore:', e);
-    }
-    return true;
-  }, []);
-
-  const handleMarkMedicalPlanCompleted = useCallback(async (planId: string) => {
-    setMedicalPlans((prev) => {
-      const updated = prev.map((p) => (p.id === planId ? { ...p, status: 'selesai' as const } : p));
+      const updated = idx >= 0 ? prev.map((p) => (p.id === plan.id ? plan : p)) : [plan, ...prev];
       try {
         localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(updated));
       } catch {}
-      saveAllStudentMedicalPlansToFirestore(updated).catch(console.error);
       return updated;
     });
+
+    try {
+      const ok = await saveStudentMedicalPlanToFirestore(plan);
+      if (ok) {
+        soundManager.playChime();
+      }
+      return ok;
+    } catch (e) {
+      console.warn('Failed to sync saved plan to Firestore:', e);
+      return false;
+    }
+  }, []);
+
+  const handleDeleteMedicalPlan = useCallback(async (planId: string): Promise<boolean> => {
+    // Optimistic local state update
+    setMedicalPlans((prev) => {
+      const updated = prev.filter((p) => p.id !== planId);
+      try {
+        localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    try {
+      const ok = await deleteStudentMedicalPlanFromFirestore(planId);
+      if (ok) {
+        soundManager.playChime();
+      }
+      return ok;
+    } catch (e) {
+      console.warn('Failed to sync deleted plan to Firestore:', e);
+      return false;
+    }
+  }, []);
+
+  const handleMarkMedicalPlanCompleted = useCallback(async (planId: string) => {
+    let planToSave: StudentMedicalPlan | null = null;
+    setMedicalPlans((prev) => {
+      const updated = prev.map((p) => {
+        if (p.id === planId) {
+          planToSave = { ...p, status: 'selesai' as const };
+          return planToSave;
+        }
+        return p;
+      });
+      try {
+        localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (planToSave) {
+      saveStudentMedicalPlanToFirestore(planToSave).catch(console.error);
+    }
+  }, []);
+
+  const handleRefreshMedicalPlansFromServer = useCallback(async (): Promise<{ success: boolean; count: number; plans: StudentMedicalPlan[] }> => {
+    try {
+      if (isFirestoreOfflineOrQuotaExhausted()) {
+        await resetQuotaExhausted();
+      }
+      const latest = await fetchStudentMedicalPlansFromFirestore();
+      if (latest !== null) {
+        setMedicalPlans(latest);
+        try {
+          localStorage.setItem('wali_asuh_student_medical_plans_v1', JSON.stringify(latest));
+        } catch {}
+        soundManager.playChime();
+        return { success: true, count: latest.length, plans: latest };
+      }
+      return { success: false, count: 0, plans: [] };
+    } catch (err) {
+      console.warn('Failed to manually sync medical plans:', err);
+      throw err;
+    }
   }, []);
 
   // Customizable SOP checklist tasks state (persisted in Firestore & localStorage)
@@ -658,6 +703,16 @@ export default function App() {
       } catch (sopErr) {
         console.warn('Could not refresh SOP tasks during manual fetch:', sopErr);
       }
+
+      // Also refresh Student Medical Plans from server
+      try {
+        const latestPlans = await fetchStudentMedicalPlansFromFirestore();
+        if (latestPlans && latestPlans.length > 0) {
+          setMedicalPlans(latestPlans);
+        }
+      } catch (medErr) {
+        console.warn('Could not refresh medical plans during manual fetch:', medErr);
+      }
     } catch (err) {
       console.error('Error fetching schedule from server:', err);
       setCloudStatus('offline');
@@ -913,6 +968,11 @@ export default function App() {
                 onDeletePlan={handleDeleteMedicalPlan}
                 staffList={staffList}
                 selectedStaffId={selectedStaffId}
+                cloudStatus={cloudStatus}
+                onRefreshFromServer={handleRefreshMedicalPlansFromServer}
+                scheduleYear={schedule.year}
+                scheduleMonth={schedule.month}
+                activeScheduleDay={activeDay}
               />
             )}
 

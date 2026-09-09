@@ -9,6 +9,11 @@ import {
   doc, 
   getDoc, 
   setDoc, 
+  deleteDoc,
+  collection,
+  getDocs,
+  getDocsFromServer,
+  getDocFromServer,
   onSnapshot, 
   Firestore,
   Unsubscribe,
@@ -873,32 +878,157 @@ export function getLocalStudentMedicalPlans(): StudentMedicalPlan[] {
   return defaults;
 }
 
+/**
+ * Fetch all student medical plans directly from Cloud Firestore (bypassing stale cache)
+ */
+export async function fetchStudentMedicalPlansFromFirestore(): Promise<StudentMedicalPlan[] | null> {
+  // If offline state was previously tripped, attempt to restore connection
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    try {
+      await resetQuotaExhausted();
+    } catch {}
+  }
+
+  try {
+    const plansMap = new Map<string, StudentMedicalPlan>();
+
+    // 1. Fetch from individual docs collection 'student_medical_plans' (prefer server to prevent stale cache)
+    try {
+      const colRef = collection(db, 'student_medical_plans');
+      let snap;
+      try {
+        snap = await getDocsFromServer(colRef);
+      } catch {
+        snap = await getDocs(colRef);
+      }
+      snap.forEach((d) => {
+        const data = d.data() as StudentMedicalPlan;
+        if (data && data.id && data.studentName) {
+          plansMap.set(data.id, { ...data, id: data.id });
+        }
+      });
+    } catch (colErr: any) {
+      if (colErr?.code === 'resource-exhausted' || colErr?.message?.includes('Quota limit exceeded')) {
+        markQuotaExhausted();
+        return null;
+      }
+      console.warn('[Firestore] Note reading student_medical_plans collection:', colErr);
+    }
+
+    // 2. Also check backward-compatible single document 'settings/student_medical_plans'
+    try {
+      const docRef = doc(db, 'settings', 'student_medical_plans');
+      let docSnap;
+      try {
+        docSnap = await getDocFromServer(docRef);
+      } catch {
+        docSnap = await getDoc(docRef);
+      }
+      if (docSnap && docSnap.exists()) {
+        const data = docSnap.data();
+        if (Array.isArray(data.plans)) {
+          for (const p of data.plans) {
+            if (p && p.id && !plansMap.has(p.id)) {
+              plansMap.set(p.id, p);
+              // Migrate to collection asynchronously
+              setDoc(doc(db, 'student_medical_plans', p.id), p, { merge: true }).catch(() => {});
+            }
+          }
+        }
+      }
+    } catch (docErr: any) {
+      if (docErr?.code === 'resource-exhausted' || docErr?.message?.includes('Quota limit exceeded')) {
+        markQuotaExhausted();
+        return null;
+      }
+    }
+
+    const plansList = Array.from(plansMap.values());
+    try {
+      localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(plansList));
+    } catch {}
+    return plansList;
+  } catch (err: any) {
+    if (err?.code === 'resource-exhausted' || err?.message?.includes('Quota limit exceeded')) {
+      markQuotaExhausted();
+      return null;
+    }
+    console.warn('[Firestore] Error fetching student medical plans:', err);
+    return null;
+  }
+}
+
+/**
+ * Realtime subscription to student medical plans across all devices
+ */
 export function subscribeToStudentMedicalPlans(
   onData: (plans: StudentMedicalPlan[]) => void,
   onError?: (err: any) => void
 ): Unsubscribe {
-  // Emit local value immediately
+  // Emit local value immediately for instant UI responsiveness
   onData(getLocalStudentMedicalPlans());
 
   if (isFirestoreOfflineOrQuotaExhausted()) {
-    if (onError) onError(new Error('Firestore offline/quota-exceeded'));
-    return () => {};
+    // Attempt re-enable in case connection has recovered
+    resetQuotaExhausted().catch(() => {});
   }
 
+  // Direct server fetch to ensure zero staleness
+  fetchStudentMedicalPlansFromFirestore().then((fetched) => {
+    if (fetched) {
+      onData(fetched);
+    }
+  }).catch(() => {});
+
   try {
-    const docRef = doc(db, 'settings', 'student_medical_plans');
+    const colRef = collection(db, 'student_medical_plans');
     return onSnapshot(
-      docRef,
+      colRef,
       (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          if (Array.isArray(data.plans)) {
-            try {
-              localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(data.plans));
-            } catch {}
-            onData(data.plans);
+        const plans: StudentMedicalPlan[] = [];
+        snapshot.forEach((d) => {
+          const data = d.data() as StudentMedicalPlan;
+          if (data && data.id && data.studentName) {
+            plans.push({ ...data, id: data.id });
           }
+        });
+
+        if (plans.length > 0) {
+          try {
+            localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(plans));
+          } catch {}
+          onData(plans);
+          return;
         }
+
+        // If snapshot is empty, also check legacy document
+        const docRef = doc(db, 'settings', 'student_medical_plans');
+        getDoc(docRef).then((dSnap) => {
+          if (dSnap.exists()) {
+            const data = dSnap.data();
+            if (Array.isArray(data.plans) && data.plans.length > 0) {
+              try {
+                localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(data.plans));
+              } catch {}
+              onData(data.plans);
+              // Migrate items to collection
+              for (const p of data.plans) {
+                if (p?.id) {
+                  setDoc(doc(db, 'student_medical_plans', p.id), p, { merge: true }).catch(() => {});
+                }
+              }
+              return;
+            }
+          }
+          // If server confirmed empty collection
+          if (!snapshot.metadata.fromCache) {
+            onData([]);
+          }
+        }).catch(() => {
+          if (!snapshot.metadata.fromCache) {
+            onData([]);
+          }
+        });
       },
       (err) => {
         if (err?.code === 'resource-exhausted' || err?.message?.includes('Quota limit exceeded')) {
@@ -913,6 +1043,92 @@ export function subscribeToStudentMedicalPlans(
   }
 }
 
+/**
+ * Save a single medical plan directly to Cloud Firestore collection
+ * (Prevents race conditions / clobbering concurrent edits from other devices)
+ */
+export async function saveStudentMedicalPlanToFirestore(
+  plan: StudentMedicalPlan
+): Promise<boolean> {
+  // 1. Update local cache immediately
+  try {
+    const current = getLocalStudentMedicalPlans();
+    const idx = current.findIndex((p) => p.id === plan.id);
+    const updated = idx >= 0 ? current.map((p) => (p.id === plan.id ? plan : p)) : [plan, ...current];
+    localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+
+  // 2. Ensure network is enabled
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    try {
+      await resetQuotaExhausted();
+    } catch {}
+  }
+
+  try {
+    // Save individual document in 'student_medical_plans'
+    const planDocRef = doc(db, 'student_medical_plans', plan.id);
+    await setDoc(planDocRef, plan, { merge: true });
+
+    // Keep 'settings/student_medical_plans' synced as aggregate backup
+    const backupDocRef = doc(db, 'settings', 'student_medical_plans');
+    const localPlans = getLocalStudentMedicalPlans();
+    await setDoc(backupDocRef, { plans: localPlans, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+
+    return true;
+  } catch (err: any) {
+    if (err?.code === 'resource-exhausted' || err?.message?.includes('Quota limit exceeded')) {
+      markQuotaExhausted();
+      return false;
+    }
+    console.warn('[Firestore] Failed to save medical plan:', err);
+    return false;
+  }
+}
+
+/**
+ * Delete a medical plan from Cloud Firestore collection & backup
+ */
+export async function deleteStudentMedicalPlanFromFirestore(
+  planId: string
+): Promise<boolean> {
+  // 1. Update local cache immediately
+  try {
+    const current = getLocalStudentMedicalPlans();
+    const updated = current.filter((p) => p.id !== planId);
+    localStorage.setItem(MEDICAL_PLANS_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    try {
+      await resetQuotaExhausted();
+    } catch {}
+  }
+
+  try {
+    // Delete individual doc from collection
+    const planDocRef = doc(db, 'student_medical_plans', planId);
+    await deleteDoc(planDocRef);
+
+    // Update backup settings doc
+    const backupDocRef = doc(db, 'settings', 'student_medical_plans');
+    const localPlans = getLocalStudentMedicalPlans();
+    await setDoc(backupDocRef, { plans: localPlans, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+
+    return true;
+  } catch (err: any) {
+    if (err?.code === 'resource-exhausted' || err?.message?.includes('Quota limit exceeded')) {
+      markQuotaExhausted();
+      return false;
+    }
+    console.warn('[Firestore] Failed to delete medical plan:', err);
+    return false;
+  }
+}
+
+/**
+ * Save all medical plans to Firestore (batch sync)
+ */
 export async function saveAllStudentMedicalPlansToFirestore(
   plans: StudentMedicalPlan[]
 ): Promise<boolean> {
@@ -925,6 +1141,14 @@ export async function saveAllStudentMedicalPlansToFirestore(
   }
 
   try {
+    // Save to collection
+    for (const plan of plans) {
+      if (plan?.id) {
+        setDoc(doc(db, 'student_medical_plans', plan.id), plan, { merge: true }).catch(() => {});
+      }
+    }
+
+    // Save to backup aggregate doc
     const docRef = doc(db, 'settings', 'student_medical_plans');
     await setDoc(docRef, { plans, updatedAt: new Date().toISOString() }, { merge: true });
     return true;
