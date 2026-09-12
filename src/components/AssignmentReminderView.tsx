@@ -450,13 +450,26 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
 
     // Mobile (Jaga Malam) (M1, M2, M3)
     lines.push('mobile (jaga malam) ( M1 ,M2 ,M3 )');
+    let hasM3 = false;
     if (posData.mobile.length === 0) {
       lines.push('- Belum ada petugas');
     } else {
       posData.mobile.forEach((item, idx) => {
         const displayName = item.customName || item.name;
-        lines.push(`${idx + 1}. ${displayName}`);
+        if (item.shiftCode === 'M3') {
+          hasM3 = true;
+          lines.push(`${idx + 1}. ${displayName} (M3 - Patroli Keliling Asrama 23:00 WIB & Kirim Foto Grup)`);
+        } else {
+          lines.push(`${idx + 1}. ${displayName}`);
+        }
       });
+    }
+
+    if (hasM3) {
+      lines.push('');
+      lines.push('📌 *CATATAN KHUSUS SHIF M3 (23:00 - 07:00):*');
+      lines.push('- Hadir pukul 23:00 WIB wajib keliling asrama santri & lingkungan sekitar serta kirim foto ke grup dinas');
+      lines.push('- Mendampingi penuh shif malam, mulai pukul 03:00 WIB menjalankan SOP kode M2 (subuh & bangun pagi santri)');
     }
 
     lines.push('');
@@ -791,8 +804,12 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                                       (kustom)
                                     </span>
                                   )}
-                                  <span className="px-1 py-0.1 rounded text-[8px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 shrink-0 leading-tight">
-                                    {item.shiftCode}
+                                  <span className={`px-1 py-0.1 rounded text-[8px] font-bold shrink-0 leading-tight ${
+                                    item.shiftCode === 'M3'
+                                      ? 'bg-fuchsia-600 text-white'
+                                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                  }`}>
+                                    {item.shiftCode === 'M3' ? 'M3 (Patroli 23:00)' : item.shiftCode}
                                   </span>
                                 </div>
                               )}

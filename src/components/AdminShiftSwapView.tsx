@@ -26,8 +26,9 @@ import {
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode, ShiftSwapRecord, AnnouncementData } from '../types';
 import { SHIFT_DEFINITIONS } from '../data/initialSchedule';
-import { INDONESIAN_DAY_NAMES, INDONESIAN_MONTH_NAMES } from '../utils/scheduler';
+import { INDONESIAN_DAY_NAMES, INDONESIAN_MONTH_NAMES, validateShiftAssignment } from '../utils/scheduler';
 import { soundManager } from '../utils/audio';
+import { notificationService } from '../utils/notification';
 import { 
   subscribeToSwapLogs, 
   saveSwapLogsToFirestore,
@@ -277,9 +278,34 @@ export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
 
     persistSwapLogs([newLog, ...swapLogs]);
     soundManager.playChime();
+
+    // Validasi penugasan shif M3: jika salah satu staf ditugaskan M3, sistem otomatis memicu pengingat khusus
+    if (staff2CurrentShift === 'M3' && staff1Obj) {
+      const val = validateShiftAssignment(staff1Obj, 'M3', activeDay, schedule.days);
+      if (val.hasSpecialReminder && val.specialReminder) {
+        notificationService.triggerNotification(val.specialReminder.title, {
+          body: val.specialReminder.message,
+          sound: 'bell',
+        });
+      }
+    }
+    if (staff1CurrentShift === 'M3' && staff2Obj) {
+      const val = validateShiftAssignment(staff2Obj, 'M3', activeDay, schedule.days);
+      if (val.hasSpecialReminder && val.specialReminder) {
+        notificationService.triggerNotification(val.specialReminder.title, {
+          body: val.specialReminder.message,
+          sound: 'bell',
+        });
+      }
+    }
+
+    const m3Notice = (staff2CurrentShift === 'M3' || staff1CurrentShift === 'M3') 
+      ? ' ⏰ [Pengingat M3 Otomatis]: Wajib keliling asrama jam 23:00 & kirim foto ke grup dinas!'
+      : '';
+
     showToast(
       'success',
-      `Berhasil menukar shif: ${staff1Obj?.name} (${staff2CurrentShift}) ⇄ ${staff2Obj?.name} (${staff1CurrentShift}) pada tanggal ${activeDay} ${monthName}.`
+      `Berhasil menukar shif: ${staff1Obj?.name} (${staff2CurrentShift}) ⇄ ${staff2Obj?.name} (${staff1CurrentShift}) pada tanggal ${activeDay} ${monthName}.${m3Notice}`
     );
   };
 
@@ -320,9 +346,25 @@ export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
 
     persistSwapLogs([newLog, ...swapLogs]);
     soundManager.playChime();
+
+    // Validasi penugasan shif M3: jika ditugaskan M3, sistem otomatis memicu pengingat khusus
+    if (overrideShift === 'M3' && staff1Obj) {
+      const val = validateShiftAssignment(staff1Obj, 'M3', activeDay, schedule.days);
+      if (val.hasSpecialReminder && val.specialReminder) {
+        notificationService.triggerNotification(val.specialReminder.title, {
+          body: val.specialReminder.message,
+          sound: 'bell',
+        });
+      }
+    }
+
+    const m3Notice = overrideShift === 'M3' 
+      ? ' ⏰ [Pengingat M3 Otomatis]: Wajib keliling asrama jam 23:00 & kirim foto ke grup dinas!'
+      : '';
+
     showToast(
       'success',
-      `Shift ${staff1Obj?.name} pada tgl ${activeDay} ${monthName} berhasil diubah menjadi [${overrideShift}].`
+      `Shift ${staff1Obj?.name} pada tgl ${activeDay} ${monthName} berhasil diubah menjadi [${overrideShift}].${m3Notice}`
     );
   };
 

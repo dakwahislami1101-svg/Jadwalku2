@@ -372,6 +372,103 @@ export function getActiveShiftsAtTime(timeStr: string): ShiftCode[] {
   return active;
 }
 
+export interface ShiftValidationResult {
+  isValid: boolean;
+  code: ShiftCode;
+  staffId: number;
+  staffName: string;
+  day: number;
+  hasSpecialReminder: boolean;
+  specialReminder?: {
+    title: string;
+    message: string;
+    dutyTime: string;
+    taskTitle: string;
+    actionInstruction: string;
+    requiredActions: string[];
+    sound: 'bell' | 'chime';
+  };
+  notes?: string;
+  warning?: string;
+}
+
+/**
+ * Logika Validasi Penjadwalan:
+ * Memeriksa validitas penugasan shif staf.
+ * Khusus saat staf ditugaskan pada kode M3 (Jaga Malam Pendamping),
+ * sistem secara otomatis menghasilkan pengingat khusus untuk tugas keliling asrama di jam 23:00 WIB,
+ * pelaporan foto ke grup dinas, serta menjalankan SOP M2 mulai pukul 03:00.
+ */
+export function validateShiftAssignment(
+  staff: Staff | { id: number; name: string },
+  shift: ShiftCode,
+  day: number,
+  scheduleContext?: Record<number, Record<number, ShiftCode>>
+): ShiftValidationResult {
+  const staffId = staff.id;
+  const staffName = staff.name || `Petugas #${staffId}`;
+
+  // Logika khusus validasi dan pengingat untuk penugasan M3
+  if (shift === 'M3') {
+    return {
+      isValid: true,
+      code: 'M3',
+      staffId,
+      staffName,
+      day,
+      hasSpecialReminder: true,
+      specialReminder: {
+        title: `⏰ Pengingat Khusus Shif M3 (${staffName} - Tgl ${day})`,
+        message: `Petugas ${staffName} ditugaskan pada kode M3 (Malam Pendamping) tanggal ${day}. Wajib hadir pukul 23:00 WIB untuk tugas keliling asrama & lingkungan sekitar, kirim foto ke grup dinas, serta menjalankan SOP M2 mulai pukul 03:00.`,
+        dutyTime: '23:00 WIB',
+        taskTitle: 'Tugas Keliling Asrama & Lingkungan Sekitar',
+        actionInstruction: 'Datang tepat pukul 23:00 WIB, wajib keliling asrama & lingkungan sekitar, serta kirim foto dokumentasi ke grup dinas. Pukul 03:00 s.d 07:00 menjalankan SOP M2.',
+        requiredActions: [
+          'Hadir tepat waktu pukul 23:00 WIB di pos asrama',
+          'Wajib patroli/keliling asrama dan lingkungan sekitar',
+          'Ambil foto dokumentasi dan kirim ke grup WhatsApp dinas',
+          'Mendampingi penuh seluruh shif malam hingga pukul 07:00 WIB',
+          'Mulai pukul 03:00 dan seterusnya menjalankan tugas kode M2 (bangun subuh santri & sholat)'
+        ],
+        sound: 'bell',
+      },
+      notes: 'M3 (23:00 - 07:00): Wajib patroli keliling asrama jam 23:00 & kirim foto dokumentasi ke grup dinas.',
+    };
+  }
+
+  return {
+    isValid: true,
+    code: shift,
+    staffId,
+    staffName,
+    day,
+    hasSpecialReminder: false,
+  };
+}
+
+/**
+ * Validasi seluruh jadwal bulan untuk mendeteksi penugasan kode M3
+ * dan mengumpulkan seluruh pengingat khusus tugas keliling asrama 23:00.
+ */
+export function validateScheduleM3Assignments(
+  schedule: MonthSchedule,
+  targetDay?: number
+): ShiftValidationResult[] {
+  const results: ShiftValidationResult[] = [];
+  const daysToCheck = targetDay ? [targetDay] : Array.from({ length: schedule.totalDays }, (_, i) => i + 1);
+
+  daysToCheck.forEach((d) => {
+    schedule.staffList.forEach((staff) => {
+      const shift = schedule.days[d]?.[staff.id];
+      if (shift === 'M3') {
+        results.push(validateShiftAssignment(staff, 'M3', d, schedule.days));
+      }
+    });
+  });
+
+  return results;
+}
+
 // Generate new month automatic shift rotation based on the official Kemensos rotation cycle pattern:
 // Pola: 1P - 4S - 1M - 1LP (Tanpa Off, hanya Lepas Piket setelah M)
 export function generateAutoSchedule(

@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
-import { calculateDailyStats, INDONESIAN_MONTH_NAMES, INDONESIAN_DAY_NAMES } from '../utils/scheduler';
+import { calculateDailyStats, INDONESIAN_MONTH_NAMES, INDONESIAN_DAY_NAMES, validateShiftAssignment } from '../utils/scheduler';
 import { generateDailySchedulePDF } from '../utils/pdfExport';
 import { soundManager } from '../utils/audio';
 import { notificationService } from '../utils/notification';
@@ -287,6 +287,23 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   const dayDate = new Date(schedule.year, schedule.month - 1, activeDay);
   const dayName = INDONESIAN_DAY_NAMES[dayDate.getDay()];
   const dateFormatted = `${dayName}, ${activeDay} ${schedule.monthName} ${schedule.year}`;
+
+  // Otomatis memicu pengingat khusus saat staf ditugaskan pada kode M3
+  useEffect(() => {
+    if (userTodayShift === 'M3') {
+      const reminderKey = `m3_auto_notified_${schedule.year}_${schedule.month}_${activeDay}_${selectedStaff.id}`;
+      if (!sessionStorage.getItem(reminderKey)) {
+        sessionStorage.setItem(reminderKey, 'true');
+        const val = validateShiftAssignment(selectedStaff, 'M3', activeDay, schedule.days);
+        if (val.hasSpecialReminder && val.specialReminder) {
+          notificationService.triggerNotification(val.specialReminder.title, {
+            body: val.specialReminder.message,
+            sound: 'bell',
+          });
+        }
+      }
+    }
+  }, [userTodayShift, selectedStaff.id, selectedStaff.name, activeDay, schedule.year, schedule.month, schedule.days, selectedStaff]);
 
   const triggerTestAlarm = () => {
     notificationService.triggerNotification(
@@ -552,6 +569,48 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         </div>
       </div>
 
+      {/* Banner Khusus Validasi & Pengingat Shif M3 (23:00 WIB) */}
+      {userTodayShift === 'M3' && (
+        <div className="rounded-xl bg-gradient-to-r from-fuchsia-950/90 via-purple-900/90 to-slate-900 text-white p-3 sm:p-4 border-2 border-fuchsia-500 shadow-md animate-in fade-in">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-400/40 text-[10.5px] font-bold">
+                <Moon className="w-3.5 h-3.5 text-fuchsia-300" />
+                <span>PENGINGAT KHUSUS PENUGASAN SHIF M3 (23:00 WIB)</span>
+              </div>
+              <h4 className="text-sm sm:text-base font-black text-fuchsia-100 flex flex-wrap items-center gap-2">
+                <span>Tugas Wajib Keliling Asrama & Kirim Foto ke Grup Dinas</span>
+                <span className="px-2 py-0.5 rounded bg-fuchsia-500 text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
+                  Jam 23:00 WIB
+                </span>
+              </h4>
+              <p className="text-xs text-fuchsia-100/90 leading-relaxed max-w-3xl">
+                Petugas <strong>{selectedStaff.name}</strong> ditugaskan pada kode <strong>M3 (Jaga Malam Pendamping)</strong>.
+                Saat datang tepat pukul <strong>23:00 WIB</strong>, wajib melakukan kontrol keliling asrama santri dan lingkungan sekitar,
+                serta <strong>mengirimkan foto dokumentasi ke grup dinas</strong>. Mendampingi full shif malam s.d 07:00 WIB (pukul 03:00 WIB dan seterusnya menjalankan SOP tugas M2).
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playBell();
+                  notificationService.triggerNotification(`🚨 Pengingat Shif M3: Tugas Keliling Asrama 23:00 WIB`, {
+                    body: `${selectedStaff.name} wajib keliling asrama & lingkungan sekitar pukul 23:00 WIB serta kirim foto ke grup dinas!`,
+                    sound: 'bell',
+                  });
+                  showToast('Alarm pengingat tugas patroli keliling 23:00 WIB dibunyikan!');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500 hover:bg-fuchsia-400 text-white font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
+              >
+                <BellRing className="w-3.5 h-3.5" />
+                <span>Bunyikan Pengingat 23:00</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Real-Time Shift Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         {/* Shif Pagi */}
@@ -801,6 +860,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
             <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
               {relevantTasks.map((task) => {
                 const isDone = Boolean(completedTasks[`${activeDay}_${task.id}`]);
+                const isM3Patrol = task.time === '23:00' && (userTodayShift === 'M3' || task.shiftCode === 'M3');
                 return (
                   <div
                     key={task.id}
@@ -808,6 +868,8 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                     className={`cursor-pointer rounded-lg p-2 border transition-all flex items-start gap-2 ${
                       isDone
                         ? 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-75'
+                        : isM3Patrol
+                        ? 'bg-fuchsia-50/70 dark:bg-fuchsia-950/30 border-fuchsia-400 dark:border-fuchsia-700 shadow-2xs hover:border-fuchsia-500'
                         : 'bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-600'
                     }`}
                   >
@@ -825,13 +887,23 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
 
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
-                        <span className="font-mono text-[10.5px] font-bold px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        <span className={`font-mono text-[10.5px] font-bold px-1.5 py-0.2 rounded border ${
+                          isM3Patrol
+                            ? 'bg-fuchsia-100 dark:bg-fuchsia-950 text-fuchsia-800 dark:text-fuchsia-200 border-fuchsia-300 dark:border-fuchsia-800'
+                            : 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                        }`}>
                           {task.time} WIB
                         </span>
                         <h4 className={`text-xs font-semibold ${isDone ? 'line-through text-slate-400' : 'text-slate-900 dark:text-white'}`}>
                           {task.title}
                         </h4>
-                        {task.priority === 'krusial' && (
+                        {isM3Patrol && (
+                          <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-fuchsia-600 text-white flex items-center gap-0.5 shadow-2xs">
+                            <Moon className="w-2.5 h-2.5" />
+                            <span>Wajib Keliling 23:00 (Foto Grup)</span>
+                          </span>
+                        )}
+                        {task.priority === 'krusial' && !isM3Patrol && (
                           <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
                             Wajib
                           </span>

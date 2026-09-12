@@ -199,14 +199,14 @@ export const SHIFT_DEFINITIONS: Record<ShiftCode, ShiftInfo> = {
     startTime: '23:00',
     endTime: '07:00',
     hours: 8,
-    color: '#c026d3', // Magenta / Fuchsia
-    bgLight: 'bg-fuchsia-100 text-fuchsia-950 border-fuchsia-400',
-    bgDark: 'dark:bg-fuchsia-950/70 dark:text-fuchsia-200 dark:border-fuchsia-600',
-    borderLight: 'border-fuchsia-400',
-    borderDark: 'dark:border-fuchsia-600',
-    textColor: 'text-fuchsia-900',
-    darkTextColor: 'dark:text-fuchsia-200',
-    badgeClass: 'bg-fuchsia-600 text-white font-bold',
+    color: '#d946ef', // Striking Magenta
+    bgLight: 'bg-fuchsia-600 text-white border-fuchsia-700 shadow-xs ring-1 ring-fuchsia-400 font-black',
+    bgDark: 'dark:bg-fuchsia-600 dark:text-white dark:border-fuchsia-400 dark:ring-fuchsia-400 font-black',
+    borderLight: 'border-fuchsia-700',
+    borderDark: 'dark:border-fuchsia-400',
+    textColor: 'text-fuchsia-600',
+    darkTextColor: 'dark:text-fuchsia-400',
+    badgeClass: 'bg-fuchsia-600 text-white font-black shadow-xs ring-1 ring-fuchsia-400',
     description: 'Piket malam pendamping full semua shif malam (23:00 - 07:00). Datang jam 23:00 wajib keliling asrama & lingkungan sekitar, kirim foto ke grup. Pukul 03:00 dan seterusnya menjalankan kode M2.',
   },
   M: {
