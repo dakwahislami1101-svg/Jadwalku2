@@ -150,7 +150,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
         return shiftOnActiveDay === 'S' || shiftOnActiveDay === 'S2A' || shiftOnActiveDay === 'S3A' || shiftOnActiveDay === 'S4A';
       }
       if (shiftFilter === 'MALAM_ALL') {
-        return shiftOnActiveDay === 'M' || shiftOnActiveDay === 'M1' || shiftOnActiveDay === 'M2';
+        return shiftOnActiveDay === 'M' || shiftOnActiveDay === 'M1' || shiftOnActiveDay === 'M2' || shiftOnActiveDay === 'M3';
       }
       return shiftOnActiveDay === shiftFilter;
     });
@@ -246,10 +246,11 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
               <option value="S2A">S2A (Kantin SMP)</option>
               <option value="S3A">S3A (Kantin SMA)</option>
               <option value="S4A">S4A (Jaga Masjid)</option>
-              <option value="MALAM_ALL">Semua Malam (M/M1/M2 15:00-07:00)</option>
+              <option value="MALAM_ALL">Semua Malam (M/M1/M2/M3 15:00-07:00)</option>
               <option value="M">M (Malam Standar)</option>
               <option value="M1">M1 (Malam Sesi 1)</option>
               <option value="M2">M2 (Malam Sesi 2)</option>
+              <option value="M3">M3 (Malam Pendamping)</option>
               <option value="LP">LP (Lepas Piket)</option>
               <option value="O">O (Libur / Off)</option>
               <option value="C">C (Cuti)</option>
@@ -903,6 +904,19 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                   </td>
                 ))}
                 <td colSpan={9} className="bg-blue-50 dark:bg-blue-950"></td>
+              </tr>
+
+              {/* M3 (Malam Pendamping) */}
+              <tr className="bg-fuchsia-50/70 dark:bg-fuchsia-950/30 text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 text-[9.5px]">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-fuchsia-50 dark:bg-fuchsia-950 font-semibold text-fuchsia-900 dark:text-fuchsia-300 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
+                  - M3 (Malam Pendamping)
+                </td>
+                {dailyStatsList.map((st, i) => (
+                  <td key={i} className="p-0.2 border-r border-slate-300 dark:border-slate-700 text-fuchsia-800 dark:text-fuchsia-300 font-bold">
+                    {st.m3 || 0}
+                  </td>
+                ))}
+                <td colSpan={9} className="bg-fuchsia-50 dark:bg-fuchsia-950"></td>
               </tr>
 
               {/* CUTI */}

@@ -14,11 +14,12 @@ import {
   Coffee,
   AlertTriangle
 } from 'lucide-react';
-import { MonthSchedule, Staff, ShiftCode } from '../types';
+import { MonthSchedule, Staff, ShiftCode, DailyTask } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
 import { calculateStaffSummary, INDONESIAN_DAY_NAMES } from '../utils/scheduler';
 import { soundManager } from '../utils/audio';
 import { notificationService } from '../utils/notification';
+import { IcsExportModal } from './IcsExportModal';
 
 interface PersonalScheduleProps {
   schedule: MonthSchedule;
@@ -28,6 +29,7 @@ interface PersonalScheduleProps {
   activeDay: number;
   setActiveDay: (day: number) => void;
   onNavigateToTab: (tab: 'dashboard' | 'matrix' | 'notifications') => void;
+  sopTasks?: DailyTask[];
 }
 
 export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
@@ -38,8 +40,10 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
   activeDay,
   setActiveDay,
   onNavigateToTab,
+  sopTasks,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [isIcsModalOpen, setIsIcsModalOpen] = useState(false);
 
   const selectedStaff = staffList.find((s) => s.id === selectedStaffId) || staffList[0] || {
     id: 0,
@@ -213,11 +217,13 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
           <div className="text-lg font-black text-blue-800 dark:text-blue-200 mt-0.5">
             {summary.m} <span className="text-[10px] font-normal text-blue-600">Hari</span>
           </div>
-          {(summary.m1 !== undefined || summary.m2 !== undefined) && (
+          {(summary.m1 !== undefined || summary.m2 !== undefined || summary.m3 !== undefined) && (
             <div className="flex flex-wrap gap-1 mt-1 pt-1 border-t border-blue-100 dark:border-blue-900/40 text-[9px] text-slate-600 dark:text-slate-300">
               <span className="font-semibold text-indigo-600 dark:text-indigo-400" title="Malam Sesi 1 (s.d 00:00)">M1: {summary.m1 || 0}</span>
               <span>•</span>
               <span className="font-semibold text-blue-600 dark:text-blue-400" title="Malam Sesi 2 (Subuh-07:00)">M2: {summary.m2 || 0}</span>
+              <span>•</span>
+              <span className="font-semibold text-fuchsia-600 dark:text-fuchsia-400" title="Malam Pendamping (23:00-07:00)">M3: {summary.m3 || 0}</span>
             </div>
           )}
         </div>
@@ -250,22 +256,34 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
                 Kalender Shif Bulanan ({schedule.monthName} {schedule.year})
               </h3>
             </div>
-            <button
-              onClick={handleCopySchedule}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition-colors"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3 h-3" />
-                  <span>Tersalin!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  <span>Salin WA</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+              <button
+                type="button"
+                onClick={() => setIsIcsModalOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors cursor-pointer"
+                title="Ekspor pengingat tugas harian & shif ke kalender pribadi Google Calendar / Outlook (.ics)"
+              >
+                <CalendarIcon className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                <span>Sinkron Kalender (.ICS)</span>
+              </button>
+
+              <button
+                onClick={handleCopySchedule}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition-colors"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3" />
+                    <span>Tersalin!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Salin WA</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Monthly Day Grid */}
@@ -388,17 +406,35 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
             ))}
           </div>
 
-          <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700">
+          <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-1.5">
+            <button
+              onClick={() => setIsIcsModalOpen(true)}
+              className="w-full py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <CalendarIcon className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+              <span>Ekspor ke Kalender HP (.ICS)</span>
+            </button>
+
             <button
               onClick={() => onNavigateToTab('notifications')}
               className="w-full py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors flex items-center justify-center gap-1"
             >
-              <BellRing className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-              <span>Atur Notifikasi</span>
+              <BellRing className="w-3 h-3 text-slate-600 dark:text-slate-300" />
+              <span>Atur Alarm & Notifikasi</span>
             </button>
           </div>
         </div>
       </div>
+
+      {/* ICS Calendar Export Modal */}
+      <IcsExportModal
+        isOpen={isIcsModalOpen}
+        onClose={() => setIsIcsModalOpen(false)}
+        staff={selectedStaff}
+        schedule={schedule}
+        activeDay={activeDay}
+        sopTasks={sopTasks}
+      />
     </div>
   );
 };

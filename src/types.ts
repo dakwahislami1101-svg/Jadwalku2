@@ -1,4 +1,4 @@
-export type ShiftCode = 'P' | 'P1' | 'P2' | 'P3' | 'S' | 'S2A' | 'S3A' | 'S4A' | 'M' | 'M1' | 'M2' | 'LP' | 'O' | 'L' | 'C';
+export type ShiftCode = 'P' | 'P1' | 'P2' | 'P3' | 'S' | 'S2A' | 'S3A' | 'S4A' | 'M' | 'M1' | 'M2' | 'M3' | 'LP' | 'O' | 'L' | 'C';
 
 export interface ShiftInfo {
   code: ShiftCode;
@@ -60,9 +60,10 @@ export interface ShiftSummary {
   s3a?: number;
   s4a?: number;
   m: number;
-  mFull?: number; // M + M1 + M2
+  mFull?: number; // M + M1 + M2 + M3
   m1?: number;
   m2?: number;
+  m3?: number;
   lp: number;
   off: number;
   cuti: number;
@@ -107,6 +108,25 @@ export interface Student {
   birthDate: string;
   motherName: string;
   address: string;
+  // Custom edited fields
+  phone?: string;
+  room?: string;
+  bloodType?: string;
+  guardianName?: string;
+  emergencyContact?: string;
+  notes?: string;
+}
+
+export interface StudentPortfolioNote {
+  id: string;
+  studentNo: number;
+  studentName: string;
+  date: string; // YYYY-MM-DD
+  category: 'Ibadah' | 'Akademik' | 'Perilaku' | 'Kesehatan' | 'Minat Bakat' | 'Kedisiplinan' | 'Lainnya';
+  content: string;
+  authorName: string;
+  authorRole?: string;
+  createdAt: string;
 }
 
 export interface SickStudent {

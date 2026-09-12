@@ -33,6 +33,7 @@ export function calculateStaffSummary(
       mFull: 0,
       m1: 0,
       m2: 0,
+      m3: 0,
       lp: 0,
       off: 0,
       cuti: 0,
@@ -51,6 +52,7 @@ export function calculateStaffSummary(
   let m = 0;
   let m1 = 0;
   let m2 = 0;
+  let m3 = 0;
   let lp = 0;
   let off = 0;
   let cuti = 0;
@@ -93,6 +95,10 @@ export function calculateStaffSummary(
         m++;
         m2++;
         break;
+      case 'M3':
+        m++;
+        m3++;
+        break;
       case 'M':
         m++;
         break;
@@ -112,9 +118,10 @@ export function calculateStaffSummary(
   const pFull = p + p1 + p2 + p3;
   // Calculate total working hours according to document hours:
   // P1 = 8h (07:00-15:00), P2 = 8h (08:00-16:00), P = 8h (07:00-15:00), P3 = 9h (07:00-16:00 Upacara Senin),
-  // S, S2A, S3A, S4A = 8h (15:00-23:00), M, M1, M2 = 16h (15:00-07:00 next day / 16h shift duty)
+  // S, S2A, S3A, S4A = 8h (15:00-23:00), M, M1, M2 = 16h (15:00-07:00 next day / 16h shift duty),
+  // M3 = 8h (23:00-07:00 next day)
   // LP, O, C = 0h
-  const totalHours = (p1 * 8) + (p * 8) + (p2 * 8) + (p3 * 9) + (s * 8) + (m * 16);
+  const totalHours = (p1 * 8) + (p * 8) + (p2 * 8) + (p3 * 9) + (s * 8) + ((m - m3) * 16) + (m3 * 8);
 
   return {
     staffId: staff.id,
@@ -132,6 +139,7 @@ export function calculateStaffSummary(
     mFull: m,
     m1,
     m2,
+    m3,
     lp,
     off,
     cuti,
@@ -154,6 +162,7 @@ export interface DailyColumnStats {
   mFull: number;
   m1: number;
   m2: number;
+  m3: number;
   cuti: number;
   offDanLepas: number;
   total: number;
@@ -167,6 +176,7 @@ export interface DailyColumnStats {
   malamWali: Staff[];
   malam1Wali: Staff[];
   malam2Wali: Staff[];
+  malam3Wali: Staff[];
   lepasWali: Staff[];
   offWali: Staff[];
   cutiWali: Staff[];
@@ -188,6 +198,7 @@ export function calculateDailyStats(
   let m = 0;
   let m1 = 0;
   let m2 = 0;
+  let m3 = 0;
   let cuti = 0;
   let offDanLepas = 0;
 
@@ -201,6 +212,7 @@ export function calculateDailyStats(
   const malamWali: Staff[] = [];
   const malam1Wali: Staff[] = [];
   const malam2Wali: Staff[] = [];
+  const malam3Wali: Staff[] = [];
   const lepasWali: Staff[] = [];
   const offWali: Staff[] = [];
   const cutiWali: Staff[] = [];
@@ -261,6 +273,12 @@ export function calculateDailyStats(
         malamWali.push(staff);
         malam2Wali.push(staff);
         break;
+      case 'M3':
+        m++;
+        m3++;
+        malamWali.push(staff);
+        malam3Wali.push(staff);
+        break;
       case 'M':
         m++;
         malamWali.push(staff);
@@ -295,6 +313,7 @@ export function calculateDailyStats(
     mFull: m,
     m1,
     m2,
+    m3,
     cuti,
     offDanLepas,
     total: staffList.length,
@@ -308,6 +327,7 @@ export function calculateDailyStats(
     malamWali,
     malam1Wali,
     malam2Wali,
+    malam3Wali,
     lepasWali,
     offWali,
     cutiWali,
@@ -343,6 +363,10 @@ export function getActiveShiftsAtTime(timeStr: string): ShiftCode[] {
     active.push('M');
     active.push('M1');
     active.push('M2');
+  }
+  // M3 (23:00 - 07:00 next day => >= 1380 OR < 420)
+  if (currentMinutes >= 23 * 60 || currentMinutes < 7 * 60) {
+    active.push('M3');
   }
 
   return active;
@@ -403,7 +427,7 @@ export function exportScheduleToCSV(
   summaries: ShiftSummary[]
 ): string {
   const headerDays = Array.from({ length: schedule.totalDays }, (_, i) => i + 1).join(',');
-  let csv = `No,Nama,${headerDays},P FUL,S,S2A (Kantin SMP),S3A (Kantin SMA),S4A (Jaga Masjid),M (Total),M1 (s.d 00:00),M2 (Subuh-07:00),LP,OFF,P1,P2,P3,JK (Jam)\n`;
+  let csv = `No,Nama,${headerDays},P FUL,S,S2A (Kantin SMP),S3A (Kantin SMA),S4A (Jaga Masjid),M (Total),M1 (s.d 00:00),M2 (Subuh-07:00),M3 (Pendamping 23-07),LP,OFF,P1,P2,P3,JK (Jam)\n`;
 
   schedule.staffList.forEach((staff, idx) => {
     const summary = summaries.find((s) => s.staffId === staff.id);
@@ -412,7 +436,7 @@ export function exportScheduleToCSV(
     }).join(',');
 
     const p1Val = (summary?.p1 || 0) + (summary?.p || 0);
-    const statsStr = `${summary?.pFull || 0},${summary?.s || 0},${summary?.s2a || 0},${summary?.s3a || 0},${summary?.s4a || 0},${summary?.m || 0},${summary?.m1 || 0},${summary?.m2 || 0},${summary?.lp || 0},${summary?.off || 0},${p1Val},${summary?.p2 || 0},${summary?.p3 || 0},${summary?.totalHours || 0}`;
+    const statsStr = `${summary?.pFull || 0},${summary?.s || 0},${summary?.s2a || 0},${summary?.s3a || 0},${summary?.s4a || 0},${summary?.m || 0},${summary?.m1 || 0},${summary?.m2 || 0},${summary?.m3 || 0},${summary?.lp || 0},${summary?.off || 0},${p1Val},${summary?.p2 || 0},${summary?.p3 || 0},${summary?.totalHours || 0}`;
 
     csv += `${idx + 1},"${staff.name}",${rowShifts},${statsStr}\n`;
   });

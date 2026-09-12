@@ -22,7 +22,8 @@ import {
   ListTodo,
   Pill,
   HeartPulse,
-  Send
+  Send,
+  GraduationCap
 } from 'lucide-react';
 import { Staff } from '../types';
 import { INSTITUTION_INFO } from '../data/initialSchedule';
@@ -30,8 +31,8 @@ import { soundManager } from '../utils/audio';
 
 interface NavbarProps {
   userRole?: 'admin' | 'staff';
-  currentTab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment';
-  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment') => void;
+  currentTab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio';
+  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio') => void;
   staffList: Staff[];
   selectedStaffId: number;
   setSelectedStaffId: (id: number) => void;
@@ -451,6 +452,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               <button
+                onClick={() => setCurrentTab('portfolio')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'portfolio'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-blue-800 dark:text-blue-300 bg-blue-50/70 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800'
+                }`}
+                title="Portofolio & Rekam Siswa Asuh (345 Siswa)"
+              >
+                <GraduationCap className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Portofolio Siswa</span>
+              </button>
+
+              <button
                 onClick={() => setCurrentTab('auto')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   currentTab === 'auto'
@@ -566,6 +580,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {medicalNotificationCount}
                   </span>
                 )}
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('portfolio')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'portfolio'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-blue-800 dark:text-blue-300 bg-blue-50/70 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800'
+                }`}
+                title="Portofolio & Rekam Siswa Asuh (345 Siswa)"
+              >
+                <GraduationCap className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Portofolio Siswa</span>
               </button>
 
               <button

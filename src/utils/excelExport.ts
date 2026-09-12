@@ -171,6 +171,11 @@ export function exportScheduleToExcel(
   dailyStatsList.forEach((st) => m2Row.push(st.m2 || 0));
   matrixData.push(m2Row);
 
+  // M3 Malam Pendamping
+  const m3Row: (string | number)[] = ['', 'M3 MALAM (Pendamping 23:00-07:00)'];
+  dailyStatsList.forEach((st) => m3Row.push(st.m3 || 0));
+  matrixData.push(m3Row);
+
   // LP Lepas Piket
   const lpRow: (string | number)[] = ['', '(LP) LEPAS PIKET'];
   dailyStatsList.forEach((st) => lpRow.push(st.lepasWali?.length || 0));
@@ -367,6 +372,13 @@ export function exportScheduleToExcel(
       'Piket malam sesi 2 untuk perempuan bertugas setelah subuh sampai jam 07:00 (bangun subuh & persiapan pagi)',
     ],
     [
+      'M3',
+      SHIFT_DEFINITIONS['M3']?.fullName || 'Jaga Malam Pendamping',
+      '23:00 - 07:00',
+      8,
+      'Mendampingi full semua shif malam. Datang jam 23:00 wajib keliling asrama & lingkungan sekitar, kirim foto ke grup, jam 03:00 jalankan SOP M2',
+    ],
+    [
       'M',
       SHIFT_DEFINITIONS['M']?.fullName || 'Jaga Malam / Piket Malam (Total)',
       '15:00 - 07:00 (Besok)',
@@ -389,8 +401,8 @@ export function exportScheduleToExcel(
     ],
     [],
     ['ATURAN UTAMA PENUGASAN:'],
-    ['1. Jam Kerja: P1 (07:00-15:00), P2 (08:00-16:00), P3 (07:00-16:00 Upacara Senin), S/S2A/S3A/S4A (15:00-23:00), M1 (15:00-00:00), M2 (Subuh-07:00), M (15:00-07:00 Besok).'],
-    ['2. Penugasan Malam: M1 untuk petugas laki-laki bertugas sampai jam 00:00, M2 untuk petugas perempuan bertugas setelah subuh sampai jam 07:00.'],
+    ['1. Jam Kerja: P1 (07:00-15:00), P2 (08:00-16:00), P3 (07:00-16:00 Upacara Senin), S/S2A/S3A/S4A (15:00-23:00), M1 (15:00-00:00), M2 (Subuh-07:00), M3 (23:00-07:00), M (15:00-07:00 Besok).'],
+    ['2. Penugasan Malam: M1 untuk petugas laki-laki (s.d 00:00), M2 untuk petugas perempuan (subuh s.d 07:00), M3 mendampingi full semua shif malam (23:00-07:00, keliling & foto ke grup, 03:00 SOP M2).'],
     ['3. Khusus hari Senin: Seluruh penugasan shif pagi ditetapkan sebagai P3 (07:00-16:00 WIB) dikarenakan ada upacara bendera.'],
     ['4. Hari selain Senin: Shif pagi dibagi rata dan adil antara P1 (07:00-15:00) dan P2 (08:00-16:00).'],
     ['5. Pola Rotasi: 1P -> 4S -> 1M -> 1LP secara berkesinambungan.'],

@@ -225,6 +225,9 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
       } else if (shift === 'M2') {
         cellBg = [147, 197, 253]; // Solid Cobalt Blue (#93C5FD)
         textCol = [15, 23, 42];
+      } else if (shift === 'M3') {
+        cellBg = [240, 171, 252]; // Solid Magenta/Fuchsia (#F0ABFC)
+        textCol = [112, 26, 117];
       } else if (shift === 'S') {
         cellBg = [253, 186, 116]; // Solid Orange (#FDBA74)
         textCol = [67, 20, 7];
@@ -361,6 +364,7 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
     { label: '(M) TOTAL MALAM (15:00-07:00)', key: 'm', bold: true, bg: [147, 197, 253], textCol: [15, 23, 42] },
     { label: '- M1 (Malam s.d 00:00)', key: 'm1', bg: [199, 210, 254], bold: true, textCol: [30, 27, 75] },
     { label: '- M2 (Malam Subuh-07:00)', key: 'm2', bg: [191, 219, 254], bold: true, textCol: [15, 23, 42] },
+    { label: '- M3 (Malam Pendamping 23-07)', key: 'm3', bg: [240, 171, 252], bold: true, textCol: [112, 26, 117] },
     { label: 'CUTI', key: 'cuti', bg: [167, 243, 208], textCol: [6, 78, 59] },
     { label: 'OFF / LIBUR + LEPAS', key: 'offDanLepas', bg: [254, 202, 202], bold: true, textCol: [153, 27, 27] },
     { label: 'JUMLAH', key: 'total', bold: true, bg: [203, 213, 225], textCol: [15, 23, 42] },
@@ -410,7 +414,7 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(4.4);
-  doc.text('P1: 07-15 | P2: 08-16 | P3: Upacara Senin 07-16 | S2A/S3A/S4A: Jaga Sore (15:00-23:00) | M/M1/M2: Jaga Malam (15:00-07:00) | LP: Lepas Piket | O: Off | C: Cuti', margin, currentY + 4.6);
+  doc.text('P1: 07-15 | P2: 08-16 | P3: Upacara Senin 07-16 | S2A/S3A/S4A: Jaga Sore (15:00-23:00) | M/M1/M2/M3: Jaga Malam | LP: Lepas Piket | O: Off | C: Cuti', margin, currentY + 4.6);
 
   // Catatan Khusus Tugas Shif Sore S2A, S3A, S4A
   doc.setFont('helvetica', 'bold');
@@ -432,6 +436,7 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
   doc.setFontSize(4.0);
   doc.text('1. M1: Bertugas sampai jam 00:00 (Sesi 1 malam - Laki-laki).', margin, currentY + 19.0);
   doc.text('2. M2: Bertugas setelah subuh sampai jam 07:00 (Sesi 2 pagi - Perempuan).', margin, currentY + 21.2);
+  doc.text('3. M3: Bertugas 23:00-07:00 (Mendampingi full malam, keliling & foto ke grup, 03:00 jalankan SOP M2).', margin, currentY + 23.4);
 
   // Signature Block
   const sigX = pageWidth - margin - 52;
@@ -594,6 +599,9 @@ export function generateDailySchedulePDF(
     } else if (shift === 'M2') {
       shiftBadgeBg = [147, 197, 253]; // Solid Blue
       badgeTextCol = [15, 23, 42];
+    } else if (shift === 'M3') {
+      shiftBadgeBg = [240, 171, 252]; // Solid Magenta/Fuchsia
+      badgeTextCol = [112, 26, 117];
     } else if (shift.startsWith('S')) {
       shiftBadgeBg = [253, 186, 116]; // Solid Orange
       badgeTextCol = [67, 20, 7];
@@ -645,6 +653,7 @@ export function generateDailySchedulePDF(
     if (shift === 'S4A') posDesc = 'Jaga Masjid & Lingkungan';
     if (shift === 'M1') posDesc = 'Piket Malam - Sesi 1 (15:00 - 00:00)';
     if (shift === 'M2') posDesc = 'Piket Malam - Sesi 2 (Subuh - 07:00)';
+    if (shift === 'M3') posDesc = 'Piket Malam - Pendamping (23:00 - 07:00)';
 
     doc.text(posDesc, curX + 2, currentY + 3.4);
 

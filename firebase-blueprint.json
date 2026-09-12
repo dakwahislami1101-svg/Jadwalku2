@@ -84,6 +84,34 @@
         "updatedAt": { "type": "string", "required": true },
         "createdBy": { "type": "string", "required": false }
       }
+    },
+    "student_portfolio_notes": {
+      "description": "Daily guidance, worship, academic, and behavioral notes for students by wali asuh",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "studentNo": { "type": "number", "required": true },
+        "studentName": { "type": "string", "required": true },
+        "date": { "type": "string", "required": true },
+        "category": { "type": "string", "required": true },
+        "content": { "type": "string", "required": true },
+        "authorName": { "type": "string", "required": true },
+        "authorRole": { "type": "string", "required": false },
+        "createdAt": { "type": "string", "required": true }
+      }
+    },
+    "student_custom_overrides": {
+      "description": "Custom edited student data such as phone number, room/dormitory number, blood type, and emergency contacts",
+      "fields": {
+        "studentNo": { "type": "number", "required": true },
+        "phone": { "type": "string", "required": false },
+        "room": { "type": "string", "required": false },
+        "bloodType": { "type": "string", "required": false },
+        "guardianName": { "type": "string", "required": false },
+        "emergencyContact": { "type": "string", "required": false },
+        "notes": { "type": "string", "required": false },
+        "updatedAt": { "type": "string", "required": true },
+        "updatedBy": { "type": "string", "required": false }
+      }
     }
   }
 }

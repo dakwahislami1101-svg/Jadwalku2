@@ -50,6 +50,7 @@ const SHIFT_TABS: { code: ShiftCode; label: string; desc: string; hours: string;
   { code: 'M', label: 'M (Malam Umum)', desc: 'Piket Malam & Dini Hari', hours: '15:00 - 07:00', badge: 'bg-blue-600 text-white' },
   { code: 'M1', label: 'M1 (Malam Sesi 1)', desc: 'Piket Malam s.d 00:00 (Laki-laki)', hours: '15:00 - 00:00', badge: 'bg-indigo-600 text-white' },
   { code: 'M2', label: 'M2 (Malam Sesi 2)', desc: 'Piket Malam Subuh - 07:00 (Perempuan)', hours: '04:00 - 07:00', badge: 'bg-blue-600 text-white' },
+  { code: 'M3', label: 'M3 (Malam Pendamping)', desc: 'Mendampingi full semua shif malam & SOP M2', hours: '23:00 - 07:00', badge: 'bg-fuchsia-600 text-white' },
   { code: 'P', label: 'P (Pagi Umum)', desc: 'Piket Pagi Standar', hours: '07:00 - 15:00', badge: 'bg-yellow-500 text-slate-950' },
   { code: 'S', label: 'S (Sore Umum)', desc: 'Piket Sore Standar', hours: '15:00 - 23:00', badge: 'bg-orange-400 text-slate-950' },
 ];

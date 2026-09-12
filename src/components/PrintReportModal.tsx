@@ -232,6 +232,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                       if (shift === 'M') bg = 'bg-blue-300 text-blue-950 font-bold';
                       if (shift === 'M1') bg = 'bg-indigo-300 text-indigo-950 font-black';
                       if (shift === 'M2') bg = 'bg-blue-400 text-blue-950 font-black';
+                      if (shift === 'M3') bg = 'bg-fuchsia-300 text-fuchsia-950 font-black';
                       if (shift === 'LP') bg = 'bg-white text-slate-900 font-bold border border-slate-300';
                       if (shift === 'O') bg = 'bg-rose-300 text-rose-950 font-black';
                       if (shift === 'C') bg = 'bg-emerald-300 text-emerald-950 font-bold';
@@ -344,6 +345,14 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 ))}
                 <td colSpan={9} className="border border-black"></td>
               </tr>
+              {/* ↳ M3 */}
+              <tr className="bg-fuchsia-100 font-bold text-fuchsia-950">
+                <td colSpan={2} className="border border-black p-0.5 text-right font-bold">↳ M3 (Malam Pendamping 23:00-07:00)</td>
+                {dailyStatsList.map((st, i) => (
+                  <td key={i} className="border border-black p-0.5 font-bold">{st.m3 || 0}</td>
+                ))}
+                <td colSpan={9} className="border border-black"></td>
+              </tr>
               {/* CUTI */}
               <tr className="bg-emerald-200 font-bold text-slate-950">
                 <td colSpan={2} className="border border-black p-0.5 text-right font-bold">CUTI</td>
@@ -379,7 +388,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
               <div className="font-bold underline text-[10.5px]">PETUNJUK KODE:</div>
               <div className="text-[10px] text-slate-700 dark:text-slate-300 space-y-0.5 mt-0.5">
                 <div><strong>P1</strong> (07:00-15:00) | <strong>P2</strong> (08:00-16:00) | <strong>P3</strong> : Upacara Senin (07:00-16:00) | <strong>S2A / S3A / S4A</strong> : Jaga Sore (15:00 - 23:00)</div>
-                <div><strong>M / M1 / M2</strong> : Jaga Malam (15:00 - 07:00) | <strong>LP</strong> : Lepas Piket | <strong>O</strong> : Off / Libur | <strong>C</strong> : Cuti</div>
+                <div><strong>M / M1 / M2 / M3</strong> : Jaga Malam (15:00 - 07:00) | <strong>LP</strong> : Lepas Piket | <strong>O</strong> : Off / Libur | <strong>C</strong> : Cuti</div>
               </div>
             </div>
 
@@ -397,6 +406,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
               <ol className="list-decimal list-inside text-[10px] text-slate-800 dark:text-slate-300 space-y-0.5 mt-0.5">
                 <li><strong>M1</strong>: Bertugas sampai jam 00:00 (Sesi 1 malam).</li>
                 <li><strong>M2</strong>: Bertugas setelah subuh sampai jam 07:00 (Sesi 2 pagi).</li>
+                <li><strong>M3</strong>: Datang jam 23:00, Pulang jam 07:00. Mendampingi full semua shif malam, datang wajib keliling asrama & lingkungan sekitar serta kirim foto ke grup, pukul 03:00 dan seterusnya menjalankan kode M2.</li>
                 <li>Untuk laki-laki bertugas sampai jam 00:00, untuk perempuan bertugas setelah subuh sampai jam 07:00.</li>
               </ol>
             </div>

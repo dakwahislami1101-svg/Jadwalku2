@@ -21,7 +21,7 @@ import {
   enableNetwork
 } from 'firebase/firestore';
 import firebaseConfigJson from '../../firebase-applet-config.json';
-import { MonthSchedule, ShiftCode, ShiftSwapRecord, HandoverReport, DailyTask, AnnouncementData, StudentMedicalPlan } from '../types';
+import { MonthSchedule, ShiftCode, ShiftSwapRecord, HandoverReport, DailyTask, AnnouncementData, StudentMedicalPlan, StudentPortfolioNote, Student } from '../types';
 
 // Set Firebase Firestore log level to silent to suppress internal connection retry messages in offline/iframe environments
 setLogLevel('silent');
@@ -1161,6 +1161,397 @@ export async function saveAllStudentMedicalPlansToFirestore(
     return false;
   }
 }
+
+// ==================== STUDENT PORTFOLIO NOTES ====================
+const STUDENT_NOTES_STORAGE_KEY = 'student_portfolio_notes';
+
+/**
+ * Get initial sample notes for demo/starter
+ */
+export function getInitialStudentNotes(): StudentPortfolioNote[] {
+  return [
+    {
+      id: 'note-sample-1',
+      studentNo: 1,
+      studentName: 'Adam Julian Shano',
+      date: '2026-09-05',
+      category: 'Ibadah',
+      content: 'Aktif mengikuti sholat Subuh dan Maghrib berjamaah di musholla asrama. Hafalan juz 30 surat An-Naba lancar.',
+      authorName: 'M. Ali Shodikin',
+      authorRole: 'Wali Asuh',
+      createdAt: '2026-09-05T19:30:00.000Z',
+    },
+    {
+      id: 'note-sample-2',
+      studentNo: 21,
+      studentName: 'Ahmad Syaiful Arsyad',
+      date: '2026-09-07',
+      category: 'Akademik',
+      content: 'Menunjukkan peningkatan pemahaman dalam pelajaran Matematika dan rajin belajar mandiri saat shif malam.',
+      authorName: 'A. Choirul',
+      authorRole: 'Wali Asuh',
+      createdAt: '2026-09-07T20:15:00.000Z',
+    },
+    {
+      id: 'note-sample-3',
+      studentNo: 23,
+      studentName: 'Alfiyah Amaliatul Hasanah',
+      date: '2026-09-08',
+      category: 'Kedisiplinan',
+      content: 'Kerapihan kamar asrama dan lemari pakaian sangat rapi. Membantu adik kelas merapikan tempat tidur.',
+      authorName: 'Siti Rahma',
+      authorRole: 'Wali Asuh',
+      createdAt: '2026-09-08T08:45:00.000Z',
+    },
+  ];
+}
+
+/**
+ * Get local student portfolio notes
+ */
+export function getLocalStudentNotes(): StudentPortfolioNote[] {
+  try {
+    const raw = localStorage.getItem(STUDENT_NOTES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  const defaults = getInitialStudentNotes();
+  try {
+    localStorage.setItem(STUDENT_NOTES_STORAGE_KEY, JSON.stringify(defaults));
+  } catch {}
+  return defaults;
+}
+
+/**
+ * Fetch student notes from Firestore
+ */
+export async function fetchStudentNotesFromFirestore(): Promise<StudentPortfolioNote[] | null> {
+  if (isFirestoreOfflineOrQuotaExhausted()) return null;
+
+  try {
+    const notesMap = new Map<string, StudentPortfolioNote>();
+
+    try {
+      const colRef = collection(db, 'student_portfolio_notes');
+      let snap;
+      try {
+        snap = await getDocsFromServer(colRef);
+      } catch {
+        snap = await getDocs(colRef);
+      }
+      snap.forEach((d) => {
+        const data = d.data() as StudentPortfolioNote;
+        if (data && data.id && data.content) {
+          notesMap.set(data.id, { ...data, id: data.id });
+        }
+      });
+    } catch (colErr: any) {
+      if (colErr?.code === 'resource-exhausted') {
+        markQuotaExhausted();
+        return null;
+      }
+    }
+
+    try {
+      const docRef = doc(db, 'settings', 'student_portfolio_notes');
+      let docSnap;
+      try {
+        docSnap = await getDocFromServer(docRef);
+      } catch {
+        docSnap = await getDoc(docRef);
+      }
+      if (docSnap.exists()) {
+        const payload = docSnap.data();
+        if (Array.isArray(payload?.notes)) {
+          payload.notes.forEach((n: StudentPortfolioNote) => {
+            if (n?.id && !notesMap.has(n.id)) {
+              notesMap.set(n.id, n);
+            }
+          });
+        }
+      }
+    } catch {}
+
+    if (notesMap.size > 0) {
+      const result = Array.from(notesMap.values());
+      try {
+        localStorage.setItem(STUDENT_NOTES_STORAGE_KEY, JSON.stringify(result));
+      } catch {}
+      return result;
+    }
+
+    return null;
+  } catch (err: any) {
+    return null;
+  }
+}
+
+/**
+ * Real-time subscription for student notes
+ */
+export function subscribeToStudentNotes(
+  onData: (notes: StudentPortfolioNote[]) => void,
+  onError?: (err: any) => void
+): Unsubscribe {
+  onData(getLocalStudentNotes());
+
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    return () => {};
+  }
+
+  fetchStudentNotesFromFirestore().then((fetched) => {
+    if (fetched && fetched.length > 0) {
+      onData(fetched);
+    }
+  }).catch(() => {});
+
+  try {
+    const colRef = collection(db, 'student_portfolio_notes');
+    return onSnapshot(
+      colRef,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const notes: StudentPortfolioNote[] = [];
+          snapshot.forEach((d) => {
+            const data = d.data() as StudentPortfolioNote;
+            if (data && data.id) notes.push({ ...data, id: data.id });
+          });
+          if (notes.length > 0) {
+            try {
+              localStorage.setItem(STUDENT_NOTES_STORAGE_KEY, JSON.stringify(notes));
+            } catch {}
+            onData(notes);
+          }
+        }
+      },
+      (err) => {
+        if (err?.code === 'resource-exhausted') markQuotaExhausted();
+        if (onError) onError(err);
+      }
+    );
+  } catch {
+    return () => {};
+  }
+}
+
+/**
+ * Save single student note to Firestore & local storage
+ */
+export async function saveStudentNoteToFirestore(note: StudentPortfolioNote): Promise<boolean> {
+  const current = getLocalStudentNotes();
+  const index = current.findIndex((n) => n.id === note.id);
+  const updated = index >= 0 ? [...current] : [note, ...current];
+  if (index >= 0) updated[index] = note;
+
+  try {
+    localStorage.setItem(STUDENT_NOTES_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+
+  if (isFirestoreOfflineOrQuotaExhausted()) return true;
+
+  try {
+    await setDoc(doc(db, 'student_portfolio_notes', note.id), note, { merge: true });
+    // update aggregate backup
+    const docRef = doc(db, 'settings', 'student_portfolio_notes');
+    setDoc(docRef, { notes: updated, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+    return true;
+  } catch (err: any) {
+    if (err?.code === 'resource-exhausted') markQuotaExhausted();
+    return false;
+  }
+}
+
+/**
+ * Delete student note from Firestore & local storage
+ */
+export async function deleteStudentNoteFromFirestore(noteId: string): Promise<boolean> {
+  const current = getLocalStudentNotes();
+  const updated = current.filter((n) => n.id !== noteId);
+  try {
+    localStorage.setItem(STUDENT_NOTES_STORAGE_KEY, JSON.stringify(updated));
+  } catch {}
+
+  if (isFirestoreOfflineOrQuotaExhausted()) return true;
+
+  try {
+    await deleteDoc(doc(db, 'student_portfolio_notes', noteId));
+    const docRef = doc(db, 'settings', 'student_portfolio_notes');
+    setDoc(docRef, { notes: updated, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+    return true;
+  } catch (err: any) {
+    if (err?.code === 'resource-exhausted') markQuotaExhausted();
+    return false;
+  }
+}
+
+// ==================== STUDENT CUSTOM OVERRIDES (ROOM, PHONE, ETC.) ====================
+const STUDENT_OVERRIDES_STORAGE_KEY = 'student_custom_overrides';
+
+/**
+ * Get local student custom overrides (room, phone, bloodType, etc.)
+ */
+export function getLocalStudentOverrides(): Record<number, Partial<Student>> {
+  try {
+    const raw = localStorage.getItem(STUDENT_OVERRIDES_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed === 'object' && parsed !== null) return parsed;
+    }
+  } catch {}
+  return {};
+}
+
+/**
+ * Fetch student overrides from Firestore
+ */
+export async function fetchStudentOverridesFromFirestore(): Promise<Record<number, Partial<Student>> | null> {
+  if (isFirestoreOfflineOrQuotaExhausted()) return null;
+
+  try {
+    const overridesMap: Record<number, Partial<Student>> = {};
+
+    // First try single collection
+    try {
+      const colRef = collection(db, 'student_custom_overrides');
+      let snap;
+      try {
+        snap = await getDocsFromServer(colRef);
+      } catch {
+        snap = await getDocs(colRef);
+      }
+      snap.forEach((d) => {
+        const data = d.data();
+        if (data && typeof data.studentNo === 'number') {
+          overridesMap[data.studentNo] = data as Partial<Student>;
+        }
+      });
+    } catch (colErr: any) {
+      if (colErr?.code === 'resource-exhausted') {
+        markQuotaExhausted();
+        return null;
+      }
+    }
+
+    // Also check settings aggregate backup
+    try {
+      const docRef = doc(db, 'settings', 'student_custom_overrides');
+      let docSnap;
+      try {
+        docSnap = await getDocFromServer(docRef);
+      } catch {
+        docSnap = await getDoc(docRef);
+      }
+      if (docSnap.exists()) {
+        const payload = docSnap.data();
+        if (payload?.overrides && typeof payload.overrides === 'object') {
+          Object.entries(payload.overrides).forEach(([k, v]) => {
+            const sNo = parseInt(k, 10);
+            if (!isNaN(sNo) && v && !overridesMap[sNo]) {
+              overridesMap[sNo] = v as Partial<Student>;
+            }
+          });
+        }
+      }
+    } catch {}
+
+    if (Object.keys(overridesMap).length > 0) {
+      try {
+        localStorage.setItem(STUDENT_OVERRIDES_STORAGE_KEY, JSON.stringify(overridesMap));
+      } catch {}
+      return overridesMap;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Real-time subscription for student overrides
+ */
+export function subscribeToStudentOverrides(
+  onData: (overrides: Record<number, Partial<Student>>) => void,
+  onError?: (err: any) => void
+): Unsubscribe {
+  onData(getLocalStudentOverrides());
+
+  if (isFirestoreOfflineOrQuotaExhausted()) {
+    return () => {};
+  }
+
+  fetchStudentOverridesFromFirestore().then((fetched) => {
+    if (fetched && Object.keys(fetched).length > 0) {
+      onData(fetched);
+    }
+  }).catch(() => {});
+
+  try {
+    const colRef = collection(db, 'student_custom_overrides');
+    return onSnapshot(
+      colRef,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const overrides: Record<number, Partial<Student>> = {};
+          snapshot.forEach((d) => {
+            const data = d.data();
+            if (data && typeof data.studentNo === 'number') {
+              overrides[data.studentNo] = data as Partial<Student>;
+            }
+          });
+          if (Object.keys(overrides).length > 0) {
+            try {
+              localStorage.setItem(STUDENT_OVERRIDES_STORAGE_KEY, JSON.stringify(overrides));
+            } catch {}
+            onData(overrides);
+          }
+        }
+      },
+      (err) => {
+        if (err?.code === 'resource-exhausted') markQuotaExhausted();
+        if (onError) onError(err);
+      }
+    );
+  } catch {
+    return () => {};
+  }
+}
+
+/**
+ * Save single student override to Firestore and local storage
+ */
+export async function saveStudentOverrideToFirestore(
+  studentNo: number,
+  updatedFields: Partial<Student>
+): Promise<boolean> {
+  const current = getLocalStudentOverrides();
+  const merged = {
+    ...(current[studentNo] || {}),
+    ...updatedFields,
+    studentNo,
+    updatedAt: new Date().toISOString(),
+  };
+  current[studentNo] = merged;
+
+  try {
+    localStorage.setItem(STUDENT_OVERRIDES_STORAGE_KEY, JSON.stringify(current));
+  } catch {}
+
+  if (isFirestoreOfflineOrQuotaExhausted()) return true;
+
+  try {
+    await setDoc(doc(db, 'student_custom_overrides', String(studentNo)), merged, { merge: true });
+    const docRef = doc(db, 'settings', 'student_custom_overrides');
+    setDoc(docRef, { overrides: current, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+    return true;
+  } catch (err: any) {
+    if (err?.code === 'resource-exhausted') markQuotaExhausted();
+    return false;
+  }
+}
+
 
 
 

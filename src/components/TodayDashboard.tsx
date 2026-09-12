@@ -42,6 +42,7 @@ import {
   DEFAULT_ANNOUNCEMENT 
 } from '../utils/firebaseService';
 import { AnnouncementPopup } from './AnnouncementPopup';
+import { IcsExportModal } from './IcsExportModal';
 
 interface TodayDashboardProps {
   schedule: MonthSchedule;
@@ -98,6 +99,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   const [tempAnnouncementEnabled, setTempAnnouncementEnabled] = useState<boolean>(true);
   const [isSavingAnnouncement, setIsSavingAnnouncement] = useState<boolean>(false);
   const [announcementToast, setAnnouncementToast] = useState<string | null>(null);
+  const [isIcsModalOpen, setIsIcsModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const unsub = subscribeToAnnouncement((data) => {
@@ -182,6 +184,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
       if (shift === 'S4A') pos = 'Jaga Masjid & Lingkungan';
       if (shift === 'M1') pos = 'Piket Malam - Sesi 1 (15:00 - 00:00)';
       if (shift === 'M2') pos = 'Piket Malam - Sesi 2 (Subuh - 07:00)';
+      if (shift === 'M3') pos = 'Piket Malam Pendamping (23:00 - 07:00)';
 
       csv += `${staff.id},"${staff.name}","${staff.role}",${shift},"${sInfo.name}","${sInfo.startTime} - ${sInfo.endTime}","${pos}"\n`;
     });
@@ -271,7 +274,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
     if (['S2A', 'S3A', 'S4A'].includes(userTodayShift)) {
       return t.shiftCode === userTodayShift || t.shiftCode === 'S';
     }
-    if (userTodayShift === 'M1' || userTodayShift === 'M2') {
+    if (userTodayShift === 'M1' || userTodayShift === 'M2' || userTodayShift === 'M3') {
       return t.shiftCode === userTodayShift || t.shiftCode === 'M';
     }
     if (userTodayShift === 'P') return t.shiftCode === 'P' || t.shiftCode === 'P1';
@@ -679,6 +682,9 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                 } else if (shiftCode === 'M2') {
                   badgeBg = 'bg-blue-600 text-white';
                   postLabel = 'Sesi 2 (Subuh-07:00)';
+                } else if (shiftCode === 'M3') {
+                  badgeBg = 'bg-fuchsia-600 text-white';
+                  postLabel = 'Pendamping (23:00-07:00)';
                 }
 
                 return (
@@ -761,7 +767,18 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+              <button
+                type="button"
+                onClick={() => setIsIcsModalOpen(true)}
+                className="px-2 py-0.5 rounded-lg text-[10.5px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 transition-colors flex items-center gap-1 cursor-pointer"
+                title="Unduh pengingat tugas harian ke format .ICS untuk disinkronkan ke kalender pribadi Google Calendar / Outlook"
+              >
+                <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                <span className="hidden sm:inline">Sinkron Kalender (.ICS)</span>
+                <span className="sm:hidden">Kalender .ICS</span>
+              </button>
+
               {userRole === 'admin' && (
                 <button
                   type="button"
@@ -1065,6 +1082,16 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* ICS Calendar Export Modal */}
+      <IcsExportModal
+        isOpen={isIcsModalOpen}
+        onClose={() => setIsIcsModalOpen(false)}
+        staff={selectedStaff}
+        schedule={schedule}
+        activeDay={activeDay}
+        sopTasks={sopTasks}
+      />
     </div>
   );
 };

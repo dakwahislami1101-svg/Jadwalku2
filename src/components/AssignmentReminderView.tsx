@@ -99,7 +99,7 @@ const POS_CONFIG: Record<PosCategory, {
   mobile: {
     id: 'mobile',
     title: 'Mobile (Jaga Malam)',
-    codeTag: 'M1 ,M2',
+    codeTag: 'M1, M2, M3',
     icon: Moon,
     accentColor: 'purple',
     badgeBg: 'bg-purple-600 text-white',
@@ -164,7 +164,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
       const shift = rawShift as ShiftCode;
       if (['S', 'S2A', 'S3A', 'S4A'].includes(shift as string)) {
         soreStaff.push({ staff, shift });
-      } else if (['M', 'M1', 'M2'].includes(shift as string)) {
+      } else if (['M', 'M1', 'M2', 'M3'].includes(shift as string)) {
         malamStaff.push({ staff, shift });
       }
     }
@@ -448,8 +448,8 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
       });
     }
 
-    // Mobile (Jaga Malam) (M1, M2)
-    lines.push('mobile (jaga malam) ( M1 ,M2 )');
+    // Mobile (Jaga Malam) (M1, M2, M3)
+    lines.push('mobile (jaga malam) ( M1 ,M2 ,M3 )');
     if (posData.mobile.length === 0) {
       lines.push('- Belum ada petugas');
     } else {
@@ -543,7 +543,7 @@ export const AssignmentReminderView: React.FC<AssignmentReminderViewProps> = ({
                 )}
               </div>
               <p className="text-[10px] sm:text-[10.5px] text-emerald-100/90 leading-none mt-0.5">
-                Pos Masjid (S4A), Kantin SMP (S2A), Kantin SMA (S3A), dan Mobile Jaga Malam (M1, M2)
+                Pos Masjid (S4A), Kantin SMP (S2A), Kantin SMA (S3A), dan Mobile Jaga Malam (M1, M2, M3)
               </p>
             </div>
           </div>

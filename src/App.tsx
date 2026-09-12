@@ -31,6 +31,7 @@ import { AdminChecklistConfigView } from './components/AdminChecklistConfigView'
 import { StudentMedicalView } from './components/StudentMedicalView';
 import { AssignmentReminderView } from './components/AssignmentReminderView';
 import { MedicalNotificationsModal } from './components/MedicalNotificationsModal';
+import { StudentPortfolioView } from './components/StudentPortfolioView';
 import { LoginPage } from './components/LoginPage';
 import { SplashScreen } from './components/SplashScreen';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
@@ -206,7 +207,7 @@ export default function App() {
 
   // Active view tab (defaults to admin swap view if admin, or dashboard if staff)
   const [currentTab, setCurrentTab] = useState<
-    'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment'
+    'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio'
   >(() => {
     try {
       const local = localStorage.getItem('sr_auth_session');
@@ -958,6 +959,7 @@ export default function App() {
                 activeDay={activeDay}
                 setActiveDay={setActiveDay}
                 onNavigateToTab={(tab) => setCurrentTab(tab as any)}
+                sopTasks={sopTasks}
               />
             )}
 
@@ -1042,6 +1044,18 @@ export default function App() {
                 activeDay={activeDay}
                 setActiveDay={setActiveDay}
                 onNavigateToTab={(tab) => setCurrentTab(tab as any)}
+              />
+            )}
+
+            {currentTab === 'portfolio' && (
+              <StudentPortfolioView
+                medicalPlans={medicalPlans}
+                staffList={staffList}
+                selectedStaffId={selectedStaffId}
+                onNavigateToTab={(tab) => setCurrentTab(tab as any)}
+                onOpenNewMedicalPlanForStudent={(name, cls) => {
+                  setCurrentTab('medical');
+                }}
               />
             )}
           </main>

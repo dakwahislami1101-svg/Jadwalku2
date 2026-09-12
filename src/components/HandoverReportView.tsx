@@ -227,7 +227,7 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
       // Yang menyerahkan: Pagi hari ini (Tgl N)
       // Yang menerima: Sore & Malam hari ini (Tgl N)
       outgoingCodes = ['P', 'P1', 'P2', 'P3'];
-      incomingCodes = ['S', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2'];
+      incomingCodes = ['S', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2', 'M3'];
       outDay = activeDay;
       inDay = activeDay;
       outLabel = `Shift Pagi (Tgl ${activeDay})`;
@@ -240,8 +240,8 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
       // 2. Sore ke Malam (Pihak yang menyerahkan: judulnya tetap Shift Sore, tetapi isinya petugas shift Sore & Malam)
       // Yang menyerahkan: Sore & Malam hari ini (Tgl N)
       // Yang menerima: Malam hari ini (Tgl N)
-      outgoingCodes = ['S', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2'];
-      incomingCodes = ['M', 'M1', 'M2'];
+      outgoingCodes = ['S', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2', 'M3'];
+      incomingCodes = ['M', 'M1', 'M2', 'M3'];
       outDay = activeDay;
       inDay = activeDay;
       outLabel = `Shift Sore (Tgl ${activeDay})`;
@@ -253,7 +253,7 @@ export const HandoverReportView: React.FC<HandoverReportViewProps> = ({
     } else {
       // 3. Malam ke Pagi (Pagi Tgl N menerima dari Malam hari sebelumnya Tgl N-1)
       // Contoh: Serah terima pagi tgl 2 -> Yang menyerahkan adalah Piket Malam tgl 1, Yang menerima adalah Piket Pagi tgl 2
-      outgoingCodes = ['M', 'M1', 'M2'];
+      outgoingCodes = ['M', 'M1', 'M2', 'M3'];
       incomingCodes = ['P', 'P1', 'P2', 'P3'];
       outDay = activeDay > 1 ? activeDay - 1 : schedule.totalDays;
       inDay = activeDay;
