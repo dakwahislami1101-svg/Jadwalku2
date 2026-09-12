@@ -28,6 +28,7 @@ import {
 import { Staff } from '../types';
 import { INSTITUTION_INFO } from '../data/initialSchedule';
 import { soundManager } from '../utils/audio';
+import { getCurrentTwoHourTheme, TwoHourTheme } from '../utils/themeTwoHour';
 
 interface NavbarProps {
   userRole?: 'admin' | 'staff';
@@ -79,6 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
+  const [twoHourTheme, setTwoHourTheme] = useState<TwoHourTheme>(() => getCurrentTwoHourTheme());
 
   useEffect(() => {
     const updateTime = () => {
@@ -95,6 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         day: 'numeric' 
       };
       setDateStr(now.toLocaleDateString('id-ID', options));
+      setTwoHourTheme(getCurrentTwoHourTheme(now));
     };
 
     updateTime();
@@ -275,25 +278,39 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Main Header Bar */}
       <div className="max-w-[1680px] mx-auto px-2 sm:px-4 py-1.5 flex flex-wrap items-center justify-between gap-2">
-        {/* Logo & Title */}
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentTab('dashboard')}>
+        {/* Logo & Title - Dynamic 2-Hour Theme Block */}
+        <div 
+          className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r ${twoHourTheme.gradientClass} border ${twoHourTheme.borderClass} shadow-xs transition-all duration-1000 cursor-pointer group select-none relative overflow-hidden`} 
+          onClick={() => setCurrentTab('dashboard')}
+          title={`Sistem Jadwal Shif Wali Asuh • Tema Waktu: ${twoHourTheme.name} (${twoHourTheme.timeSlot}) - Berganti otomatis setiap 2 jam sekali`}
+        >
+          {/* Subtle Ambient Glow inside block */}
+          <div className={`absolute inset-0 bg-gradient-to-r ${twoHourTheme.accentGlow} pointer-events-none transition-all duration-1000`} />
+
           <img 
             src="/logo.svg" 
             alt="Logo Sekolah Rakyat" 
-            className="w-8 h-8 rounded-lg shadow-xs object-contain bg-white border border-slate-200 dark:border-slate-700 p-0.5 shrink-0" 
+            className="w-8 h-8 rounded-lg shadow-xs object-contain bg-white/95 border border-white/30 p-0.5 shrink-0 group-hover:scale-105 transition-transform duration-300 relative z-10" 
           />
-          <div>
+          <div className="relative z-10">
             <div className="flex items-center gap-1.5">
-              <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
+              <h1 className={`text-sm sm:text-base font-black ${twoHourTheme.titleColor} leading-tight tracking-tight drop-shadow-xs transition-colors duration-1000`}>
                 Sistem Jadwal Shif Wali Asuh
               </h1>
-              <span className="hidden lg:inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
+              <span className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9.5px] font-extrabold bg-white/15 text-white border border-white/20 backdrop-blur-xs shadow-2xs">
+                <Sparkles className={`w-2.5 h-2.5 ${twoHourTheme.iconColor} animate-pulse`} />
                 {activeShiftTitle}
               </span>
             </div>
-            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 leading-none">
-              Otomatisasi Jadwal Harian & Notifikasi Pengingat Tugas
-            </p>
+            <div className="flex items-center gap-1.5 leading-none pt-0.5">
+              <p className={`text-[10.5px] ${twoHourTheme.subtitleColor} font-medium transition-colors duration-1000`}>
+                Otomatisasi Jadwal Harian & Notifikasi Pengingat Tugas
+              </p>
+              <span className="hidden sm:inline-flex items-center gap-1 px-1 rounded text-[8.5px] font-bold bg-white/10 text-white/80 border border-white/15">
+                <Clock className="w-2 h-2 text-white/70" />
+                {twoHourTheme.timeSlot}
+              </span>
+            </div>
           </div>
         </div>
 
