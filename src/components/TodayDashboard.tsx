@@ -533,7 +533,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         ) : null}
       </div>
 
-      {/* User's Assigned Shift Banner - Dynamic 2-Hour Theme Block (Slim & Compact) */}
+      {/* User's Assigned Shift Banner - Dynamic Vibrant Theme Block (Slim & Compact, 10-Min Rotation) */}
       <div className={`relative overflow-hidden rounded-xl bg-gradient-to-r ${twoHourTheme.gradientClass} border ${twoHourTheme.borderClass} text-white px-3 py-2 sm:px-4 sm:py-2.5 shadow-sm transition-all duration-1000`}>
         {/* Ambient glow accent */}
         <div className={`absolute inset-0 bg-gradient-to-r ${twoHourTheme.accentGlow} pointer-events-none transition-all duration-1000`} />
@@ -541,32 +541,32 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3">
           <div className="space-y-0.5 sm:space-y-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/15 backdrop-blur text-[10.5px] font-medium text-white border border-white/20">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/20 backdrop-blur-sm text-[10.5px] font-medium text-white border border-white/20 shadow-2xs">
                 <Sparkles className={`w-2.5 h-2.5 ${twoHourTheme.iconColor} animate-pulse`} />
                 <span>Penugasan Wali Asuh: <strong>{selectedStaff.name}</strong></span>
               </div>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-white/10 text-white/90 border border-white/15 backdrop-blur-xs">
-                <Clock className="w-2.5 h-2.5 text-white/80" />
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-black/20 text-white/95 border border-white/20 backdrop-blur-xs shadow-2xs">
+                <Clock className="w-2.5 h-2.5 text-amber-200" />
                 <span>Tema: {twoHourTheme.name} ({twoHourTheme.timeSlot})</span>
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-base sm:text-lg font-black tracking-tight drop-shadow-xs">
+              <span className="text-base sm:text-lg font-black tracking-tight drop-shadow-sm">
                 {shiftMeta.name}
               </span>
               <span className={`px-1.5 py-0.2 rounded text-[10.5px] font-black shadow-xs ${shiftMeta.badgeClass}`}>
                 Kode: {shiftMeta.code}
               </span>
             </div>
-            <p className="text-[11.5px] sm:text-xs text-white/90 max-w-3xl leading-snug">
+            <p className="text-[11.5px] sm:text-xs text-white/95 max-w-3xl leading-snug drop-shadow-xs font-normal">
               {shiftMeta.description}
             </p>
-            <div className="flex flex-wrap items-center gap-2.5 text-[10.5px] font-medium text-white/85 pt-0.5">
-              <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-2.5 text-[10.5px] font-medium text-white/90 pt-0.5">
+              <div className="flex items-center gap-1 bg-black/15 px-1.5 py-0.5 rounded border border-white/10">
                 <Clock className="w-3 h-3 text-amber-300" />
                 <span>Jam: <strong>{shiftMeta.startTime} - {shiftMeta.endTime}</strong> ({shiftMeta.hours} Jam)</span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 bg-black/15 px-1.5 py-0.5 rounded border border-white/10">
                 <Calendar className="w-3 h-3 text-emerald-300" />
                 <span>Besok (Tgl {nextDay}): <strong>{nextShiftMeta.name} ({nextShiftMeta.code})</strong></span>
               </div>

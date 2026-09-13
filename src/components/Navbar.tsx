@@ -282,7 +282,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div 
           className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r ${twoHourTheme.gradientClass} border ${twoHourTheme.borderClass} shadow-xs transition-all duration-1000 cursor-pointer group select-none relative overflow-hidden`} 
           onClick={() => setCurrentTab('dashboard')}
-          title={`Sistem Jadwal Shif Wali Asuh • Tema Waktu: ${twoHourTheme.name} (${twoHourTheme.timeSlot}) - Berganti otomatis setiap 2 jam sekali`}
+          title={`Sistem Jadwal Shif Wali Asuh • Tema Warna: ${twoHourTheme.name} (${twoHourTheme.timeSlot}) - Berganti dinamis setiap 10 menit sekali`}
         >
           {/* Subtle Ambient Glow inside block */}
           <div className={`absolute inset-0 bg-gradient-to-r ${twoHourTheme.accentGlow} pointer-events-none transition-all duration-1000`} />
