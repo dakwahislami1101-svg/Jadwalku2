@@ -36,6 +36,7 @@ import { calculateDailyStats, INDONESIAN_MONTH_NAMES, INDONESIAN_DAY_NAMES, vali
 import { generateDailySchedulePDF } from '../utils/pdfExport';
 import { soundManager } from '../utils/audio';
 import { notificationService } from '../utils/notification';
+import { webPushService } from '../utils/webPushService';
 import { 
   subscribeToAnnouncement, 
   saveAnnouncementToFirestore, 
@@ -319,6 +320,13 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         }
       }
     }
+
+    // Sinkronisasi otomatis alarm tugas shif ke Service Worker Web Push jika perangkat aktif
+    if (webPushService.hasLocalSubscription() && userTodayShift && userTodayShift !== 'O' && userTodayShift !== 'L') {
+      webPushService.scheduleShiftAlarms(selectedStaff.id, selectedStaff.name, userTodayShift).catch(() => {
+        // Ignore background sync error
+      });
+    }
   }, [userTodayShift, selectedStaff.id, selectedStaff.name, activeDay, schedule.year, schedule.month, schedule.days, selectedStaff]);
 
   const triggerTestAlarm = () => {
@@ -439,6 +447,16 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Petunjuk Kode</span>
+            </button>
+
+            {/* Tombol Web Push API Background Alarm */}
+            <button
+              onClick={() => onNavigateToTab('notifications')}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0 whitespace-nowrap"
+              title="Integrasi Web Push API agar alarm berdering saat browser ditutup"
+            >
+              <Radio className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+              <span>Web Push API</span>
             </button>
 
             {/* Tombol Unduh PDF Hari Ini */}

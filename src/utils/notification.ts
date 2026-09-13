@@ -1,4 +1,5 @@
 import { soundManager } from './audio';
+import { webPushService } from './webPushService';
 
 export interface ToastAlert {
   id: string;
@@ -44,24 +45,29 @@ class NotificationService {
       icon?: string;
       sound?: 'bell' | 'chime' | 'digital' | 'gong' | 'none';
       tag?: string;
+      url?: string;
     }
   ) {
     const sound = options?.sound || 'bell';
-    soundManager.playSound(sound);
+    try {
+      soundManager.playSound(sound);
+    } catch {
+      // Ignore audio error
+    }
 
     if (this.hasNotificationApi && Notification.permission === 'granted') {
-      try {
-        new Notification(title, {
-          body: options?.body,
-          icon: options?.icon || 'https://api.iconify.design/lucide:bell-ring.svg?color=%232563eb',
-          tag: options?.tag,
-          requireInteraction: false,
-        });
-      } catch (err) {
-        console.warn('Browser notification error:', err);
-      }
+      // Deliver through Web Push Service Worker for background and system tray integration
+      webPushService.showSystemNotification(title, {
+        body: options?.body,
+        icon: options?.icon || '/logo.svg',
+        tag: options?.tag,
+        url: options?.url || '/',
+      }).catch((err) => {
+        console.warn('Web push show notification fallback:', err);
+      });
     }
   }
 }
 
 export const notificationService = new NotificationService();
+

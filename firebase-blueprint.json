@@ -112,6 +112,21 @@
         "updatedAt": { "type": "string", "required": true },
         "updatedBy": { "type": "string", "required": false }
       }
+    },
+    "push_subscriptions": {
+      "description": "Registered Web Push device subscriptions for background task notifications",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "staffId": { "type": "number", "required": false },
+        "staffName": { "type": "string", "required": false },
+        "endpoint": { "type": "string", "required": true },
+        "keys": { "type": "object", "required": true },
+        "deviceInfo": { "type": "string", "required": true },
+        "platform": { "type": "string", "required": false },
+        "subscribedAt": { "type": "string", "required": true },
+        "lastActive": { "type": "string", "required": true },
+        "isActive": { "type": "boolean", "required": true }
+      }
     }
   }
 }

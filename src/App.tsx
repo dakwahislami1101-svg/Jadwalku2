@@ -1022,6 +1022,9 @@ export default function App() {
                 soundEnabled={soundEnabled}
                 setSoundEnabled={setSoundEnabled}
                 onShowSplash={() => setShowSplash(true)}
+                selectedStaffId={selectedStaffId}
+                staffList={staffList}
+                schedule={schedule}
               />
             )}
 
