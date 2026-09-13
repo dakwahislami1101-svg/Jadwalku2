@@ -27,7 +27,8 @@ import {
   Megaphone,
   X,
   Radio,
-  Send
+  Send,
+  BookOpen
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
@@ -51,7 +52,7 @@ interface TodayDashboardProps {
   selectedStaffId: number;
   activeDay: number;
   setActiveDay: (day: number) => void;
-  onNavigateToTab: (tab: 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment') => void;
+  onNavigateToTab: (tab: 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'codeguide') => void;
   sopTasks?: DailyTask[];
   userRole?: 'admin' | 'staff';
   medicalPlans?: StudentMedicalPlan[];
@@ -428,6 +429,16 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Laporan Serah Terima</span>
+            </button>
+
+            {/* Tombol Petunjuk & Keterangan Kode (Sejajar Pengingat Penugasan & Serah Terima) */}
+            <button
+              onClick={() => onNavigateToTab('codeguide')}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0 whitespace-nowrap"
+              title="Buka Kamus, Petunjuk & Keterangan Lengkap Semua Kode Penugasan"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Petunjuk Kode</span>
             </button>
 
             {/* Tombol Unduh PDF Hari Ini */}

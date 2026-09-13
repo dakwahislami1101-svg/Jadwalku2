@@ -23,7 +23,8 @@ import {
   Pill,
   HeartPulse,
   Send,
-  GraduationCap
+  GraduationCap,
+  BookOpen
 } from 'lucide-react';
 import { Staff } from '../types';
 import { INSTITUTION_INFO } from '../data/initialSchedule';
@@ -32,8 +33,8 @@ import { getCurrentTwoHourTheme, TwoHourTheme } from '../utils/themeTwoHour';
 
 interface NavbarProps {
   userRole?: 'admin' | 'staff';
-  currentTab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio';
-  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio') => void;
+  currentTab: 'dashboard' | 'matrix' | 'codeguide' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio';
+  setCurrentTab: (tab: 'dashboard' | 'matrix' | 'codeguide' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio') => void;
   staffList: Staff[];
   selectedStaffId: number;
   setSelectedStaffId: (id: number) => void;
@@ -403,6 +404,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               <button
+                onClick={() => setCurrentTab('codeguide')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'codeguide'
+                    ? 'bg-sky-600 text-white shadow-xs font-bold'
+                    : 'text-sky-800 dark:text-sky-300 bg-sky-50/70 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200 dark:border-sky-800'
+                }`}
+                title="Buka Kamus, Petunjuk & Keterangan Lengkap Semua Kode Penugasan"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-sky-600 dark:text-sky-300" />
+                <span>Petunjuk Kode</span>
+              </button>
+
+              <button
                 onClick={() => setCurrentTab('dashboard')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   currentTab === 'dashboard'
@@ -543,6 +557,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <CalendarDays className="w-3.5 h-3.5" />
                 <span>Matriks Roster 31 Hari</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentTab('codeguide')}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                  currentTab === 'codeguide'
+                    ? 'bg-sky-600 text-white shadow-xs font-bold'
+                    : 'text-sky-800 dark:text-sky-300 bg-sky-50/70 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200 dark:border-sky-800'
+                }`}
+                title="Buka Kamus, Petunjuk & Keterangan Lengkap Semua Kode Penugasan"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-sky-600 dark:text-sky-300" />
+                <span>Petunjuk Kode</span>
               </button>
 
               <button

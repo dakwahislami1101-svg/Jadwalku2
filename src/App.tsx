@@ -32,6 +32,7 @@ import { StudentMedicalView } from './components/StudentMedicalView';
 import { AssignmentReminderView } from './components/AssignmentReminderView';
 import { MedicalNotificationsModal } from './components/MedicalNotificationsModal';
 import { StudentPortfolioView } from './components/StudentPortfolioView';
+import { CodeGuideView } from './components/CodeGuideView';
 import { LoginPage } from './components/LoginPage';
 import { SplashScreen } from './components/SplashScreen';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
@@ -207,7 +208,7 @@ export default function App() {
 
   // Active view tab (defaults to admin swap view if admin, or dashboard if staff)
   const [currentTab, setCurrentTab] = useState<
-    'dashboard' | 'matrix' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio'
+    'dashboard' | 'matrix' | 'codeguide' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio'
   >(() => {
     try {
       const local = localStorage.getItem('sr_auth_session');
@@ -947,6 +948,12 @@ export default function App() {
                 onOpenPrint={() => setCurrentTab('print')}
                 onOpenAuto={() => setCurrentTab('auto')}
                 onOpenAdminSwap={() => setCurrentTab('admin')}
+              />
+            )}
+
+            {currentTab === 'codeguide' && (
+              <CodeGuideView
+                onNavigateToTab={(tab) => setCurrentTab(tab as any)}
               />
             )}
 
