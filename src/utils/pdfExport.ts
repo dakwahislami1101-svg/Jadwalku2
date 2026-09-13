@@ -361,7 +361,7 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
     { label: '(P1) 07:00 - 15:00', key: 'p1', bg: [224, 242, 254], textCol: [12, 74, 110] },
     { label: '(P2) 08:00 - 16:00', key: 'p2', bg: [204, 251, 241], textCol: [19, 78, 74] },
     { label: '(P3) 07:00 - 16:00 (Upacara)', key: 'p3', bg: [254, 249, 195], textCol: [113, 63, 18] },
-    { label: '(P4) 07:00 - 23:00 (Kunjungan)', key: 'p4', bg: [207, 250, 254], textCol: [14, 116, 144] },
+    { label: '(P4) 07:00 - 20:00 (Kunjungan)', key: 'p4', bg: [207, 250, 254], textCol: [14, 116, 144] },
     { label: '(PAGI FULL)', key: 'pagiFull', bold: true, bg: [186, 230, 253], textCol: [12, 74, 110] },
     { label: '(S) TOTAL SORE (15:00-23:00)', key: 's', bold: true, bg: [251, 146, 60], textCol: [67, 20, 7] },
     { label: '- S2A (Kantin SMP)', key: 's2a', bg: [216, 180, 254], bold: true, textCol: [88, 28, 135] },
@@ -420,7 +420,7 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(4.4);
-  doc.text('P1: 07-15 | P2: 08-16 | P3: Upacara 07-16 | P4: Kunjungan (07-23) | S2A/S3A/S4A: Jaga Sore (15-23) | M/M1/M2/M3: Jaga Malam | LP: Lepas Piket | O: Off | C: Cuti', margin, currentY + 4.6);
+  doc.text('P1: 07-15 | P2: 08-16 | P3: Upacara 07-16 | P4: Kunjungan (07-20 / Pulang Makan Malam) | S2A/S3A/S4A: Jaga Sore (15-23) | M/M1/M2/M3: Jaga Malam | LP: Lepas Piket | O: Off | C: Cuti', margin, currentY + 4.6);
 
   // Catatan Khusus Tugas Shif P4 (Kunjungan)
   doc.setFont('helvetica', 'bold');
@@ -429,8 +429,8 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(3.7);
-  doc.text('1. P4 (07:00-23:00 / 16 Jam): Pengalihan M ke P saat ada kunjungan/acara. 07:00-15:00 wajib bantu kunjungan.', margin, currentY + 9.2);
-  doc.text('2. Pukul 15:00-23:00: Bantu shif Sore (tugas pokok M: patroli luar belakang lapangan/jogging track) & bantu makan malam S2A/S3A (bukan evaluator).', margin, currentY + 11.2);
+  doc.text('1. P4 (07:00-20:00 / 13 Jam): Pengalihan M ke P saat ada kunjungan/acara. 07:00-15:00 wajib bantu kunjungan. Pulang setelah makan malam.', margin, currentY + 9.2);
+  doc.text('2. Pukul 15:00-20:00: Bantu shif Sore (tugas pokok M: patroli luar belakang lapangan/jogging track) & bantu makan malam S2A/S3A (bukan evaluator). Selesai makan malam pulang.', margin, currentY + 11.2);
 
   // Catatan Khusus Tugas Shif Sore S2A, S3A, S4A
   doc.setFont('helvetica', 'bold');
@@ -664,7 +664,7 @@ export function generateDailySchedulePDF(
 
     let posDesc = sMeta.description;
     if (shift === 'P3') posDesc = 'Jaga Pagi Upacara Senin (07:00 - 16:00)';
-    if (shift === 'P4') posDesc = 'Bantu Kunjungan & Shif Sore Luar Belakang (07:00 - 23:00)';
+    if (shift === 'P4') posDesc = 'Bantu Kunjungan & Shif Sore Luar Belakang (07:00 - 20:00 / Pulang Makan Malam)';
     if (shift === 'S2A') posDesc = 'Kantin SMP (2 Petugas)';
     if (shift === 'S3A') posDesc = 'Kantin SMA (2 Petugas)';
     if (shift === 'S4A') posDesc = 'Jaga Masjid & Lingkungan';

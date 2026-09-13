@@ -635,29 +635,32 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         </div>
       )}
 
-      {/* Banner Khusus Validasi & Pengingat Shif P4 (07:00 - 23:00 WIB) - Slim */}
+      {/* Banner Khusus Validasi & Pengingat Shif P4 (07:00 - 20:00 WIB) - Slim */}
       {userTodayShift === 'P4' && (
         <div className="rounded-xl bg-gradient-to-r from-cyan-950/90 via-teal-900/90 to-slate-900 text-white px-3 py-2 sm:px-4 sm:py-2.5 border-2 border-cyan-400 shadow-md animate-in fade-in">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
             <div className="space-y-0.5">
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 text-[10px] font-bold">
                 <Sun className="w-3 h-3 text-cyan-300" />
-                <span>PENGINGAT KHUSUS PENUGASAN SHIF P4 (07:00 - 23:00 WIB)</span>
+                <span>PENGINGAT KHUSUS PENUGASAN SHIF P4 (07:00 - 20:00 WIB)</span>
               </div>
               <h4 className="text-xs sm:text-sm font-black text-cyan-100 flex flex-wrap items-center gap-1.5">
                 <span>Shif Pagi Acara/Kunjungan & Bantuan Siaga Sore (Tupoksi M)</span>
                 <span className="px-1.5 py-0.2 rounded bg-cyan-600 text-white text-[9.5px] font-black uppercase tracking-wider shadow-xs">
-                  16 Jam Kerja
+                  13 Jam Kerja
+                </span>
+                <span className="px-1.5 py-0.2 rounded bg-emerald-600 text-white text-[9.5px] font-black tracking-wide shadow-xs">
+                  Pulang Setelah Makan Malam
                 </span>
               </h4>
               <p className="text-[11px] text-cyan-100/90 leading-snug max-w-3xl">
                 Petugas <strong>{selectedStaff.name}</strong> ditugaskan pada kode <strong>P4</strong> (pengganti M karena ada kunjungan/acara pagi yang butuh banyak personil).
-                <strong> Datang jam 07:00, Pulang jam 23:00 WIB</strong>.
+                <strong> Datang jam 07:00, Pulang setelah makan malam jam 20:00 WIB</strong>.
               </p>
               <ul className="text-[10.5px] text-cyan-200/95 space-y-0.2 list-disc list-inside pt-0.5">
                 <li><strong>07:00 - 15:00:</strong> Wajib bantu pelayanan & pendampingan acara / kunjungan tamu dan wali santri.</li>
-                <li><strong>15:00 - 23:00:</strong> Membantu shif Sore tetapi tetap tugas pokok M: patroli luar belakang (lapangan, jogging track, voli, basket).</li>
-                <li><strong>Saat makan malam:</strong> Membantu petugas S2A dan S3A (bukan sebagai evaluator).</li>
+                <li><strong>15:00 - 20:00:</strong> Membantu shif Sore tetapi tetap tugas pokok M: patroli luar belakang (lapangan, jogging track, voli, basket).</li>
+                <li><strong>Saat makan malam:</strong> Membantu petugas S2A dan S3A (bukan sebagai evaluator). Selesai makan malam diperkenankan pulang.</li>
               </ul>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -666,7 +669,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                 onClick={() => {
                   soundManager.playBell();
                   notificationService.triggerNotification(`🏛️ Pengingat Shif P4: Kunjungan & Siaga Luar Belakang`, {
-                    body: `${selectedStaff.name} (P4): Wajib bantu kunjungan (07-15) & patroli luar belakang (15-23). Jam dinas 07:00-23:00 WIB.`,
+                    body: `${selectedStaff.name} (P4): Wajib bantu kunjungan (07-15), patroli luar belakang (15-20), dan bantu makan malam. Jam dinas 07:00-20:00 WIB (Pulang setelah makan malam).`,
                     sound: 'bell',
                   });
                   showToast('Alarm pengingat tugas shif P4 dibunyikan!');
@@ -692,7 +695,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               </div>
               <div>
                 <h3 className="font-bold text-xs text-slate-900 dark:text-white">Jaga Pagi (P1/P2/P3/P4)</h3>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">07:00 - 16:00 (P4 s.d 23:00)</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">07:00 - 16:00 (P4 s.d 20:00)</p>
               </div>
             </div>
             <span className="px-1.5 py-0.2 rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 text-[10.5px] font-bold">

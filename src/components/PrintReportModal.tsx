@@ -294,7 +294,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
               </tr>
               {/* (P4) */}
               <tr className="bg-cyan-50 font-bold text-cyan-950">
-                <td colSpan={2} className="border border-black p-0.5 text-right font-bold">(P4) 07:00 - 23:00 (Acara/Kunjungan)</td>
+                <td colSpan={2} className="border border-black p-0.5 text-right font-bold">(P4) 07:00 - 20:00 (Acara/Kunjungan)</td>
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 text-cyan-950 font-black">{st.p4 || 0}</td>
                 ))}
@@ -398,7 +398,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
             <div>
               <div className="font-bold underline text-[10.5px]">PETUNJUK KODE:</div>
               <div className="text-[10px] text-slate-700 dark:text-slate-300 space-y-0.5 mt-0.5">
-                <div><strong>P1</strong> (07:00-15:00) | <strong>P2</strong> (08:00-16:00) | <strong>P3</strong> : Upacara Senin (07:00-16:00) | <strong>P4</strong> : Kunjungan/Acara (07:00-23:00) | <strong>S2A / S3A / S4A</strong> : Jaga Sore (15:00 - 23:00)</div>
+                <div><strong>P1</strong> (07:00-15:00) | <strong>P2</strong> (08:00-16:00) | <strong>P3</strong> : Upacara Senin (07:00-16:00) | <strong>P4</strong> : Kunjungan/Acara (07:00-20:00 / Pulang Makan Malam) | <strong>S2A / S3A / S4A</strong> : Jaga Sore (15:00 - 23:00)</div>
                 <div><strong>M / M1 / M2 / M3</strong> : Jaga Malam (15:00 - 07:00) | <strong>LP</strong> : Lepas Piket | <strong>O</strong> : Off / Libur | <strong>C</strong> : Cuti</div>
               </div>
             </div>
@@ -406,10 +406,10 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
             <div className="pt-0.5 p-1.5 rounded-sm bg-cyan-50/70 dark:bg-cyan-950/30 border-l-2 border-cyan-500">
               <div className="font-bold text-slate-900 dark:text-slate-100 underline text-[10.5px]">CATATAN KHUSUS PENUGASAN PAGI & KUNJUNGAN (P4):</div>
               <ol className="list-decimal list-inside text-[10px] text-slate-800 dark:text-slate-300 space-y-0.5 mt-0.5">
-                <li><strong>Waktu & Ketentuan</strong>: Jam dinas 07:00 – 23:00 WIB (16 Jam Kerja). Digunakan saat jadwal personil yang seharusnya dinas Malam (M) dialihkan masuk Pagi (P) karena ada kunjungan/agenda penting yang membutuhkan banyak personil.</li>
+                <li><strong>Waktu & Ketentuan</strong>: Jam dinas 07:00 – 20:00 WIB (13 Jam Kerja). Digunakan saat jadwal personil yang seharusnya dinas Malam (M) dialihkan masuk Pagi (P) karena ada kunjungan/agenda penting yang membutuhkan banyak personil. <strong>Pulang setelah mendampingi sesi makan malam</strong>.</li>
                 <li><strong>Pukul 07:00 – 15:00</strong>: Wajib bertugas aktif membantu dan mendampingi kelancaran kunjungan/acara pagi.</li>
-                <li><strong>Pukul 15:00 – 23:00</strong>: Membantu shif Sore dengan fokus tugas pokok M, yaitu patroli & pengamanan area luar belakang (lapangan upacara, sepak bola, jogging track, voli, basket).</li>
-                <li><strong>Sesi Makan Malam</strong>: Membantu personil <strong>S2A</strong> (Kantin SMP) dan <strong>S3A</strong> (Kantin SMA), murni sebagai pendamping teknis (bukan sebagai evaluator).</li>
+                <li><strong>Pukul 15:00 – 20:00</strong>: Membantu shif Sore dengan fokus tugas pokok M, yaitu patroli & pengamanan area luar belakang (lapangan upacara, sepak bola, jogging track, voli, basket).</li>
+                <li><strong>Sesi Makan Malam & Kepulangan</strong>: Membantu personil <strong>S2A</strong> (Kantin SMP) dan <strong>S3A</strong> (Kantin SMA), murni sebagai pendamping teknis (bukan sebagai evaluator). Setelah seluruh rangkaian makan malam santri selesai (pukul 20:00 WIB), personil P4 diperkenankan pulang dinas.</li>
               </ol>
             </div>
 

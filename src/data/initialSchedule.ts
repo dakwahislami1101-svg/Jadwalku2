@@ -93,10 +93,10 @@ export const SHIFT_DEFINITIONS: Record<ShiftCode, ShiftInfo> = {
   P4: {
     code: 'P4',
     name: 'Jaga Pagi Acara/Kunjungan (P4)',
-    fullName: 'Jaga Pagi-Malam Acara & Kunjungan Khusus',
+    fullName: 'Jaga Pagi-Makan Malam Acara & Kunjungan Khusus',
     startTime: '07:00',
-    endTime: '23:00',
-    hours: 16,
+    endTime: '20:00',
+    hours: 13,
     color: '#0891b2', // Cyan-600
     bgLight: 'bg-cyan-100 text-cyan-950 border-cyan-400',
     bgDark: 'dark:bg-cyan-950/70 dark:text-cyan-200 dark:border-cyan-600',
@@ -105,7 +105,7 @@ export const SHIFT_DEFINITIONS: Record<ShiftCode, ShiftInfo> = {
     textColor: 'text-cyan-900',
     darkTextColor: 'dark:text-cyan-200',
     badgeClass: 'bg-cyan-700 text-white font-bold',
-    description: 'Piket pagi khusus pengganti jadwal M karena adanya kunjungan/acara pagi yang membutuhkan banyak personil. Datang jam 07:00, Pulang jam 23:00 (16 Jam). Pukul 07:00-15:00 wajib bantu kunjungan. Pukul 15:00-23:00 membantu shif sore tapi tetap menjalankan tugas pokok M (patroli area luar belakang: lapangan upacara, lapangan sepak bola, jogging track, voli, basket). Saat makan malam membantu S2A & S3A non-evaluasi.',
+    description: 'Piket pagi khusus pengganti jadwal M karena adanya kunjungan/acara pagi yang membutuhkan banyak personil. Datang jam 07:00, Pulang setelah makan malam jam 20:00 WIB (13 Jam Kerja). Pukul 07:00-15:00 wajib bantu kunjungan. Pukul 15:00-20:00 membantu shif sore dengan fokus tugas pokok M (patroli area luar belakang: lapangan upacara, lapangan sepak bola, jogging track, voli, basket). Saat makan malam membantu personil S2A & S3A sebagai pendamping teknis (bukan evaluator), dan pulang setelah seluruh rangkaian makan malam selesai.',
   },
   S: {
     code: 'S',
@@ -538,7 +538,7 @@ export const SHIFT_TASKS_TEMPLATE: DailyTask[] = [
     priority: 'krusial',
   },
 
-  // Shif Pagi Khusus Acara / Kunjungan (07:00 - 23:00 / P4)
+  // Shif Pagi Khusus Acara / Kunjungan (07:00 - 20:00 / P4) - Pulang Setelah Makan Malam
   {
     id: 'task_p4_1',
     shiftCode: 'P4',
@@ -588,7 +588,7 @@ export const SHIFT_TASKS_TEMPLATE: DailyTask[] = [
     id: 'task_p4_6',
     shiftCode: 'P4',
     time: '15:00',
-    title: 'Alih Tugas: Bantu Shif Sore & Siaga Patroli Luar Belakang',
+    title: 'Alih Tugas: Bantu Shif Sore & Siaga Patroli Luar Belakang (15:00-20:00)',
     description: 'Pukul 15:00 mulai membantu shif sore tetapi tetap menjalankan tugas pokok M: siaga dan patroli di area luar belakang (lapangan upacara, lapangan sepak bola, jogging track, lapangan voli, lapangan basket).',
     category: 'patroli',
     priority: 'krusial',
@@ -605,27 +605,18 @@ export const SHIFT_TASKS_TEMPLATE: DailyTask[] = [
   {
     id: 'task_p4_8',
     shiftCode: 'P4',
-    time: '19:00',
+    time: '18:45',
     title: 'Bantu Makan Malam Bersama S2A & S3A (Bukan Sebagai Evaluator)',
-    description: 'Membantu kelancaran makan malam anak asuh bersama petugas S2A (Kantin SMP) dan S3A (Kantin SMA). Catatan: Hanya membantu pendampingan/ketertiban, bukan sebagai penilai/evaluator.',
+    description: 'Membantu kelancaran makan malam anak asuh bersama petugas S2A (Kantin SMP) dan S3A (Kantin SMA). Catatan: Hanya membantu pendampingan teknis/ketertiban, bukan sebagai penilai/evaluator.',
     category: 'makan',
     priority: 'penting',
   },
   {
     id: 'task_p4_9',
     shiftCode: 'P4',
-    time: '20:30',
-    title: 'Patroli Keamanan Malam Area Luar Belakang & Fasilitas Olahraga',
-    description: 'Melaksanakan patroli tupoksi M di seluruh area luar belakang: lapangan upacara, jogging track, lapangan sepak bola, voli, dan basket serta pagar batas.',
-    category: 'patroli',
-    priority: 'penting',
-  },
-  {
-    id: 'task_p4_10',
-    shiftCode: 'P4',
-    time: '22:45',
-    title: 'Pengisian Log Dinas P4, Handover ke Piket Malam & Selesai Dinas (23:00)',
-    description: 'Melaporkan situasi area luar belakang kepada petugas M1/M3, pengisian catatan jaga P4, dan kepulangan dinas tepat pukul 23:00 WIB.',
+    time: '19:50',
+    title: 'Purna Sesi Makan Malam, Log Dinas P4 & Kepulangan Dinas (20:00)',
+    description: 'Memastikan seluruh anak asuh selesai makan malam dengan tertib bersama S2A/S3A, pelaporan log dinas P4, dan personil P4 diperkenankan pulang dinas setelah makan malam tepat pukul 20:00 WIB.',
     category: 'laporan',
     priority: 'krusial',
   },

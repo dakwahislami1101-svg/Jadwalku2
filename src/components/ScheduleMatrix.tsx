@@ -841,10 +841,10 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                 <td colSpan={10} className="bg-yellow-50 dark:bg-yellow-950"></td>
               </tr>
 
-              {/* (P4) 07:00 - 23:00 (Kunjungan) */}
+              {/* (P4) 07:00 - 20:00 (Kunjungan) */}
               <tr className="bg-cyan-50/80 dark:bg-cyan-950/40 text-slate-800 dark:text-slate-200 border-t border-slate-300 dark:border-slate-700 font-semibold text-[10px]">
                 <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-cyan-50 dark:bg-cyan-950 font-bold text-cyan-950 dark:text-cyan-200 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
-                  (P4) 07:00 - 23:00 (Kunjungan)
+                  (P4) 07:00 - 20:00 (Kunjungan)
                 </td>
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="p-0.2 border-r border-slate-300 dark:border-slate-700 text-cyan-800 dark:text-cyan-300 font-bold">
@@ -1031,13 +1031,13 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
             <span className="flex items-center gap-1.5">
               <span>🏛️ CATATAN PENUGASAN P4 (KUNJUNGAN)</span>
             </span>
-            <span className="px-1.5 py-0.2 rounded bg-cyan-600 text-white font-black text-[9px]">07:00 - 23:00</span>
+            <span className="px-1.5 py-0.2 rounded bg-cyan-600 text-white font-black text-[9px]">07:00 - 20:00</span>
           </div>
           <ol className="list-decimal list-inside space-y-1 text-[11px] text-cyan-950/90 dark:text-cyan-200/90 leading-relaxed">
-            <li><strong>Waktu & Ketentuan</strong>: Jam dinas <strong>07:00 – 23:00 WIB</strong> (16 Jam Kerja). Digunakan saat jadwal personil yang seharusnya dinas Malam (M) dialihkan masuk Pagi (P) karena ada kunjungan/agenda yang butuh banyak personil.</li>
+            <li><strong>Waktu & Ketentuan</strong>: Jam dinas <strong>07:00 – 20:00 WIB</strong> (13 Jam Kerja). Digunakan saat jadwal personil yang seharusnya dinas Malam (M) dialihkan masuk Pagi (P) karena ada kunjungan/agenda yang butuh banyak personil. <strong>Pulang setelah mendampingi sesi makan malam</strong>.</li>
             <li><strong>07:00 – 15:00</strong>: Wajib bertugas aktif membantu dan mendampingi kelancaran kunjungan/acara pagi.</li>
-            <li><strong>15:00 – 23:00</strong>: Membantu shif Sore dengan fokus tugas pokok M (patroli luar belakang: lapangan upacara, sepak bola, jogging track, voli, basket).</li>
-            <li><strong>Makan Malam</strong>: Membantu personil <strong>S2A</strong> (Kantin SMP) dan <strong>S3A</strong> (Kantin SMA), tanpa bertindak sebagai evaluator.</li>
+            <li><strong>15:00 – 20:00</strong>: Membantu shif Sore dengan fokus tugas pokok M (patroli luar belakang: lapangan upacara, sepak bola, jogging track, voli, basket).</li>
+            <li><strong>Makan Malam & Pulang</strong>: Membantu personil <strong>S2A</strong> (Kantin SMP) dan <strong>S3A</strong> (Kantin SMA) sebagai pendamping teknis (bukan evaluator). Setelah seluruh sesi makan malam selesai (pukul 20:00 WIB), personil P4 diperkenankan pulang dinas.</li>
           </ol>
         </div>
 

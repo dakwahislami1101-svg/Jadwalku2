@@ -122,11 +122,11 @@ export function calculateStaffSummary(
   const pFull = p + p1 + p2 + p3 + p4;
   // Calculate total working hours according to document hours:
   // P1 = 8h (07:00-15:00), P2 = 8h (08:00-16:00), P = 8h (07:00-15:00), P3 = 9h (07:00-16:00 Upacara Senin),
-  // P4 = 16h (07:00-23:00 Acara/Kunjungan Pagi s.d Sore Siaga Luar Belakang),
+  // P4 = 13h (07:00-20:00 Acara/Kunjungan Pagi s.d Selesai Makan Malam 20:00),
   // S, S2A, S3A, S4A = 8h (15:00-23:00), M, M1, M2 = 16h (15:00-07:00 next day / 16h shift duty),
   // M3 = 8h (23:00-07:00 next day)
   // LP, O, C = 0h
-  const totalHours = (p1 * 8) + (p * 8) + (p2 * 8) + (p3 * 9) + (p4 * 16) + (s * 8) + ((m - m3) * 16) + (m3 * 8);
+  const totalHours = (p1 * 8) + (p * 8) + (p2 * 8) + (p3 * 9) + (p4 * 13) + (s * 8) + ((m - m3) * 16) + (m3 * 8);
 
   return {
     staffId: staff.id,
@@ -368,8 +368,8 @@ export function getActiveShiftsAtTime(timeStr: string): ShiftCode[] {
   if (currentMinutes >= 8 * 60 && currentMinutes < 16 * 60) {
     active.push('P2');
   }
-  // P4 (07:00 - 23:00 => 420 to 1380)
-  if (currentMinutes >= 7 * 60 && currentMinutes < 23 * 60) {
+  // P4 (07:00 - 20:00 => 420 to 1200, pulang setelah makan malam)
+  if (currentMinutes >= 7 * 60 && currentMinutes < 20 * 60) {
     active.push('P4');
   }
   // S / S2A / S3A / S4A (15:00 - 23:00 => 900 to 1380)
@@ -468,20 +468,21 @@ export function validateShiftAssignment(
       hasSpecialReminder: true,
       specialReminder: {
         title: `🏛️ Pengingat Khusus Shif P4 (${staffName} - Tgl ${day})`,
-        message: `Petugas ${staffName} ditugaskan pada kode P4 tanggal ${day}. Jam dinas 07:00 - 23:00 WIB (16 Jam Kerja). Pengganti shif M karena ada acara/kunjungan. Pagi wajib bantu kunjungan, sore bantu patroli luar belakang (lapangan bola, basket, voli, jogging track) dan bantu makan malam S2A/S3A non-evaluasi.`,
-        dutyTime: '07:00 - 23:00 WIB',
-        taskTitle: 'Bantu Acara/Kunjungan Pagi & Patroli Area Luar Belakang Sore',
-        actionInstruction: 'Datang 07:00, Pulang 23:00. Pukul 07:00-15:00 wajib bantu kunjungan/acara. Pukul 15:00-23:00 membantu shif sore dengan tupoksi M (patroli luar belakang). Saat makan malam bantu S2A & S3A non-evaluasi.',
+        message: `Petugas ${staffName} ditugaskan pada kode P4 tanggal ${day}. Jam dinas 07:00 - 20:00 WIB (13 Jam Kerja). Pengganti shif M karena ada acara/kunjungan. Pagi wajib bantu kunjungan (07-15), sore bantu patroli luar belakang (15-20), dan mendampingi makan malam S2A/S3A non-evaluasi. Pulang setelah sesi makan malam selesai.`,
+        dutyTime: '07:00 - 20:00 WIB (Pulang Selesai Makan Malam)',
+        taskTitle: 'Bantu Acara/Kunjungan Pagi, Patroli Luar Belakang Sore & Pendamping Makan Malam',
+        actionInstruction: 'Datang 07:00, Pulang setelah makan malam jam 20:00 WIB (13 Jam Kerja). Pukul 07:00-15:00 wajib bantu kunjungan/acara. Pukul 15:00-20:00 membantu shif sore dengan fokus tugas pokok M (patroli luar belakang: lapangan upacara, bola, jogging track, voli, basket). Saat makan malam bantu S2A & S3A non-evaluasi, selesai makan malam pulang.',
         requiredActions: [
-          'Datang dinas tepat jam 07:00 WIB, Pulang jam 23:00 WIB (16 Jam Kerja)',
+          'Datang dinas tepat jam 07:00 WIB, Pulang jam 20:00 WIB (13 Jam Kerja / Pulang setelah makan malam)',
           'Digunakan saat seharusnya jadwal M dialihkan ke P karena ada kunjungan/acara pagi yang butuh banyak personil',
           'Saat diterapkan menjadi petugas kunjungan, wajib bantu kunjungan (07:00 - 15:00)',
-          'Dari jam 15:00 membantu shif Sore tetapi tetap sebagai tugas pokok M: berjaga di area luar belakang (lapangan upacara, sepak bola, jogging track, voli, basket)',
-          'Saat acara makan malam santri, membantu petugas S2A dan S3A (bukan sebagai evaluator)',
+          'Dari jam 15:00 s.d 20:00 membantu shif Sore tetapi tetap tugas pokok M: patroli area luar belakang (lapangan upacara, sepak bola, jogging track, voli, basket)',
+          'Saat acara makan malam santri, membantu petugas S2A dan S3A sebagai pendamping teknis (bukan sebagai evaluator)',
+          'Setelah seluruh rangkaian makan malam santri tuntas (pukul 20:00 WIB), personil P4 diperkenankan pulang dinas',
         ],
         sound: 'bell',
       },
-      notes: 'P4 (07:00 - 23:00): Pengganti M untuk bantu kunjungan pagi, patroli luar belakang sore, & pendamping makan malam S2A/S3A.',
+      notes: 'P4 (07:00 - 20:00 / 13 Jam): Pengganti M untuk bantu kunjungan pagi, patroli luar belakang sore, pendamping makan malam S2A/S3A, pulang setelah makan malam.',
     };
   }
 

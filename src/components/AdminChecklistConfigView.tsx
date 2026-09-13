@@ -44,7 +44,7 @@ const SHIFT_TABS: { code: ShiftCode; label: string; desc: string; hours: string;
   { code: 'P1', label: 'P1 (Pagi 1)', desc: 'Piket Pagi Sesi 1', hours: '07:00 - 15:00', badge: 'bg-teal-600 text-white' },
   { code: 'P2', label: 'P2 (Pagi 2)', desc: 'Piket Pagi Sesi 2', hours: '08:00 - 16:00', badge: 'bg-teal-700 text-white' },
   { code: 'P3', label: 'P3 (Pagi Khusus)', desc: 'Piket Pagi Khusus (Upacara / Sabtu / Pendampingan)', hours: '07:00 - 16:00', badge: 'bg-amber-600 text-white' },
-  { code: 'P4', label: 'P4 (Pagi Acara/Kunjungan)', desc: 'Bantu Kunjungan (07-15) & Patroli Luar Belakang Sore (15-23)', hours: '07:00 - 23:00', badge: 'bg-cyan-700 text-white' },
+  { code: 'P4', label: 'P4 (Pagi Acara/Kunjungan)', desc: 'Bantu Kunjungan (07-15), Patroli Luar Belakang (15-20) & Pulang Setelah Makan Malam', hours: '07:00 - 20:00', badge: 'bg-cyan-700 text-white' },
   { code: 'S2A', label: 'S2A (Kantin SMP)', desc: 'Piket Sore Kantin SMP', hours: '15:00 - 23:00', badge: 'bg-purple-600 text-white' },
   { code: 'S3A', label: 'S3A (Kantin SMA)', desc: 'Piket Sore Kantin SMA', hours: '15:00 - 23:00', badge: 'bg-orange-500 text-white' },
   { code: 'S4A', label: 'S4A (Jaga Masjid)', desc: 'Piket Sore Masjid & Luar', hours: '15:00 - 23:00', badge: 'bg-emerald-600 text-white' },
