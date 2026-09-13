@@ -533,58 +533,58 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         ) : null}
       </div>
 
-      {/* User's Assigned Shift Banner - Dynamic 2-Hour Theme Block */}
-      <div className={`relative overflow-hidden rounded-xl bg-gradient-to-r ${twoHourTheme.gradientClass} border ${twoHourTheme.borderClass} text-white p-3 sm:p-4 shadow-sm transition-all duration-1000`}>
+      {/* User's Assigned Shift Banner - Dynamic 2-Hour Theme Block (Slim & Compact) */}
+      <div className={`relative overflow-hidden rounded-xl bg-gradient-to-r ${twoHourTheme.gradientClass} border ${twoHourTheme.borderClass} text-white px-3 py-2 sm:px-4 sm:py-2.5 shadow-sm transition-all duration-1000`}>
         {/* Ambient glow accent */}
         <div className={`absolute inset-0 bg-gradient-to-r ${twoHourTheme.accentGlow} pointer-events-none transition-all duration-1000`} />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/15 backdrop-blur text-[11px] font-medium text-white border border-white/20">
-                <Sparkles className={`w-3 h-3 ${twoHourTheme.iconColor} animate-pulse`} />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3">
+          <div className="space-y-0.5 sm:space-y-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/15 backdrop-blur text-[10.5px] font-medium text-white border border-white/20">
+                <Sparkles className={`w-2.5 h-2.5 ${twoHourTheme.iconColor} animate-pulse`} />
                 <span>Penugasan Wali Asuh: <strong>{selectedStaff.name}</strong></span>
               </div>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-white/10 text-white/90 border border-white/15 backdrop-blur-xs">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-white/10 text-white/90 border border-white/15 backdrop-blur-xs">
                 <Clock className="w-2.5 h-2.5 text-white/80" />
                 <span>Tema: {twoHourTheme.name} ({twoHourTheme.timeSlot})</span>
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-lg sm:text-xl font-extrabold tracking-tight drop-shadow-xs">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-base sm:text-lg font-black tracking-tight drop-shadow-xs">
                 {shiftMeta.name}
               </span>
-              <span className={`px-2 py-0.5 rounded-md text-xs font-bold shadow-xs ${shiftMeta.badgeClass}`}>
+              <span className={`px-1.5 py-0.2 rounded text-[10.5px] font-black shadow-xs ${shiftMeta.badgeClass}`}>
                 Kode: {shiftMeta.code}
               </span>
             </div>
-            <p className="text-xs text-white/90 max-w-3xl leading-relaxed">
+            <p className="text-[11.5px] sm:text-xs text-white/90 max-w-3xl leading-snug">
               {shiftMeta.description}
             </p>
-            <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium text-white/80 pt-0.5">
+            <div className="flex flex-wrap items-center gap-2.5 text-[10.5px] font-medium text-white/85 pt-0.5">
               <div className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-amber-300" />
+                <Clock className="w-3 h-3 text-amber-300" />
                 <span>Jam: <strong>{shiftMeta.startTime} - {shiftMeta.endTime}</strong> ({shiftMeta.hours} Jam)</span>
               </div>
               <div className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-emerald-300" />
+                <Calendar className="w-3 h-3 text-emerald-300" />
                 <span>Besok (Tgl {nextDay}): <strong>{nextShiftMeta.name} ({nextShiftMeta.code})</strong></span>
               </div>
             </div>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="flex flex-row md:flex-col gap-1.5 shrink-0">
+          {/* Quick Action Buttons - Compact */}
+          <div className="flex flex-row md:flex-col gap-1.5 shrink-0 self-start md:self-center">
             <button
               onClick={triggerTestAlarm}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-xs transition-transform active:scale-95"
+              className="flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-xs transition-transform active:scale-95 cursor-pointer"
             >
-              <BellRing className="w-3.5 h-3.5 text-slate-950" />
+              <BellRing className="w-3 h-3 text-slate-950" />
               <span>Alarm Tugas</span>
             </button>
             <button
               onClick={() => onNavigateToTab('personal')}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white font-semibold text-xs border border-white/25 transition-colors"
+              className="flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-semibold text-xs border border-white/25 transition-colors cursor-pointer"
             >
               <span>Jadwal Personal</span>
               <ArrowRight className="w-3 h-3" />
@@ -593,22 +593,22 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         </div>
       </div>
 
-      {/* Banner Khusus Validasi & Pengingat Shif M3 (23:00 WIB) */}
+      {/* Banner Khusus Validasi & Pengingat Shif M3 (23:00 WIB) - Slim */}
       {userTodayShift === 'M3' && (
-        <div className="rounded-xl bg-gradient-to-r from-fuchsia-950/90 via-purple-900/90 to-slate-900 text-white p-3 sm:p-4 border-2 border-fuchsia-500 shadow-md animate-in fade-in">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-400/40 text-[10.5px] font-bold">
-                <Moon className="w-3.5 h-3.5 text-fuchsia-300" />
+        <div className="rounded-xl bg-gradient-to-r from-fuchsia-950/90 via-purple-900/90 to-slate-900 text-white px-3 py-2 sm:px-4 sm:py-2.5 border-2 border-fuchsia-500 shadow-md animate-in fade-in">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+            <div className="space-y-0.5">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-400/40 text-[10px] font-bold">
+                <Moon className="w-3 h-3 text-fuchsia-300" />
                 <span>PENGINGAT KHUSUS PENUGASAN SHIF M3 (23:00 WIB)</span>
               </div>
-              <h4 className="text-sm sm:text-base font-black text-fuchsia-100 flex flex-wrap items-center gap-2">
+              <h4 className="text-xs sm:text-sm font-black text-fuchsia-100 flex flex-wrap items-center gap-1.5">
                 <span>Tugas Wajib Keliling Asrama & Kirim Foto ke Grup Dinas</span>
-                <span className="px-2 py-0.5 rounded bg-fuchsia-500 text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
+                <span className="px-1.5 py-0.2 rounded bg-fuchsia-500 text-white text-[9.5px] font-black uppercase tracking-wider shadow-xs">
                   Jam 23:00 WIB
                 </span>
               </h4>
-              <p className="text-xs text-fuchsia-100/90 leading-relaxed max-w-3xl">
+              <p className="text-[11px] text-fuchsia-100/90 leading-snug max-w-3xl">
                 Petugas <strong>{selectedStaff.name}</strong> ditugaskan pada kode <strong>M3 (Jaga Malam Pendamping)</strong>.
                 Saat datang tepat pukul <strong>23:00 WIB</strong>, wajib melakukan kontrol keliling asrama santri dan lingkungan sekitar,
                 serta <strong>mengirimkan foto dokumentasi ke grup dinas</strong>. Mendampingi full shif malam s.d 07:00 WIB (pukul 03:00 WIB dan seterusnya menjalankan SOP tugas M2).
@@ -625,38 +625,38 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                   });
                   showToast('Alarm pengingat tugas patroli keliling 23:00 WIB dibunyikan!');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-500 hover:bg-fuchsia-400 text-white font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-fuchsia-500 hover:bg-fuchsia-400 text-white font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
               >
-                <BellRing className="w-3.5 h-3.5" />
-                <span>Bunyikan Pengingat 23:00</span>
+                <BellRing className="w-3 h-3" />
+                <span>Bunyikan 23:00</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Banner Khusus Validasi & Pengingat Shif P4 (07:00 - 23:00 WIB) */}
+      {/* Banner Khusus Validasi & Pengingat Shif P4 (07:00 - 23:00 WIB) - Slim */}
       {userTodayShift === 'P4' && (
-        <div className="rounded-xl bg-gradient-to-r from-cyan-950/90 via-teal-900/90 to-slate-900 text-white p-3 sm:p-4 border-2 border-cyan-400 shadow-md animate-in fade-in">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 text-[10.5px] font-bold">
-                <Sun className="w-3.5 h-3.5 text-cyan-300" />
+        <div className="rounded-xl bg-gradient-to-r from-cyan-950/90 via-teal-900/90 to-slate-900 text-white px-3 py-2 sm:px-4 sm:py-2.5 border-2 border-cyan-400 shadow-md animate-in fade-in">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+            <div className="space-y-0.5">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 text-[10px] font-bold">
+                <Sun className="w-3 h-3 text-cyan-300" />
                 <span>PENGINGAT KHUSUS PENUGASAN SHIF P4 (07:00 - 23:00 WIB)</span>
               </div>
-              <h4 className="text-sm sm:text-base font-black text-cyan-100 flex flex-wrap items-center gap-2">
+              <h4 className="text-xs sm:text-sm font-black text-cyan-100 flex flex-wrap items-center gap-1.5">
                 <span>Shif Pagi Acara/Kunjungan & Bantuan Siaga Sore (Tupoksi M)</span>
-                <span className="px-2 py-0.5 rounded bg-cyan-600 text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
+                <span className="px-1.5 py-0.2 rounded bg-cyan-600 text-white text-[9.5px] font-black uppercase tracking-wider shadow-xs">
                   16 Jam Kerja
                 </span>
               </h4>
-              <p className="text-xs text-cyan-100/90 leading-relaxed max-w-3xl">
+              <p className="text-[11px] text-cyan-100/90 leading-snug max-w-3xl">
                 Petugas <strong>{selectedStaff.name}</strong> ditugaskan pada kode <strong>P4</strong> (pengganti M karena ada kunjungan/acara pagi yang butuh banyak personil).
                 <strong> Datang jam 07:00, Pulang jam 23:00 WIB</strong>.
               </p>
-              <ul className="text-[11px] text-cyan-200/95 space-y-0.5 list-disc list-inside pt-1">
+              <ul className="text-[10.5px] text-cyan-200/95 space-y-0.2 list-disc list-inside pt-0.5">
                 <li><strong>07:00 - 15:00:</strong> Wajib bantu pelayanan & pendampingan acara / kunjungan tamu dan wali santri.</li>
-                <li><strong>15:00 - 23:00:</strong> Membantu shif Sore tetapi tetap tugas pokok M: berjaga di area luar belakang (lapangan upacara, sepak bola, jogging track, voli, basket).</li>
+                <li><strong>15:00 - 23:00:</strong> Membantu shif Sore tetapi tetap tugas pokok M: patroli luar belakang (lapangan, jogging track, voli, basket).</li>
                 <li><strong>Saat makan malam:</strong> Membantu petugas S2A dan S3A (bukan sebagai evaluator).</li>
               </ul>
             </div>
@@ -671,10 +671,10 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                   });
                   showToast('Alarm pengingat tugas shif P4 dibunyikan!');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
               >
-                <BellRing className="w-3.5 h-3.5" />
-                <span>Bunyikan Pengingat P4</span>
+                <BellRing className="w-3 h-3" />
+                <span>Bunyikan P4</span>
               </button>
             </div>
           </div>
