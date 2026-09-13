@@ -208,6 +208,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 <th className="border border-black p-0.5 bg-yellow-100 font-bold">P1</th>
                 <th className="border border-black p-0.5 bg-yellow-100 font-bold">P2</th>
                 <th className="border border-black p-0.5 bg-yellow-100 font-bold">P3</th>
+                <th className="border border-black p-0.5 bg-cyan-100 font-bold text-cyan-950">P4</th>
                 <th className="border border-black p-0.5 bg-slate-300 font-black text-slate-900">JK</th>
               </tr>
             </thead>
@@ -225,6 +226,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                       const shift = schedule.days[d]?.[staff.id] || 'O';
                       let bg = 'bg-white text-black';
                       if (shift === 'P' || shift === 'P1' || shift === 'P2' || shift === 'P3') bg = 'bg-yellow-300 text-yellow-950 font-bold';
+                      if (shift === 'P4') bg = 'bg-cyan-300 text-cyan-950 font-bold';
                       if (shift === 'S') bg = 'bg-orange-300 text-orange-950 font-bold';
                       if (shift === 'S2A') bg = 'bg-amber-400 text-amber-950 font-black';
                       if (shift === 'S3A') bg = 'bg-orange-400 text-orange-950 font-black';
@@ -259,6 +261,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                     <td className="border border-black p-0.5 font-medium bg-yellow-50">{(summary?.p1 || 0) + (summary?.p || 0)}</td>
                     <td className="border border-black p-0.5 font-medium bg-yellow-50">{summary?.p2}</td>
                     <td className="border border-black p-0.5 font-medium bg-yellow-50">{summary?.p3}</td>
+                    <td className="border border-black p-0.5 font-medium bg-cyan-50 text-cyan-950 font-bold">{summary?.p4 || 0}</td>
                     <td className="border border-black p-0.5 font-black bg-slate-300 text-slate-950">{summary?.totalHours}</td>
                   </tr>
                 );
@@ -271,7 +274,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5">{(st.p1 || 0) + (st.p || 0)}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* (P2) */}
               <tr className="bg-yellow-50 font-bold">
@@ -279,7 +282,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5">{st.p2}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* (P3) */}
               <tr className="bg-yellow-50 font-bold">
@@ -287,7 +290,15 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5">{st.p3}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
+              </tr>
+              {/* (P4) */}
+              <tr className="bg-cyan-50 font-bold text-cyan-950">
+                <td colSpan={2} className="border border-black p-0.5 text-right font-bold">(P4) 07:00 - 23:00 (Acara/Kunjungan)</td>
+                {dailyStatsList.map((st, i) => (
+                  <td key={i} className="border border-black p-0.5 text-cyan-950 font-black">{st.p4 || 0}</td>
+                ))}
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* (PAGI FULL) */}
               <tr className="bg-amber-300 font-black text-slate-950">
@@ -295,7 +306,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-black">{st.pagiFull}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* (S) TOTAL SORE */}
               <tr className="bg-orange-400 font-black text-slate-950">
@@ -303,7 +314,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-black">{st.s}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* ↳ S2A */}
               <tr className="bg-amber-200 font-bold text-amber-950">
@@ -311,7 +322,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-bold">{st.s2a}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* ↳ S3A */}
               <tr className="bg-orange-200 font-bold text-orange-950">
@@ -319,7 +330,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-bold">{st.s3a}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* (M) */}
               <tr className="bg-blue-300 font-black text-slate-950">
@@ -327,7 +338,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-black">{st.m}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* ↳ M1 */}
               <tr className="bg-indigo-100 font-bold text-indigo-950">
@@ -335,7 +346,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-bold">{st.m1}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* ↳ M2 */}
               <tr className="bg-blue-100 font-bold text-blue-950">
@@ -343,7 +354,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-bold">{st.m2}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* ↳ M3 */}
               <tr className="bg-fuchsia-100 font-bold text-fuchsia-950">
@@ -351,7 +362,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-bold">{st.m3 || 0}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* CUTI */}
               <tr className="bg-emerald-200 font-bold text-slate-950">
@@ -359,7 +370,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-bold">{st.cuti}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* OFF / LIBUR + LEPAS */}
               <tr className="bg-rose-300 font-black text-slate-950">
@@ -367,7 +378,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-black">{st.offDanLepas}</td>
                 ))}
-                <td colSpan={9} className="border border-black"></td>
+                <td colSpan={10} className="border border-black"></td>
               </tr>
               {/* JUMLAH */}
               <tr className="bg-slate-300 font-black text-slate-950">
@@ -375,7 +386,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 {dailyStatsList.map((st, i) => (
                   <td key={i} className="border border-black p-0.5 font-black">{st.total}</td>
                 ))}
-                <td colSpan={9} className="border border-black font-black"></td>
+                <td colSpan={10} className="border border-black font-black"></td>
               </tr>
             </tfoot>
           </table>
@@ -387,9 +398,19 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
             <div>
               <div className="font-bold underline text-[10.5px]">PETUNJUK KODE:</div>
               <div className="text-[10px] text-slate-700 dark:text-slate-300 space-y-0.5 mt-0.5">
-                <div><strong>P1</strong> (07:00-15:00) | <strong>P2</strong> (08:00-16:00) | <strong>P3</strong> : Upacara Senin (07:00-16:00) | <strong>S2A / S3A / S4A</strong> : Jaga Sore (15:00 - 23:00)</div>
+                <div><strong>P1</strong> (07:00-15:00) | <strong>P2</strong> (08:00-16:00) | <strong>P3</strong> : Upacara Senin (07:00-16:00) | <strong>P4</strong> : Kunjungan/Acara (07:00-23:00) | <strong>S2A / S3A / S4A</strong> : Jaga Sore (15:00 - 23:00)</div>
                 <div><strong>M / M1 / M2 / M3</strong> : Jaga Malam (15:00 - 07:00) | <strong>LP</strong> : Lepas Piket | <strong>O</strong> : Off / Libur | <strong>C</strong> : Cuti</div>
               </div>
+            </div>
+
+            <div className="pt-0.5 p-1.5 rounded-sm bg-cyan-50/70 dark:bg-cyan-950/30 border-l-2 border-cyan-500">
+              <div className="font-bold text-slate-900 dark:text-slate-100 underline text-[10.5px]">CATATAN KHUSUS PENUGASAN PAGI & KUNJUNGAN (P4):</div>
+              <ol className="list-decimal list-inside text-[10px] text-slate-800 dark:text-slate-300 space-y-0.5 mt-0.5">
+                <li><strong>Waktu & Ketentuan</strong>: Jam dinas 07:00 – 23:00 WIB (16 Jam Kerja). Digunakan saat jadwal personil yang seharusnya dinas Malam (M) dialihkan masuk Pagi (P) karena ada kunjungan/agenda penting yang membutuhkan banyak personil.</li>
+                <li><strong>Pukul 07:00 – 15:00</strong>: Wajib bertugas aktif membantu dan mendampingi kelancaran kunjungan/acara pagi.</li>
+                <li><strong>Pukul 15:00 – 23:00</strong>: Membantu shif Sore dengan fokus tugas pokok M, yaitu patroli & pengamanan area luar belakang (lapangan upacara, sepak bola, jogging track, voli, basket).</li>
+                <li><strong>Sesi Makan Malam</strong>: Membantu personil <strong>S2A</strong> (Kantin SMP) dan <strong>S3A</strong> (Kantin SMA), murni sebagai pendamping teknis (bukan sebagai evaluator).</li>
+              </ol>
             </div>
 
             <div className="pt-0.5">

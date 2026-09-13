@@ -1,4 +1,4 @@
-export type ShiftCode = 'P' | 'P1' | 'P2' | 'P3' | 'S' | 'S2A' | 'S3A' | 'S4A' | 'M' | 'M1' | 'M2' | 'M3' | 'LP' | 'O' | 'L' | 'C';
+export type ShiftCode = 'P' | 'P1' | 'P2' | 'P3' | 'P4' | 'S' | 'S2A' | 'S3A' | 'S4A' | 'M' | 'M1' | 'M2' | 'M3' | 'LP' | 'O' | 'L' | 'C';
 
 export interface ShiftInfo {
   code: ShiftCode;
@@ -50,11 +50,12 @@ export interface MonthSchedule {
 export interface ShiftSummary {
   staffId: number;
   staffName: string;
-  pFull: number; // P + P1 + P2 + P3
+  pFull: number; // P + P1 + P2 + P3 + P4
   p: number;
   p1: number;
   p2: number;
   p3: number;
+  p4?: number;
   s: number;
   s2a?: number;
   s3a?: number;

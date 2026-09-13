@@ -45,6 +45,7 @@ export function calculateStaffSummary(
   let p1 = 0;
   let p2 = 0;
   let p3 = 0;
+  let p4 = 0;
   let s = 0;
   let s2a = 0;
   let s3a = 0;
@@ -71,6 +72,9 @@ export function calculateStaffSummary(
         break;
       case 'P3':
         p3++;
+        break;
+      case 'P4':
+        p4++;
         break;
       case 'S':
         s++;
@@ -115,13 +119,14 @@ export function calculateStaffSummary(
     }
   }
 
-  const pFull = p + p1 + p2 + p3;
+  const pFull = p + p1 + p2 + p3 + p4;
   // Calculate total working hours according to document hours:
   // P1 = 8h (07:00-15:00), P2 = 8h (08:00-16:00), P = 8h (07:00-15:00), P3 = 9h (07:00-16:00 Upacara Senin),
+  // P4 = 16h (07:00-23:00 Acara/Kunjungan Pagi s.d Sore Siaga Luar Belakang),
   // S, S2A, S3A, S4A = 8h (15:00-23:00), M, M1, M2 = 16h (15:00-07:00 next day / 16h shift duty),
   // M3 = 8h (23:00-07:00 next day)
   // LP, O, C = 0h
-  const totalHours = (p1 * 8) + (p * 8) + (p2 * 8) + (p3 * 9) + (s * 8) + ((m - m3) * 16) + (m3 * 8);
+  const totalHours = (p1 * 8) + (p * 8) + (p2 * 8) + (p3 * 9) + (p4 * 16) + (s * 8) + ((m - m3) * 16) + (m3 * 8);
 
   return {
     staffId: staff.id,
@@ -131,6 +136,7 @@ export function calculateStaffSummary(
     p1,
     p2,
     p3,
+    p4,
     s,
     s2a,
     s3a,
@@ -153,6 +159,7 @@ export interface DailyColumnStats {
   p1: number;
   p2: number;
   p3: number;
+  p4: number;
   pagiFull: number;
   s: number;
   s2a: number;
@@ -169,6 +176,7 @@ export interface DailyColumnStats {
   pagiWali: Staff[];
   pagi1Wali: Staff[];
   pagi2Wali: Staff[];
+  pagi4Wali: Staff[];
   soreWali: Staff[];
   soreKantinSmp: Staff[];
   soreKantinSma: Staff[];
@@ -191,6 +199,7 @@ export function calculateDailyStats(
   let p1 = 0;
   let p2 = 0;
   let p3 = 0;
+  let p4 = 0;
   let s = 0;
   let s2a = 0;
   let s3a = 0;
@@ -205,6 +214,7 @@ export function calculateDailyStats(
   const pagiWali: Staff[] = [];
   const pagi1Wali: Staff[] = [];
   const pagi2Wali: Staff[] = [];
+  const pagi4Wali: Staff[] = [];
   const soreWali: Staff[] = [];
   const soreKantinSmp: Staff[] = [];
   const soreKantinSma: Staff[] = [];
@@ -238,6 +248,11 @@ export function calculateDailyStats(
       case 'P3':
         p3++;
         pagiWali.push(staff);
+        break;
+      case 'P4':
+        p4++;
+        pagiWali.push(staff);
+        pagi4Wali.push(staff);
         break;
       case 'S':
         s++;
@@ -304,7 +319,8 @@ export function calculateDailyStats(
     p1,
     p2,
     p3,
-    pagiFull: p + p1 + p2 + p3,
+    p4,
+    pagiFull: p + p1 + p2 + p3 + p4,
     s,
     s2a,
     s3a,
@@ -320,6 +336,7 @@ export function calculateDailyStats(
     pagiWali,
     pagi1Wali,
     pagi2Wali,
+    pagi4Wali,
     soreWali,
     soreKantinSmp,
     soreKantinSma,
@@ -350,6 +367,10 @@ export function getActiveShiftsAtTime(timeStr: string): ShiftCode[] {
   // P2 (08:00 - 16:00 => 480 to 960)
   if (currentMinutes >= 8 * 60 && currentMinutes < 16 * 60) {
     active.push('P2');
+  }
+  // P4 (07:00 - 23:00 => 420 to 1380)
+  if (currentMinutes >= 7 * 60 && currentMinutes < 23 * 60) {
+    active.push('P4');
   }
   // S / S2A / S3A / S4A (15:00 - 23:00 => 900 to 1380)
   if (currentMinutes >= 15 * 60 && currentMinutes < 23 * 60) {
@@ -433,6 +454,34 @@ export function validateShiftAssignment(
         sound: 'bell',
       },
       notes: 'M3 (23:00 - 07:00): Wajib patroli keliling asrama jam 23:00 & kirim foto dokumentasi ke grup dinas.',
+    };
+  }
+
+  // Logika khusus validasi dan pengingat untuk penugasan P4 (Pagi Acara/Kunjungan)
+  if (shift === 'P4') {
+    return {
+      isValid: true,
+      code: 'P4',
+      staffId,
+      staffName,
+      day,
+      hasSpecialReminder: true,
+      specialReminder: {
+        title: `🏛️ Pengingat Khusus Shif P4 (${staffName} - Tgl ${day})`,
+        message: `Petugas ${staffName} ditugaskan pada kode P4 tanggal ${day}. Jam dinas 07:00 - 23:00 WIB (16 Jam Kerja). Pengganti shif M karena ada acara/kunjungan. Pagi wajib bantu kunjungan, sore bantu patroli luar belakang (lapangan bola, basket, voli, jogging track) dan bantu makan malam S2A/S3A non-evaluasi.`,
+        dutyTime: '07:00 - 23:00 WIB',
+        taskTitle: 'Bantu Acara/Kunjungan Pagi & Patroli Area Luar Belakang Sore',
+        actionInstruction: 'Datang 07:00, Pulang 23:00. Pukul 07:00-15:00 wajib bantu kunjungan/acara. Pukul 15:00-23:00 membantu shif sore dengan tupoksi M (patroli luar belakang). Saat makan malam bantu S2A & S3A non-evaluasi.',
+        requiredActions: [
+          'Datang dinas tepat jam 07:00 WIB, Pulang jam 23:00 WIB (16 Jam Kerja)',
+          'Digunakan saat seharusnya jadwal M dialihkan ke P karena ada kunjungan/acara pagi yang butuh banyak personil',
+          'Saat diterapkan menjadi petugas kunjungan, wajib bantu kunjungan (07:00 - 15:00)',
+          'Dari jam 15:00 membantu shif Sore tetapi tetap sebagai tugas pokok M: berjaga di area luar belakang (lapangan upacara, sepak bola, jogging track, voli, basket)',
+          'Saat acara makan malam santri, membantu petugas S2A dan S3A (bukan sebagai evaluator)',
+        ],
+        sound: 'bell',
+      },
+      notes: 'P4 (07:00 - 23:00): Pengganti M untuk bantu kunjungan pagi, patroli luar belakang sore, & pendamping makan malam S2A/S3A.',
     };
   }
 
@@ -524,7 +573,7 @@ export function exportScheduleToCSV(
   summaries: ShiftSummary[]
 ): string {
   const headerDays = Array.from({ length: schedule.totalDays }, (_, i) => i + 1).join(',');
-  let csv = `No,Nama,${headerDays},P FUL,S,S2A (Kantin SMP),S3A (Kantin SMA),S4A (Jaga Masjid),M (Total),M1 (s.d 00:00),M2 (Subuh-07:00),M3 (Pendamping 23-07),LP,OFF,P1,P2,P3,JK (Jam)\n`;
+  let csv = `No,Nama,${headerDays},P FUL,S,S2A (Kantin SMP),S3A (Kantin SMA),S4A (Jaga Masjid),M (Total),M1 (s.d 00:00),M2 (Subuh-07:00),M3 (Pendamping 23-07),LP,OFF,P1,P2,P3,P4,JK (Jam)\n`;
 
   schedule.staffList.forEach((staff, idx) => {
     const summary = summaries.find((s) => s.staffId === staff.id);
@@ -533,7 +582,7 @@ export function exportScheduleToCSV(
     }).join(',');
 
     const p1Val = (summary?.p1 || 0) + (summary?.p || 0);
-    const statsStr = `${summary?.pFull || 0},${summary?.s || 0},${summary?.s2a || 0},${summary?.s3a || 0},${summary?.s4a || 0},${summary?.m || 0},${summary?.m1 || 0},${summary?.m2 || 0},${summary?.m3 || 0},${summary?.lp || 0},${summary?.off || 0},${p1Val},${summary?.p2 || 0},${summary?.p3 || 0},${summary?.totalHours || 0}`;
+    const statsStr = `${summary?.pFull || 0},${summary?.s || 0},${summary?.s2a || 0},${summary?.s3a || 0},${summary?.s4a || 0},${summary?.m || 0},${summary?.m1 || 0},${summary?.m2 || 0},${summary?.m3 || 0},${summary?.lp || 0},${summary?.off || 0},${p1Val},${summary?.p2 || 0},${summary?.p3 || 0},${summary?.p4 || 0},${summary?.totalHours || 0}`;
 
     csv += `${idx + 1},"${staff.name}",${rowShifts},${statsStr}\n`;
   });

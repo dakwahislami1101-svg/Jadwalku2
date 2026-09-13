@@ -271,7 +271,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
     if (hasSpecificTasks) {
       return t.shiftCode === userTodayShift;
     }
-    if (userTodayShift === 'P1' || userTodayShift === 'P2' || userTodayShift === 'P3') {
+    if (userTodayShift === 'P1' || userTodayShift === 'P2' || userTodayShift === 'P3' || userTodayShift === 'P4') {
       return t.shiftCode === userTodayShift || t.shiftCode === 'P';
     }
     if (['S2A', 'S3A', 'S4A'].includes(userTodayShift)) {
@@ -291,13 +291,25 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   const dayName = INDONESIAN_DAY_NAMES[dayDate.getDay()];
   const dateFormatted = `${dayName}, ${activeDay} ${schedule.monthName} ${schedule.year}`;
 
-  // Otomatis memicu pengingat khusus saat staf ditugaskan pada kode M3
+  // Otomatis memicu pengingat khusus saat staf ditugaskan pada kode M3 atau P4
   useEffect(() => {
     if (userTodayShift === 'M3') {
       const reminderKey = `m3_auto_notified_${schedule.year}_${schedule.month}_${activeDay}_${selectedStaff.id}`;
       if (!sessionStorage.getItem(reminderKey)) {
         sessionStorage.setItem(reminderKey, 'true');
         const val = validateShiftAssignment(selectedStaff, 'M3', activeDay, schedule.days);
+        if (val.hasSpecialReminder && val.specialReminder) {
+          notificationService.triggerNotification(val.specialReminder.title, {
+            body: val.specialReminder.message,
+            sound: 'bell',
+          });
+        }
+      }
+    } else if (userTodayShift === 'P4') {
+      const reminderKey = `p4_auto_notified_${schedule.year}_${schedule.month}_${activeDay}_${selectedStaff.id}`;
+      if (!sessionStorage.getItem(reminderKey)) {
+        sessionStorage.setItem(reminderKey, 'true');
+        const val = validateShiftAssignment(selectedStaff, 'P4', activeDay, schedule.days);
         if (val.hasSpecialReminder && val.specialReminder) {
           notificationService.triggerNotification(val.specialReminder.title, {
             body: val.specialReminder.message,
@@ -623,6 +635,52 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         </div>
       )}
 
+      {/* Banner Khusus Validasi & Pengingat Shif P4 (07:00 - 23:00 WIB) */}
+      {userTodayShift === 'P4' && (
+        <div className="rounded-xl bg-gradient-to-r from-cyan-950/90 via-teal-900/90 to-slate-900 text-white p-3 sm:p-4 border-2 border-cyan-400 shadow-md animate-in fade-in">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 text-[10.5px] font-bold">
+                <Sun className="w-3.5 h-3.5 text-cyan-300" />
+                <span>PENGINGAT KHUSUS PENUGASAN SHIF P4 (07:00 - 23:00 WIB)</span>
+              </div>
+              <h4 className="text-sm sm:text-base font-black text-cyan-100 flex flex-wrap items-center gap-2">
+                <span>Shif Pagi Acara/Kunjungan & Bantuan Siaga Sore (Tupoksi M)</span>
+                <span className="px-2 py-0.5 rounded bg-cyan-600 text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
+                  16 Jam Kerja
+                </span>
+              </h4>
+              <p className="text-xs text-cyan-100/90 leading-relaxed max-w-3xl">
+                Petugas <strong>{selectedStaff.name}</strong> ditugaskan pada kode <strong>P4</strong> (pengganti M karena ada kunjungan/acara pagi yang butuh banyak personil).
+                <strong> Datang jam 07:00, Pulang jam 23:00 WIB</strong>.
+              </p>
+              <ul className="text-[11px] text-cyan-200/95 space-y-0.5 list-disc list-inside pt-1">
+                <li><strong>07:00 - 15:00:</strong> Wajib bantu pelayanan & pendampingan acara / kunjungan tamu dan wali santri.</li>
+                <li><strong>15:00 - 23:00:</strong> Membantu shif Sore tetapi tetap tugas pokok M: berjaga di area luar belakang (lapangan upacara, sepak bola, jogging track, voli, basket).</li>
+                <li><strong>Saat makan malam:</strong> Membantu petugas S2A dan S3A (bukan sebagai evaluator).</li>
+              </ul>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playBell();
+                  notificationService.triggerNotification(`🏛️ Pengingat Shif P4: Kunjungan & Siaga Luar Belakang`, {
+                    body: `${selectedStaff.name} (P4): Wajib bantu kunjungan (07-15) & patroli luar belakang (15-23). Jam dinas 07:00-23:00 WIB.`,
+                    sound: 'bell',
+                  });
+                  showToast('Alarm pengingat tugas shif P4 dibunyikan!');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
+              >
+                <BellRing className="w-3.5 h-3.5" />
+                <span>Bunyikan Pengingat P4</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Real-Time Shift Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
         {/* Shif Pagi */}
@@ -633,8 +691,8 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                 <Sun className="w-3.5 h-3.5" />
               </div>
               <div>
-                <h3 className="font-bold text-xs text-slate-900 dark:text-white">Jaga Pagi (P1/P2)</h3>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">07:00 - 16:00</p>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white">Jaga Pagi (P1/P2/P3/P4)</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">07:00 - 16:00 (P4 s.d 23:00)</p>
               </div>
             </div>
             <span className="px-1.5 py-0.2 rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 text-[10.5px] font-bold">
@@ -650,13 +708,20 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                   ? 'bg-sky-600 text-white'
                   : shiftCode === 'P2'
                   ? 'bg-teal-600 text-white'
+                  : shiftCode === 'P4'
+                  ? 'bg-cyan-700 text-white'
                   : 'bg-yellow-500 text-slate-900';
                 return (
                   <div
                     key={st.id}
                     className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-sky-50/70 dark:bg-sky-950/40 text-slate-800 dark:text-slate-200"
                   >
-                    <span className="font-medium truncate">{st.name}</span>
+                    <div className="flex items-center gap-1 truncate">
+                      <span className="font-medium truncate">{st.name}</span>
+                      {shiftCode === 'P4' && (
+                        <span className="text-[8.5px] text-cyan-700 dark:text-cyan-300 shrink-0 font-bold">(Kunjungan)</span>
+                      )}
+                    </div>
                     <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded shrink-0 ${badgeClass}`}>
                       {shiftCode}
                     </span>

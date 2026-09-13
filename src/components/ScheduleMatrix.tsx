@@ -647,6 +647,9 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                 <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-yellow-50 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 3 (07:00-15:00)">
                   P3
                 </th>
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-cyan-50 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 4 / Kunjungan (07:00-23:00)">
+                  P4
+                </th>
                 <th className="p-0.5 border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-extrabold text-[9.5px] min-w-[32px]" title="Total Jam Kerja (JK)">
                   JK
                 </th>
@@ -656,7 +659,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
             <tbody>
               {filteredStaff.length === 0 ? (
                 <tr>
-                  <td colSpan={schedule.totalDays + 11} className="py-16 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={schedule.totalDays + 12} className="py-16 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex flex-col items-center justify-center gap-2 max-w-md mx-auto">
                       <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                         <Sparkles className="w-5 h-5" />
@@ -786,6 +789,9 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     <td className="p-0.5 border-r border-slate-200 dark:border-slate-700/80 font-semibold text-yellow-700 dark:text-yellow-400 text-[10px]">
                       {summary?.p3 || 0}
                     </td>
+                    <td className="p-0.5 border-r border-slate-200 dark:border-slate-700/80 font-semibold text-cyan-700 dark:text-cyan-400 text-[10px]">
+                      {summary?.p4 || 0}
+                    </td>
                     <td className="p-0.5 font-mono font-extrabold bg-slate-100 dark:bg-slate-700/60 text-slate-900 dark:text-white text-[10px]">
                       {summary?.totalHours || 0}
                     </td>
@@ -806,7 +812,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {(st.p1 || 0) + (st.p || 0)}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-sky-50 dark:bg-sky-950"></td>
+                <td colSpan={10} className="bg-sky-50 dark:bg-sky-950"></td>
               </tr>
 
               {/* (P2) 08:00 - 16:00 */}
@@ -819,7 +825,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.p2}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-teal-50 dark:bg-teal-950"></td>
+                <td colSpan={10} className="bg-teal-50 dark:bg-teal-950"></td>
               </tr>
 
               {/* (P3) 07:00 - 16:00 (Upacara) */}
@@ -832,7 +838,20 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.p3}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-yellow-50 dark:bg-yellow-950"></td>
+                <td colSpan={10} className="bg-yellow-50 dark:bg-yellow-950"></td>
+              </tr>
+
+              {/* (P4) 07:00 - 23:00 (Kunjungan) */}
+              <tr className="bg-cyan-50/80 dark:bg-cyan-950/40 text-slate-800 dark:text-slate-200 border-t border-slate-300 dark:border-slate-700 font-semibold text-[10px]">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-cyan-50 dark:bg-cyan-950 font-bold text-cyan-950 dark:text-cyan-200 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
+                  (P4) 07:00 - 23:00 (Kunjungan)
+                </td>
+                {dailyStatsList.map((st, i) => (
+                  <td key={i} className="p-0.2 border-r border-slate-300 dark:border-slate-700 text-cyan-800 dark:text-cyan-300 font-bold">
+                    {st.p4 || 0}
+                  </td>
+                ))}
+                <td colSpan={10} className="bg-cyan-50 dark:bg-cyan-950"></td>
               </tr>
 
               {/* (PAGI FULL) */}
@@ -845,7 +864,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.pagiFull}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-sky-100 dark:bg-sky-900"></td>
+                <td colSpan={10} className="bg-sky-100 dark:bg-sky-900"></td>
               </tr>
 
               {/* (S) 15:00 - 23:00 */}
@@ -858,7 +877,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.s}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-orange-100 dark:bg-orange-950"></td>
+                <td colSpan={10} className="bg-orange-100 dark:bg-orange-950"></td>
               </tr>
 
               {/* (S2A) Kantin SMP */}
@@ -871,7 +890,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.s2a}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-purple-50 dark:bg-purple-950"></td>
+                <td colSpan={10} className="bg-purple-50 dark:bg-purple-950"></td>
               </tr>
 
               {/* (S3A) Kantin SMA */}
@@ -884,7 +903,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.s3a}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-orange-50 dark:bg-orange-950"></td>
+                <td colSpan={10} className="bg-orange-50 dark:bg-orange-950"></td>
               </tr>
 
               {/* (S4A) Jaga Masjid */}
@@ -897,7 +916,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.s4a}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-emerald-50 dark:bg-emerald-950"></td>
+                <td colSpan={10} className="bg-emerald-50 dark:bg-emerald-950"></td>
               </tr>
 
               {/* (M) 15:00 - 07:00 */}
@@ -910,7 +929,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.m}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-blue-100 dark:bg-blue-950"></td>
+                <td colSpan={10} className="bg-blue-100 dark:bg-blue-950"></td>
               </tr>
 
               {/* M1 (Malam Sesi 1) */}
@@ -923,7 +942,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.m1}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-indigo-50 dark:bg-indigo-950"></td>
+                <td colSpan={10} className="bg-indigo-50 dark:bg-indigo-950"></td>
               </tr>
 
               {/* M2 (Malam Sesi 2) */}
@@ -936,7 +955,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.m2}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-blue-50 dark:bg-blue-950"></td>
+                <td colSpan={10} className="bg-blue-50 dark:bg-blue-950"></td>
               </tr>
 
               {/* M3 (Malam Pendamping) */}
@@ -958,7 +977,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     )}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-fuchsia-50 dark:bg-fuchsia-950"></td>
+                <td colSpan={10} className="bg-fuchsia-50 dark:bg-fuchsia-950"></td>
               </tr>
 
               {/* CUTI */}
@@ -971,7 +990,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.cuti}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-teal-50 dark:bg-teal-950"></td>
+                <td colSpan={10} className="bg-teal-50 dark:bg-teal-950"></td>
               </tr>
 
               {/* OFF / LIBUR + LEPAS */}
@@ -984,7 +1003,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.offDanLepas}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-red-50 dark:bg-red-950"></td>
+                <td colSpan={10} className="bg-red-50 dark:bg-red-950"></td>
               </tr>
 
               {/* JUMLAH */}
@@ -997,7 +1016,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.total}
                   </td>
                 ))}
-                <td colSpan={9} className="bg-slate-200 dark:bg-slate-900"></td>
+                <td colSpan={10} className="bg-slate-200 dark:bg-slate-900"></td>
               </tr>
             </tfoot>
           </table>
@@ -1005,7 +1024,23 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
       </div>
 
       {/* Special Shift Notes & Instructions Card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        {/* P4 Card */}
+        <div className="bg-cyan-50/80 dark:bg-cyan-950/40 p-3 rounded-xl border border-cyan-200 dark:border-cyan-800/60 text-cyan-950 dark:text-cyan-200 space-y-1.5 shadow-2xs">
+          <div className="font-bold flex items-center justify-between gap-1 text-cyan-900 dark:text-cyan-300 uppercase tracking-wide text-[11px]">
+            <span className="flex items-center gap-1.5">
+              <span>🏛️ CATATAN PENUGASAN P4 (KUNJUNGAN)</span>
+            </span>
+            <span className="px-1.5 py-0.2 rounded bg-cyan-600 text-white font-black text-[9px]">07:00 - 23:00</span>
+          </div>
+          <ol className="list-decimal list-inside space-y-1 text-[11px] text-cyan-950/90 dark:text-cyan-200/90 leading-relaxed">
+            <li><strong>Waktu & Ketentuan</strong>: Jam dinas <strong>07:00 – 23:00 WIB</strong> (16 Jam Kerja). Digunakan saat jadwal personil yang seharusnya dinas Malam (M) dialihkan masuk Pagi (P) karena ada kunjungan/agenda yang butuh banyak personil.</li>
+            <li><strong>07:00 – 15:00</strong>: Wajib bertugas aktif membantu dan mendampingi kelancaran kunjungan/acara pagi.</li>
+            <li><strong>15:00 – 23:00</strong>: Membantu shif Sore dengan fokus tugas pokok M (patroli luar belakang: lapangan upacara, sepak bola, jogging track, voli, basket).</li>
+            <li><strong>Makan Malam</strong>: Membantu personil <strong>S2A</strong> (Kantin SMP) dan <strong>S3A</strong> (Kantin SMA), tanpa bertindak sebagai evaluator.</li>
+          </ol>
+        </div>
+
         <div className="bg-amber-50/70 dark:bg-amber-950/30 p-3 rounded-xl border border-amber-200 dark:border-amber-800/60 text-amber-950 dark:text-amber-200 space-y-1.5">
           <div className="font-bold flex items-center gap-1.5 text-amber-900 dark:text-amber-300 uppercase tracking-wide text-[11px]">
             <span>📋 CATATAN KHUSUS PENUGASAN SORE</span>

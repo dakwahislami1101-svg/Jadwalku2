@@ -57,7 +57,7 @@ const SWAP_REASONS = [
   'Izin Khusus Pimpinan / Kepala Sekolah',
 ];
 
-const AVAILABLE_SHIFTS: ShiftCode[] = ['P1', 'P2', 'P3', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2', 'M3', 'LP', 'O', 'C'];
+const AVAILABLE_SHIFTS: ShiftCode[] = ['P1', 'P2', 'P3', 'P4', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2', 'M3', 'LP', 'O', 'C'];
 
 export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
   schedule,
