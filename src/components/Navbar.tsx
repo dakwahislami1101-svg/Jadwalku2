@@ -53,6 +53,7 @@ interface NavbarProps {
   onRefreshServer?: () => void;
   medicalNotificationCount?: number;
   onOpenMedicalNotifications?: () => void;
+  onOpenActiveShiftModal?: () => void;
 }
 
 
@@ -78,6 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRefreshServer,
   medicalNotificationCount = 0,
   onOpenMedicalNotifications,
+  onOpenActiveShiftModal,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -232,6 +234,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Calendar className="w-3 h-3 text-slate-500 dark:text-slate-400" />
             <span>{dateStr}</span>
           </div>
+
+          {/* Tombol Shif Aktif (Munculkan Pop-up Petugas & Tugas Kunci di Jam Ini) */}
+          {onOpenActiveShiftModal && (
+            <button
+              type="button"
+              onClick={onOpenActiveShiftModal}
+              title="Klik untuk melihat siapa yang bertugas di jam ini dan tugas prioritasnya"
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-2xs active:scale-95 transition-all cursor-pointer"
+            >
+              <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+              <span>Petugas Jam Ini</span>
+            </button>
+          )}
 
           {/* Speaker Sound Toggle (Sejajar Kemensos RI) */}
           <button

@@ -31,6 +31,11 @@ import { AdminChecklistConfigView } from './components/AdminChecklistConfigView'
 import { StudentMedicalView } from './components/StudentMedicalView';
 import { AssignmentReminderView } from './components/AssignmentReminderView';
 import { MedicalNotificationsModal } from './components/MedicalNotificationsModal';
+import { 
+  ActiveShiftModal, 
+  shouldShowTwoHourShiftPopup, 
+  recordTwoHourShiftPopupShown 
+} from './components/ActiveShiftModal';
 import { StudentPortfolioView } from './components/StudentPortfolioView';
 import { CodeGuideView } from './components/CodeGuideView';
 import { LoginPage } from './components/LoginPage';
@@ -234,6 +239,23 @@ export default function App() {
     return getLocalStudentMedicalPlans();
   });
   const [isMedicalNotificationsOpen, setIsMedicalNotificationsOpen] = useState(false);
+
+  // Pop-up Shif Aktif Otomatis Setiap 2 Jam Sekali (Pagi / Sore / Malam)
+  const [isActiveShiftModalOpen, setIsActiveShiftModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Jalankan pengecekan interval 2 jam ketika user membuka aplikasi & terautentikasi
+    if (isAuthenticated && !showSplash) {
+      const timer = setTimeout(() => {
+        if (shouldShowTwoHourShiftPopup()) {
+          setIsActiveShiftModalOpen(true);
+          recordTwoHourShiftPopupShown();
+          soundManager.playChime();
+        }
+      }, 1200); // Beri jeda halus setelah splash/load selesai
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, showSplash]);
 
   // Cross-device sync: fetch directly and subscribe in realtime
   useEffect(() => {
@@ -894,6 +916,11 @@ export default function App() {
               ).length;
             })()}
             onOpenMedicalNotifications={() => setIsMedicalNotificationsOpen(true)}
+            onOpenActiveShiftModal={() => {
+              setIsActiveShiftModalOpen(true);
+              recordTwoHourShiftPopupShown();
+              soundManager.playChime();
+            }}
           />
 
           {/* Floating Cloud Refresh Toast Notification */}
@@ -932,6 +959,11 @@ export default function App() {
                 userRole={currentUserRole}
                 medicalPlans={medicalPlans}
                 onOpenMedicalModal={() => setIsMedicalNotificationsOpen(true)}
+                onOpenActiveShiftModal={() => {
+                  setIsActiveShiftModalOpen(true);
+                  recordTwoHourShiftPopupShown();
+                  soundManager.playChime();
+                }}
               />
             )}
 
@@ -1096,6 +1128,16 @@ export default function App() {
               setCurrentTab('medical');
             }}
             onMarkPlanCompleted={handleMarkMedicalPlanCompleted}
+          />
+
+          {/* Modal Pop-up Shif Aktif Setiap 2 Jam Sekali (Pagi / Sore / Malam) */}
+          <ActiveShiftModal
+            isOpen={isActiveShiftModalOpen}
+            onClose={() => setIsActiveShiftModalOpen(false)}
+            schedule={schedule}
+            staffList={staffList}
+            selectedStaffId={selectedStaffId}
+            onNavigateToTab={(tab) => setCurrentTab(tab as any)}
           />
         </div>
       )}

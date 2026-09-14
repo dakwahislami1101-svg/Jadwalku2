@@ -58,6 +58,7 @@ interface TodayDashboardProps {
   userRole?: 'admin' | 'staff';
   medicalPlans?: StudentMedicalPlan[];
   onOpenMedicalModal?: () => void;
+  onOpenActiveShiftModal?: () => void;
 }
 
 export const TodayDashboard: React.FC<TodayDashboardProps> = ({
@@ -71,6 +72,7 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   userRole = 'staff',
   medicalPlans = [],
   onOpenMedicalModal,
+  onOpenActiveShiftModal,
 }) => {
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
     try {
@@ -604,6 +606,17 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
 
           {/* Quick Action Buttons - Compact */}
           <div className="flex flex-row md:flex-col gap-1.5 shrink-0 self-start md:self-center">
+            {onOpenActiveShiftModal && (
+              <button
+                type="button"
+                onClick={onOpenActiveShiftModal}
+                title="Buka daftar petugas aktif & agenda prioritas di jam ini"
+                className="flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-white/25 hover:bg-white/35 text-white font-bold text-xs border border-white/30 backdrop-blur-xs shadow-xs transition-transform active:scale-95 cursor-pointer"
+              >
+                <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" />
+                <span>Petugas Jam Ini</span>
+              </button>
+            )}
             <button
               onClick={triggerTestAlarm}
               className="flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-xs transition-transform active:scale-95 cursor-pointer"
