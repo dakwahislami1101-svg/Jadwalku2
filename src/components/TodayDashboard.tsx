@@ -28,9 +28,10 @@ import {
   X,
   Radio,
   Send,
-  BookOpen
+  BookOpen,
+  GraduationCap
 } from 'lucide-react';
-import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan } from '../types';
+import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan, P5TaskAssignment } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
 import { calculateDailyStats, INDONESIAN_MONTH_NAMES, INDONESIAN_DAY_NAMES, validateShiftAssignment } from '../utils/scheduler';
 import { generateDailySchedulePDF } from '../utils/pdfExport';
@@ -43,6 +44,8 @@ import {
   getLocalAnnouncement, 
   DEFAULT_ANNOUNCEMENT 
 } from '../utils/firebaseService';
+import { getLocalP5Assignments, subscribeToP5Assignments } from '../utils/p5TaskService';
+import { P5TaskAssignmentModal } from './P5TaskAssignmentModal';
 import { AnnouncementPopup } from './AnnouncementPopup';
 import { IcsExportModal } from './IcsExportModal';
 import { getCurrentTwoHourTheme, TwoHourTheme } from '../utils/themeTwoHour';
@@ -106,6 +109,24 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   const [isSavingAnnouncement, setIsSavingAnnouncement] = useState<boolean>(false);
   const [announcementToast, setAnnouncementToast] = useState<string | null>(null);
   const [isIcsModalOpen, setIsIcsModalOpen] = useState<boolean>(false);
+  const [p5ModalTarget, setP5ModalTarget] = useState<{ day: number; staff: Staff } | null>(null);
+  const [p5Assignments, setP5Assignments] = useState<Record<string, P5TaskAssignment>>(() => 
+    getLocalP5Assignments(schedule.year, schedule.month)
+  );
+
+  useEffect(() => {
+    const unsub = subscribeToP5Assignments(schedule.year, schedule.month, (data) => {
+      setP5Assignments(data);
+    });
+    const handleCustomUpdate = () => {
+      setP5Assignments(getLocalP5Assignments(schedule.year, schedule.month));
+    };
+    window.addEventListener('p5_assignments_updated', handleCustomUpdate);
+    return () => {
+      unsub();
+      window.removeEventListener('p5_assignments_updated', handleCustomUpdate);
+    };
+  }, [schedule.year, schedule.month]);
 
   useEffect(() => {
     const unsub = subscribeToAnnouncement((data) => {
@@ -588,9 +609,26 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               <span className={`px-1.5 py-0.2 rounded text-[10.5px] font-black shadow-xs ${shiftMeta.badgeClass}`}>
                 Kode: {shiftMeta.code}
               </span>
+              {userTodayShift === 'P5' && (
+                <button
+                  type="button"
+                  onClick={() => setP5ModalTarget({ day: activeDay, staff: selectedStaff })}
+                  className="px-2 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold flex items-center gap-1 shadow-xs cursor-pointer transition-all"
+                  title="Ganti atau sesuaikan fokus tugas P5"
+                >
+                  <Edit3 className="w-2.5 h-2.5" />
+                  <span>Ubah Tugas P5</span>
+                </button>
+              )}
             </div>
             <p className="text-[11.5px] sm:text-xs text-white/95 max-w-3xl leading-snug drop-shadow-xs font-normal">
-              {shiftMeta.description}
+              {userTodayShift === 'P5' ? (
+                <span>
+                  Fokus Tugas Khusus: <strong>{p5Assignments[`${activeDay}_${selectedStaff.id}`]?.taskTitle || 'Mendampingi Perhotelan'}</strong>. Melaksanakan bimbingan keterampilan & pendampingan vokasi santri di jam 07:00 – 15:00 WIB.
+                </span>
+              ) : (
+                shiftMeta.description
+              )}
             </p>
             <div className="flex flex-wrap items-center gap-2.5 text-[10.5px] font-medium text-white/90 pt-0.5">
               <div className="flex items-center gap-1 bg-black/15 px-1.5 py-0.5 rounded border border-white/10">
@@ -736,8 +774,8 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                 <Sun className="w-3.5 h-3.5" />
               </div>
               <div>
-                <h3 className="font-bold text-xs text-slate-900 dark:text-white">Jaga Pagi (P1/P2/P3/P4)</h3>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">07:00 - 16:00 (P4 s.d 20:00)</p>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white">Jaga Pagi (P1-P5)</h3>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">07:00 - 15:00/16:00 (P4 s.d 20:00)</p>
               </div>
             </div>
             <span className="px-1.5 py-0.2 rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 text-[10.5px] font-bold">
@@ -749,25 +787,45 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               dailyStats.pagiWali.map((st) => {
                 const shiftCode = schedule.days[activeDay]?.[st.id];
                 const isP1 = shiftCode === 'P1' || shiftCode === 'P';
+                const isP5 = shiftCode === 'P5';
+                const p5Task = isP5 ? p5Assignments[`${activeDay}_${st.id}`]?.taskTitle : null;
                 const badgeClass = isP1
                   ? 'bg-sky-600 text-white'
                   : shiftCode === 'P2'
                   ? 'bg-teal-600 text-white'
                   : shiftCode === 'P4'
                   ? 'bg-cyan-700 text-white'
+                  : isP5
+                  ? 'bg-emerald-700 text-white'
                   : 'bg-yellow-500 text-slate-900';
                 return (
                   <div
                     key={st.id}
-                    className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-sky-50/70 dark:bg-sky-950/40 text-slate-800 dark:text-slate-200"
+                    className="flex items-center justify-between text-[11px] py-0.5 px-1.5 rounded bg-sky-50/70 dark:bg-sky-950/40 text-slate-800 dark:text-slate-200 gap-1"
                   >
-                    <div className="flex items-center gap-1 truncate">
+                    <div className="flex items-center gap-1 truncate min-w-0">
                       <span className="font-medium truncate">{st.name}</span>
                       {shiftCode === 'P4' && (
                         <span className="text-[8.5px] text-cyan-700 dark:text-cyan-300 shrink-0 font-bold">(Kunjungan)</span>
                       )}
+                      {isP5 && (
+                        <span 
+                          onClick={() => {
+                            if (userRole === 'admin') setP5ModalTarget({ day: activeDay, staff: st });
+                          }}
+                          className={`text-[8.5px] text-emerald-700 dark:text-emerald-300 truncate font-semibold ${userRole === 'admin' ? 'cursor-pointer hover:underline' : ''}`}
+                          title={p5Task ? `Tugas: ${p5Task}` : 'Klik untuk atur tugas'}
+                        >
+                          ({p5Task || 'Keterampilan'})
+                        </span>
+                      )}
                     </div>
-                    <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded shrink-0 ${badgeClass}`}>
+                    <span 
+                      onClick={() => {
+                        if (isP5 && userRole === 'admin') setP5ModalTarget({ day: activeDay, staff: st });
+                      }}
+                      className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded shrink-0 ${badgeClass} ${isP5 && userRole === 'admin' ? 'cursor-pointer hover:opacity-85' : ''}`}
+                    >
                       {shiftCode}
                     </span>
                   </div>
@@ -1286,6 +1344,22 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
         activeDay={activeDay}
         sopTasks={sopTasks}
       />
+
+      {/* Pop-up Dialog Penugasan Tugas Shif P5 (Keterampilan / Vokasi) */}
+      {p5ModalTarget && (
+        <P5TaskAssignmentModal
+          isOpen={!!p5ModalTarget}
+          onClose={() => setP5ModalTarget(null)}
+          staff={p5ModalTarget.staff}
+          day={p5ModalTarget.day}
+          month={schedule.month}
+          year={schedule.year}
+          monthName={schedule.monthName}
+          onSaved={() => {
+            setP5Assignments(getLocalP5Assignments(schedule.year, schedule.month));
+          }}
+        />
+      )}
     </div>
   );
 };

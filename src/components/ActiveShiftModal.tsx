@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode } from '../types';
 import { soundManager } from '../utils/audio';
+import { getLocalP5Assignments } from '../utils/p5TaskService';
 
 interface ActiveShiftModalProps {
   isOpen: boolean;
@@ -46,7 +47,7 @@ export function getCurrentShiftPeriod(date: Date = new Date()): ShiftPeriodInfo 
       title: 'Shif Pagi',
       timeRange: '07:00 – 15:00 WIB',
       accentGradient: 'from-sky-700 via-teal-700 to-emerald-800',
-      icon: <Sun className="w-4 h-4 text-amber-300" />,
+      icon: <Sun className="w-3.5 h-3.5 text-amber-300" />,
     };
   }
 
@@ -56,7 +57,7 @@ export function getCurrentShiftPeriod(date: Date = new Date()): ShiftPeriodInfo 
       title: 'Shif Sore',
       timeRange: '15:00 – 23:00 WIB',
       accentGradient: 'from-orange-700 via-amber-700 to-purple-800',
-      icon: <Sunset className="w-4 h-4 text-amber-300" />,
+      icon: <Sunset className="w-3.5 h-3.5 text-amber-300" />,
     };
   }
 
@@ -66,14 +67,14 @@ export function getCurrentShiftPeriod(date: Date = new Date()): ShiftPeriodInfo 
     title: 'Shif Malam',
     timeRange: '23:00 – 07:00 WIB',
     accentGradient: 'from-indigo-950 via-slate-900 to-blue-950',
-    icon: <Moon className="w-4 h-4 text-indigo-300" />,
+    icon: <Moon className="w-3.5 h-3.5 text-indigo-300" />,
   };
 }
 
 /**
  * Keterangan singkat & padat untuk setiap kode shif (misal: S2A Jaga Kantin SMP)
  */
-export function getShortShiftDescription(code: ShiftCode): { shortDesc: string; badgeBg: string } {
+export function getShortShiftDescription(code: ShiftCode, customP5Title?: string): { shortDesc: string; badgeBg: string } {
   switch (code) {
     case 'P1':
     case 'P':
@@ -84,6 +85,11 @@ export function getShortShiftDescription(code: ShiftCode): { shortDesc: string; 
       return { shortDesc: 'Piket Pagi Khusus (Upacara / Senin)', badgeBg: 'bg-amber-600 text-white' };
     case 'P4':
       return { shortDesc: 'Pagi Acara & Patroli Luar (s.d 20:00)', badgeBg: 'bg-cyan-700 text-white' };
+    case 'P5':
+      return { 
+        shortDesc: customP5Title ? `${customP5Title} (07-15)` : 'Pendamping Keterampilan/Vokasi (07-15)', 
+        badgeBg: 'bg-emerald-700 text-white' 
+      };
     case 'S2A':
       return { shortDesc: 'Jaga Kantin SMP & Maghrib', badgeBg: 'bg-purple-600 text-white' };
     case 'S3A':
@@ -163,6 +169,8 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
       badgeBg: string;
     }[] = [];
 
+    const p5Assignments = getLocalP5Assignments(schedule.year, schedule.month);
+
     staffList.forEach((staff) => {
       const shiftCode = schedule.days[todayDay]?.[staff.id];
       if (!shiftCode || shiftCode === 'O' || shiftCode === 'LP' || shiftCode === 'L' || shiftCode === 'C') {
@@ -171,7 +179,7 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
 
       let isIncluded = false;
       if (activePeriod.type === 'pagi') {
-        if (['P1', 'P2', 'P3', 'P4', 'P'].includes(shiftCode)) {
+        if (['P1', 'P2', 'P3', 'P4', 'P5', 'P'].includes(shiftCode)) {
           isIncluded = true;
         }
       } else if (activePeriod.type === 'sore') {
@@ -185,7 +193,8 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
       }
 
       if (isIncluded) {
-        const { shortDesc, badgeBg } = getShortShiftDescription(shiftCode);
+        const p5Custom = shiftCode === 'P5' ? p5Assignments[`${todayDay}_${staff.id}`]?.taskTitle : undefined;
+        const { shortDesc, badgeBg } = getShortShiftDescription(shiftCode, p5Custom);
         list.push({
           staff,
           shiftCode,
@@ -201,114 +210,114 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
       if (b.isCurrentUser) return 1;
       return a.staff.name.localeCompare(b.staff.name);
     });
-  }, [staffList, schedule.days, todayDay, activePeriod.type, selectedStaffId]);
+  }, [staffList, schedule.days, schedule.year, schedule.month, todayDay, activePeriod.type, selectedStaffId]);
 
   if (!isOpen) return null;
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 bg-slate-950/75 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 bg-slate-950/75 backdrop-blur-xs animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm sm:max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col transition-all select-none"
+        className="bg-white dark:bg-slate-900 rounded-xl max-w-[340px] sm:max-w-[380px] w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col transition-all select-none"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
       >
-        {/* Header Kompak Rapat */}
-        <div className={`px-3 py-2 bg-gradient-to-r ${activePeriod.accentGradient} text-white relative shadow-xs`}>
+        {/* Header Kompak Rapat - 1 Halaman Kecil Pas */}
+        <div className={`px-2.5 py-1.5 bg-gradient-to-r ${activePeriod.accentGradient} text-white relative shadow-xs`}>
           <button
             onClick={onClose}
-            className="absolute top-2 right-2 p-1 rounded-full bg-black/20 hover:bg-black/40 text-white/90 hover:text-white transition-colors cursor-pointer"
+            className="absolute top-1.5 right-1.5 p-0.5 rounded-full bg-black/20 hover:bg-black/40 text-white/90 hover:text-white transition-colors cursor-pointer"
             title="Tutup (Esc)"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
 
-          <div className="flex items-center gap-2 pr-6">
-            <div className="w-6 h-6 rounded-md bg-white/20 backdrop-blur-sm border border-white/25 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-1.5 pr-6">
+            <div className="w-5 h-5 rounded bg-white/20 backdrop-blur-sm border border-white/25 flex items-center justify-center shrink-0">
               {activePeriod.icon}
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h2 className="text-xs sm:text-sm font-black tracking-tight leading-tight truncate">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1 leading-none">
+                <h2 className="text-xs font-black tracking-tight truncate">
                   Petugas {activePeriod.title}
                 </h2>
-                <span className="px-1.5 py-0.2 rounded bg-black/20 text-[9px] font-bold border border-white/20">
+                <span className="px-1 py-0.2 rounded bg-black/25 text-[8.5px] font-bold">
                   {activePeriod.timeRange}
                 </span>
               </div>
-              <p className="text-[10px] text-white/90 truncate font-mono">
+              <p className="text-[9.5px] text-white/90 truncate font-mono mt-0.5">
                 {dayName}, {todayDay} {schedule.monthName} • {timeFormatted} WIB
               </p>
             </div>
           </div>
         </div>
 
-        {/* Konten Rapat: Hanya Nama, Kode Tugas & Keterangan Singkat */}
-        <div className="p-2 sm:p-2.5">
-          <div className="flex items-center justify-between px-1 mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <Users className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-              Petugas Aktif ({onDutyStaff.length} Orang)
+        {/* Konten Rapat: Hanya Nama, Kode Tugas & Keterangan Singkat - Tanpa Perlu Menggeser */}
+        <div className="p-2 space-y-1">
+          <div className="flex items-center justify-between px-0.5 pb-0.5 border-b border-slate-100 dark:border-slate-800">
+            <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <Users className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
+              Petugas Aktif ({onDutyStaff.length})
             </span>
-            <span className="inline-flex items-center gap-0.5 text-[9px] text-amber-600 dark:text-amber-400 font-medium">
-              <Sparkles className="w-2.5 h-2.5" />
+            <span className="inline-flex items-center gap-0.5 text-[8.5px] text-amber-600 dark:text-amber-400 font-medium">
+              <Sparkles className="w-2 h-2" />
               Tiap 2 Jam
             </span>
           </div>
 
           {onDutyStaff.length > 0 ? (
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {onDutyStaff.map(({ staff, shiftCode, isCurrentUser, shortDesc, badgeBg }) => (
                 <div
                   key={staff.id}
-                  className={`px-2.5 py-1.5 rounded-lg border flex items-center justify-between gap-2 transition-all ${
+                  className={`px-2 py-1 rounded border flex items-center justify-between gap-1.5 transition-all ${
                     isCurrentUser
                       ? 'bg-blue-50 dark:bg-blue-950/70 border-blue-300 dark:border-blue-700 shadow-2xs'
-                      : 'bg-slate-50/80 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80'
+                      : 'bg-slate-50/90 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80'
                   }`}
                 >
                   {/* Nama & Keterangan Singkat Saja */}
                   <div className="min-w-0 flex-1 leading-tight">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <span className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                    <div className="flex items-center gap-1 truncate">
+                      <span className="font-bold text-[11px] text-slate-900 dark:text-white truncate">
                         {staff.name}
                       </span>
                       {isCurrentUser && (
-                        <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[8px] font-black bg-blue-600 text-white shrink-0">
-                          <CheckCircle2 className="w-2.5 h-2.5" /> SAYA
+                        <span className="inline-flex items-center px-1 py-0.2 rounded text-[7.5px] font-black bg-blue-600 text-white shrink-0">
+                          SAYA
                         </span>
                       )}
                     </div>
-                    <p className="text-[10.5px] text-slate-600 dark:text-slate-300 font-medium truncate mt-0.5">
+                    <p className="text-[9.5px] text-slate-600 dark:text-slate-300 font-medium truncate mt-0.5">
                       {shortDesc}
                     </p>
                   </div>
 
                   {/* Kode Tugas */}
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-black shrink-0 ${badgeBg} shadow-2xs`}>
+                  <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-black shrink-0 ${badgeBg} shadow-2xs`}>
                     {shiftCode}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="py-4 px-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-center text-[10.5px] text-slate-400 italic">
-              Tidak ada petugas yang tercatat dinas di jam ini.
+            <div className="py-2.5 px-2 rounded border border-dashed border-slate-300 dark:border-slate-700 text-center text-[10px] text-slate-400 italic">
+              Tidak ada petugas yang dinas di jam ini.
             </div>
           )}
         </div>
 
         {/* Footer Rapat & Ringkas */}
-        <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1 text-[9.5px] text-slate-500 dark:text-slate-400">
-            <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-            <span>Otomatis tiap 2 jam</span>
+        <div className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1 text-[8.5px] text-slate-500 dark:text-slate-400">
+            <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+            <span>Otomatis 2 jam</span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {onNavigateToTab && (
               <button
                 type="button"
@@ -316,7 +325,7 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
                   onClose();
                   onNavigateToTab('dashboard');
                 }}
-                className="px-2 py-1 rounded-md text-[10px] font-semibold bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded text-[9.5px] font-semibold bg-slate-200/80 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
               >
                 Dasbor
               </button>
@@ -328,7 +337,7 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
                 soundManager.playChime();
                 onClose();
               }}
-              className="px-3 py-1 rounded-md text-[10.5px] font-bold bg-blue-600 hover:bg-blue-700 active:scale-95 text-white transition-all shadow-xs cursor-pointer"
+              className="px-2.5 py-0.5 rounded text-[9.5px] font-bold bg-blue-600 hover:bg-blue-700 active:scale-95 text-white transition-all shadow-xs cursor-pointer"
             >
               Tutup
             </button>
@@ -338,3 +347,4 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
     </div>
   );
 };
+

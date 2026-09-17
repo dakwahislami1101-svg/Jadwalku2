@@ -29,6 +29,9 @@ import { generateOfficialSchedulePDF } from '../utils/pdfExport';
 import { exportScheduleToExcel } from '../utils/excelExport';
 import { soundManager } from '../utils/audio';
 import { notificationService } from '../utils/notification';
+import { P5TaskAssignmentModal } from './P5TaskAssignmentModal';
+import { getLocalP5Assignments, subscribeToP5Assignments } from '../utils/p5TaskService';
+import { P5TaskAssignment } from '../types';
 
 interface ScheduleMatrixProps {
   userRole?: 'admin' | 'staff';
@@ -63,6 +66,24 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
   const [editingCell, setEditingCell] = useState<{ day: number; staffId: number } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [m3ReminderModal, setM3ReminderModal] = useState<ShiftValidationResult | null>(null);
+  const [p5ModalTarget, setP5ModalTarget] = useState<{ day: number; staff: Staff } | null>(null);
+  const [p5Assignments, setP5Assignments] = useState<Record<string, P5TaskAssignment>>(() => 
+    getLocalP5Assignments(schedule.year, schedule.month)
+  );
+
+  useEffect(() => {
+    const unsub = subscribeToP5Assignments(schedule.year, schedule.month, (data) => {
+      setP5Assignments(data);
+    });
+    const handleCustomUpdate = () => {
+      setP5Assignments(getLocalP5Assignments(schedule.year, schedule.month));
+    };
+    window.addEventListener('p5_assignments_updated', handleCustomUpdate);
+    return () => {
+      unsub();
+      window.removeEventListener('p5_assignments_updated', handleCustomUpdate);
+    };
+  }, [schedule.year, schedule.month]);
 
   // Ref & states for smooth horizontal scrolling and sticky headers
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -181,6 +202,13 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
     });
 
     if (staffObj) {
+      if (newShift === 'P5') {
+        soundManager.playChime();
+        setEditingCell(null);
+        setP5ModalTarget({ day, staff: staffObj });
+        return;
+      }
+
       const validation = validateShiftAssignment(staffObj, newShift, day, schedule.days);
       if (validation.hasSpecialReminder && validation.specialReminder) {
         soundManager.playBell();
@@ -647,8 +675,11 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                 <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-yellow-50 dark:bg-yellow-950 text-yellow-800 dark:text-yellow-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 3 (07:00-15:00)">
                   P3
                 </th>
-                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-cyan-50 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 4 / Kunjungan (07:00-23:00)">
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-cyan-50 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 4 / Kunjungan (07:00-20:00)">
                   P4
+                </th>
+                <th className="p-0.5 border-r border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-semibold text-[9.5px] min-w-[22px]" title="Pagi 5 / Keterampilan & Vokasi (07:00-15:00)">
+                  P5
                 </th>
                 <th className="p-0.5 border-b border-slate-300 dark:border-slate-700 sticky top-0 z-30 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-extrabold text-[9.5px] min-w-[32px]" title="Total Jam Kerja (JK)">
                   JK
@@ -741,20 +772,30 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                       const meta = SHIFT_DEFINITIONS[shift] || SHIFT_DEFINITIONS['P1'];
                       const isFocusedDay = day === activeDay;
                       const isM3 = shift === 'M3';
+                      const isP5 = shift === 'P5';
+                      const p5Task = isP5 ? p5Assignments[`${day}_${staff.id}`]?.taskTitle : null;
 
                       return (
                         <td
                           key={day}
-                          onClick={() => handleCellClick(day, staff.id)}
+                          onClick={() => {
+                            if (shift === 'P5' && userRole === 'admin') {
+                              setP5ModalTarget({ day, staff });
+                            } else {
+                              handleCellClick(day, staff.id);
+                            }
+                          }}
                           className={`p-0.2 border-r border-slate-200 dark:border-slate-700/80 cursor-pointer select-none transition-all ${
                             isFocusedDay ? 'bg-blue-50 dark:bg-blue-900/20 font-bold' : ''
-                          } ${isM3 ? 'bg-fuchsia-100/60 dark:bg-fuchsia-950/40' : ''}`}
-                          title={`Tgl ${day} - ${staff.name}: ${meta?.name || shift} (${meta?.startTime || '07:00'}-${meta?.endTime || '15:00'})`}
+                          } ${isM3 ? 'bg-fuchsia-100/60 dark:bg-fuchsia-950/40' : ''} ${isP5 ? 'bg-emerald-50/50 dark:bg-emerald-950/30' : ''}`}
+                          title={`Tgl ${day} - ${staff.name}: ${meta?.name || shift} ${p5Task ? `[Tugas: ${p5Task}]` : ''} (${meta?.startTime || '07:00'}-${meta?.endTime || '15:00'})`}
                         >
                           <span
                             className={`inline-flex items-center justify-center min-w-[24px] max-w-[34px] py-0.5 px-1 rounded text-[9.5px] leading-tight border transition-all ${
                               isM3
                                 ? 'bg-fuchsia-600 text-white font-black border-fuchsia-700 dark:border-fuchsia-400 shadow-xs ring-1 ring-fuchsia-300 dark:ring-fuchsia-400 scale-105'
+                                : isP5
+                                ? 'bg-emerald-700 text-white font-black border-emerald-800 dark:border-emerald-600 shadow-2xs'
                                 : `${meta?.bgLight || 'bg-slate-100'} ${meta?.bgDark || 'dark:bg-slate-800'} font-bold`
                             }`}
                           >
@@ -791,6 +832,9 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     </td>
                     <td className="p-0.5 border-r border-slate-200 dark:border-slate-700/80 font-semibold text-cyan-700 dark:text-cyan-400 text-[10px]">
                       {summary?.p4 || 0}
+                    </td>
+                    <td className="p-0.5 border-r border-slate-200 dark:border-slate-700/80 font-semibold text-emerald-700 dark:text-emerald-400 text-[10px]">
+                      {summary?.p5 || 0}
                     </td>
                     <td className="p-0.5 font-mono font-extrabold bg-slate-100 dark:bg-slate-700/60 text-slate-900 dark:text-white text-[10px]">
                       {summary?.totalHours || 0}
@@ -851,7 +895,20 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.p4 || 0}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-cyan-50 dark:bg-cyan-950"></td>
+                <td colSpan={11} className="bg-cyan-50 dark:bg-cyan-950"></td>
+              </tr>
+
+              {/* (P5) 07:00 - 15:00 (Keterampilan/Vokasi) */}
+              <tr className="bg-emerald-50/80 dark:bg-emerald-950/40 text-slate-800 dark:text-slate-200 border-t border-slate-300 dark:border-slate-700 font-semibold text-[10px]">
+                <td colSpan={2} className="p-1 border-r-2 border-slate-300 dark:border-slate-700 text-right sticky left-0 z-20 bg-emerald-50 dark:bg-emerald-950 font-bold text-emerald-950 dark:text-emerald-200 shadow-[2px_0_4px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_rgba(0,0,0,0.3)]">
+                  (P5) 07:00 - 15:00 (Vokasi)
+                </td>
+                {dailyStatsList.map((st, i) => (
+                  <td key={i} className="p-0.2 border-r border-slate-300 dark:border-slate-700 text-emerald-800 dark:text-emerald-300 font-bold">
+                    {st.p5 || 0}
+                  </td>
+                ))}
+                <td colSpan={11} className="bg-emerald-50 dark:bg-emerald-950"></td>
               </tr>
 
               {/* (PAGI FULL) */}
@@ -864,7 +921,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.pagiFull}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-sky-100 dark:bg-sky-900"></td>
+                <td colSpan={11} className="bg-sky-100 dark:bg-sky-900"></td>
               </tr>
 
               {/* (S) 15:00 - 23:00 */}
@@ -877,7 +934,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.s}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-orange-100 dark:bg-orange-950"></td>
+                <td colSpan={11} className="bg-orange-100 dark:bg-orange-950"></td>
               </tr>
 
               {/* (S2A) Kantin SMP */}
@@ -890,7 +947,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.s2a}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-purple-50 dark:bg-purple-950"></td>
+                <td colSpan={11} className="bg-purple-50 dark:bg-purple-950"></td>
               </tr>
 
               {/* (S3A) Kantin SMA */}
@@ -903,7 +960,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.s3a}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-orange-50 dark:bg-orange-950"></td>
+                <td colSpan={11} className="bg-orange-50 dark:bg-orange-950"></td>
               </tr>
 
               {/* (S4A) Jaga Masjid */}
@@ -916,7 +973,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.s4a}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-emerald-50 dark:bg-emerald-950"></td>
+                <td colSpan={11} className="bg-emerald-50 dark:bg-emerald-950"></td>
               </tr>
 
               {/* (M) 15:00 - 07:00 */}
@@ -929,7 +986,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.m}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-blue-100 dark:bg-blue-950"></td>
+                <td colSpan={11} className="bg-blue-100 dark:bg-blue-950"></td>
               </tr>
 
               {/* M1 (Malam Sesi 1) */}
@@ -942,7 +999,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.m1}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-indigo-50 dark:bg-indigo-950"></td>
+                <td colSpan={11} className="bg-indigo-50 dark:bg-indigo-950"></td>
               </tr>
 
               {/* M2 (Malam Sesi 2) */}
@@ -955,7 +1012,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.m2}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-blue-50 dark:bg-blue-950"></td>
+                <td colSpan={11} className="bg-blue-50 dark:bg-blue-950"></td>
               </tr>
 
               {/* M3 (Malam Pendamping) */}
@@ -977,7 +1034,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     )}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-fuchsia-50 dark:bg-fuchsia-950"></td>
+                <td colSpan={11} className="bg-fuchsia-50 dark:bg-fuchsia-950"></td>
               </tr>
 
               {/* CUTI */}
@@ -990,7 +1047,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.cuti}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-teal-50 dark:bg-teal-950"></td>
+                <td colSpan={11} className="bg-teal-50 dark:bg-teal-950"></td>
               </tr>
 
               {/* OFF / LIBUR + LEPAS */}
@@ -1003,7 +1060,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.offDanLepas}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-red-50 dark:bg-red-950"></td>
+                <td colSpan={11} className="bg-red-50 dark:bg-red-950"></td>
               </tr>
 
               {/* JUMLAH */}
@@ -1016,7 +1073,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                     {st.total}
                   </td>
                 ))}
-                <td colSpan={10} className="bg-slate-200 dark:bg-slate-900"></td>
+                <td colSpan={11} className="bg-slate-200 dark:bg-slate-900"></td>
               </tr>
             </tfoot>
           </table>
@@ -1232,6 +1289,27 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Pop-up Dialog Penugasan Tugas Shif P5 (Keterampilan / Vokasi) */}
+      {p5ModalTarget && (
+        <P5TaskAssignmentModal
+          isOpen={!!p5ModalTarget}
+          onClose={() => setP5ModalTarget(null)}
+          staff={p5ModalTarget.staff}
+          day={p5ModalTarget.day}
+          month={schedule.month}
+          year={schedule.year}
+          monthName={schedule.monthName}
+          onSaved={(assignment) => {
+            setP5Assignments(getLocalP5Assignments(schedule.year, schedule.month));
+            setToastMessage(assignment 
+              ? `Tugas P5 untuk ${p5ModalTarget.staff.name} berhasil disimpan: "${assignment.taskTitle}"`
+              : `Tugas P5 untuk ${p5ModalTarget.staff.name} telah dihapus`
+            );
+            setTimeout(() => setToastMessage(null), 4000);
+          }}
+        />
       )}
     </div>
   );

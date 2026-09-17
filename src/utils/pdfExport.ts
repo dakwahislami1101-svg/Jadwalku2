@@ -214,6 +214,9 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
       } else if (shift === 'P4') {
         cellBg = [165, 243, 252]; // Solid Cyan (#A5F3FC)
         textCol = [14, 116, 144];
+      } else if (shift === 'P5') {
+        cellBg = [167, 243, 208]; // Solid Emerald Mint (#A7F3D0)
+        textCol = [6, 95, 70];
       } else if (shift === 'S2A') {
         cellBg = [216, 180, 254]; // Solid Vibrant Light Purple (#D8B4FE)
         textCol = [88, 28, 135];
@@ -420,7 +423,7 @@ export function generateOfficialSchedulePDF(schedule: MonthSchedule, staffList: 
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(4.4);
-  doc.text('P1: 07-15 | P2: 08-16 | P3: Upacara 07-16 | P4: Kunjungan (07-20 / Pulang Makan Malam) | S2A/S3A/S4A: Jaga Sore (15-23) | M/M1/M2/M3: Jaga Malam | LP: Lepas Piket | O: Off | C: Cuti', margin, currentY + 4.6);
+  doc.text('P1: 07-15 | P2: 08-16 | P3: Upacara 07-16 | P4: Kunjungan (07-20 / Pulang Makan Malam) | P5: Pendampingan Vokasi (07-15) | S2A/S3A/S4A: Jaga Sore (15-23) | M/M1/M2/M3: Jaga Malam | LP: Lepas Piket | O: Off | C: Cuti', margin, currentY + 4.6);
 
   // Catatan Khusus Tugas Shif P4 (Kunjungan)
   doc.setFont('helvetica', 'bold');
@@ -597,7 +600,10 @@ export function generateDailySchedulePDF(
     let shiftBadgeBg: number[] | null = null;
     let badgeTextCol: number[] = [0, 0, 0];
 
-    if (shift.startsWith('P')) {
+    if (shift === 'P5') {
+      shiftBadgeBg = [167, 243, 208]; // Solid Emerald
+      badgeTextCol = [6, 95, 70];
+    } else if (shift.startsWith('P')) {
       shiftBadgeBg = [254, 224, 71]; // Solid Yellow
       badgeTextCol = [30, 41, 59];
     } else if (shift === 'S2A') {

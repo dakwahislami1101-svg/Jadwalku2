@@ -141,6 +141,32 @@ const SHIFT_GUIDE_DATA: ShiftGuideDetail[] = [
     colorBorder: 'border-cyan-400 dark:border-cyan-600',
     cardBg: 'bg-gradient-to-br from-cyan-50/50 via-white to-cyan-50/30 dark:from-cyan-950/20 dark:via-slate-900 dark:to-slate-900'
   },
+  {
+    code: 'P5',
+    category: 'pagi',
+    categoryLabel: 'Shif Pagi',
+    categoryIcon: <Sun className="w-4 h-4 text-emerald-500" />,
+    categoryColor: 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800',
+    dutyTime: '07:00 – 15:00 WIB',
+    workHours: 8,
+    badgeBg: 'bg-emerald-600 text-white font-black',
+    tagline: 'Pagi Pendampingan Keterampilan / Vokasi Santri (Tugas Fleksibel & Kustom)',
+    description: 'Petugas dinas pagi khusus pendampingan program keterampilan dan vokasi santri. Pilihan tugas dapat dipilih langsung dari daftar tugas (Mendampingi Perhotelan, Tata Boga, Peternakan, Pertanian, Tata Rias) maupun kustom yang dapat diatur oleh Admin.',
+    responsibilities: [
+      'Pukul 07:00 – 07:30: Siaga di asrama, pengarahan santri menuju lokasi praktik kejuruan/vokasi',
+      'Pukul 07:30 – 11:45: Mendampingi praktik keterampilan (Perhotelan / Tata Boga / Peternakan / Pertanian / Tata Rias / Tugas Kustom)',
+      'Pukul 11:45 – 13:00: Pengawalan sholat Dzuhur berjamaah dan makan siang bersama siswa vokasi',
+      'Pukul 13:00 – 14:30: Monitoring evaluasi hasil karya praktik dan pembinaan kedisiplinan kerja',
+      'Pukul 14:30 – 15:00: Pengisian jurnal vokasi P5 di dashboard dan serah terima dinas ke shif Sore'
+    ],
+    rulesAndNotes: [
+      'Jam kerja: 07:00 – 15:00 WIB (Total dihitung 8 Jam Kerja)',
+      'Pilihan bidang tugas dapat dipilih melalui dropdown di Dashboard atau diatur tugas kustom oleh Admin',
+      'Fokus utama adalah pendampingan karakter, kedisiplinan, keselamatan kerja (K3), dan keaktifan anak asuh'
+    ],
+    colorBorder: 'border-emerald-400 dark:border-emerald-600',
+    cardBg: 'bg-gradient-to-br from-emerald-50/50 via-white to-emerald-50/30 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900'
+  },
 
   // --- SHIF SORE ---
   {

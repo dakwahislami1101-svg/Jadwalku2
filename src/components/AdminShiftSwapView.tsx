@@ -22,8 +22,10 @@ import {
   Shield,
   HelpCircle,
   Megaphone,
-  Save
+  Save,
+  GraduationCap
 } from 'lucide-react';
+import { P5TaskAdminManager } from './P5TaskAdminManager';
 import { MonthSchedule, Staff, ShiftCode, ShiftSwapRecord, AnnouncementData } from '../types';
 import { SHIFT_DEFINITIONS } from '../data/initialSchedule';
 import { INDONESIAN_DAY_NAMES, INDONESIAN_MONTH_NAMES, validateShiftAssignment } from '../utils/scheduler';
@@ -57,7 +59,7 @@ const SWAP_REASONS = [
   'Izin Khusus Pimpinan / Kepala Sekolah',
 ];
 
-const AVAILABLE_SHIFTS: ShiftCode[] = ['P1', 'P2', 'P3', 'P4', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2', 'M3', 'LP', 'O', 'C'];
+const AVAILABLE_SHIFTS: ShiftCode[] = ['P1', 'P2', 'P3', 'P4', 'P5', 'S2A', 'S3A', 'S4A', 'M', 'M1', 'M2', 'M3', 'LP', 'O', 'C'];
 
 export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
   schedule,
@@ -207,6 +209,7 @@ export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
     const counts: Record<string, number> = {
       P1: 0,
       P2: 0,
+      P5: 0,
       S2A: 0,
       S3A: 0,
       S4A: 0,
@@ -708,6 +711,9 @@ export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Pengaturan Pilihan Tugas Shif P5 (Keterampilan / Vokasi) */}
+      <P5TaskAdminManager />
 
       {/* Date Picker & Mode Bar */}
       <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs flex flex-wrap items-center justify-between gap-3">
@@ -1265,6 +1271,11 @@ export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
                 <span className="px-1.5 py-0.2 bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 rounded border border-sky-300 dark:border-sky-800 font-semibold">
                   Pagi: {dayShiftCounts.P1 + dayShiftCounts.P2} (P1:{dayShiftCounts.P1}, P2:{dayShiftCounts.P2})
                 </span>
+                {(dayShiftCounts.P5 || 0) > 0 && (
+                  <span className="px-1.5 py-0.2 bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 rounded border border-teal-300 dark:border-teal-800 font-semibold">
+                    P5: {dayShiftCounts.P5} Org
+                  </span>
+                )}
                 <span className="px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 rounded border border-emerald-300 dark:border-emerald-800 font-semibold">
                   Sore: {dayShiftCounts.S2A + dayShiftCounts.S3A + dayShiftCounts.S4A} (S2A:{dayShiftCounts.S2A}, S3A:{dayShiftCounts.S3A}, S4A:{dayShiftCounts.S4A})
                 </span>

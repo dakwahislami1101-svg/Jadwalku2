@@ -25,6 +25,8 @@ export function calculateStaffSummary(
       p1: 0,
       p2: 0,
       p3: 0,
+      p4: 0,
+      p5: 0,
       s: 0,
       s2a: 0,
       s3a: 0,
@@ -46,6 +48,7 @@ export function calculateStaffSummary(
   let p2 = 0;
   let p3 = 0;
   let p4 = 0;
+  let p5 = 0;
   let s = 0;
   let s2a = 0;
   let s3a = 0;
@@ -75,6 +78,9 @@ export function calculateStaffSummary(
         break;
       case 'P4':
         p4++;
+        break;
+      case 'P5':
+        p5++;
         break;
       case 'S':
         s++;
@@ -119,14 +125,15 @@ export function calculateStaffSummary(
     }
   }
 
-  const pFull = p + p1 + p2 + p3 + p4;
+  const pFull = p + p1 + p2 + p3 + p4 + p5;
   // Calculate total working hours according to document hours:
   // P1 = 8h (07:00-15:00), P2 = 8h (08:00-16:00), P = 8h (07:00-15:00), P3 = 9h (07:00-16:00 Upacara Senin),
   // P4 = 13h (07:00-20:00 Acara/Kunjungan Pagi s.d Selesai Makan Malam 20:00),
+  // P5 = 8h (07:00-15:00 Pendampingan Keterampilan/Vokasi),
   // S, S2A, S3A, S4A = 8h (15:00-23:00), M, M1, M2 = 16h (15:00-07:00 next day / 16h shift duty),
   // M3 = 8h (23:00-07:00 next day)
   // LP, O, C = 0h
-  const totalHours = (p1 * 8) + (p * 8) + (p2 * 8) + (p3 * 9) + (p4 * 13) + (s * 8) + ((m - m3) * 16) + (m3 * 8);
+  const totalHours = (p1 * 8) + (p * 8) + (p2 * 8) + (p3 * 9) + (p4 * 13) + (p5 * 8) + (s * 8) + ((m - m3) * 16) + (m3 * 8);
 
   return {
     staffId: staff.id,
@@ -137,6 +144,7 @@ export function calculateStaffSummary(
     p2,
     p3,
     p4,
+    p5,
     s,
     s2a,
     s3a,
@@ -160,6 +168,7 @@ export interface DailyColumnStats {
   p2: number;
   p3: number;
   p4: number;
+  p5: number;
   pagiFull: number;
   s: number;
   s2a: number;
@@ -177,6 +186,7 @@ export interface DailyColumnStats {
   pagi1Wali: Staff[];
   pagi2Wali: Staff[];
   pagi4Wali: Staff[];
+  pagi5Wali: Staff[];
   soreWali: Staff[];
   soreKantinSmp: Staff[];
   soreKantinSma: Staff[];
@@ -200,6 +210,7 @@ export function calculateDailyStats(
   let p2 = 0;
   let p3 = 0;
   let p4 = 0;
+  let p5 = 0;
   let s = 0;
   let s2a = 0;
   let s3a = 0;
@@ -215,6 +226,7 @@ export function calculateDailyStats(
   const pagi1Wali: Staff[] = [];
   const pagi2Wali: Staff[] = [];
   const pagi4Wali: Staff[] = [];
+  const pagi5Wali: Staff[] = [];
   const soreWali: Staff[] = [];
   const soreKantinSmp: Staff[] = [];
   const soreKantinSma: Staff[] = [];
@@ -253,6 +265,11 @@ export function calculateDailyStats(
         p4++;
         pagiWali.push(staff);
         pagi4Wali.push(staff);
+        break;
+      case 'P5':
+        p5++;
+        pagiWali.push(staff);
+        pagi5Wali.push(staff);
         break;
       case 'S':
         s++;
@@ -320,7 +337,8 @@ export function calculateDailyStats(
     p2,
     p3,
     p4,
-    pagiFull: p + p1 + p2 + p3 + p4,
+    p5,
+    pagiFull: p + p1 + p2 + p3 + p4 + p5,
     s,
     s2a,
     s3a,
@@ -337,6 +355,7 @@ export function calculateDailyStats(
     pagi1Wali,
     pagi2Wali,
     pagi4Wali,
+    pagi5Wali,
     soreWali,
     soreKantinSmp,
     soreKantinSma,
@@ -358,11 +377,12 @@ export function getActiveShiftsAtTime(timeStr: string): ShiftCode[] {
 
   const active: ShiftCode[] = [];
 
-  // P1 (07:00 - 15:00 => 420 to 900)
+  // P1, P, P3, P5 (07:00 - 15:00 => 420 to 900)
   if (currentMinutes >= 7 * 60 && currentMinutes < 15 * 60) {
     active.push('P1');
     active.push('P');
     active.push('P3');
+    active.push('P5');
   }
   // P2 (08:00 - 16:00 => 480 to 960)
   if (currentMinutes >= 8 * 60 && currentMinutes < 16 * 60) {
@@ -483,6 +503,34 @@ export function validateShiftAssignment(
         sound: 'bell',
       },
       notes: 'P4 (07:00 - 20:00 / 13 Jam): Pengganti M untuk bantu kunjungan pagi, patroli luar belakang sore, pendamping makan malam S2A/S3A, pulang setelah makan malam.',
+    };
+  }
+
+  // Logika khusus validasi dan pengingat untuk penugasan P5 (Pagi Keterampilan/Vokasi)
+  if (shift === 'P5') {
+    return {
+      isValid: true,
+      code: 'P5',
+      staffId,
+      staffName,
+      day,
+      hasSpecialReminder: true,
+      specialReminder: {
+        title: `🛠️ Pengingat Shif P5 Keterampilan/Vokasi (${staffName} - Tgl ${day})`,
+        message: `Petugas ${staffName} ditugaskan pada kode P5 tanggal ${day}. Jam dinas 07:00 - 15:00 WIB (8 Jam Kerja). Tugas: Pendampingan vokasi/keterampilan (Perhotelan, Tata Boga, Peternakan, Pertanian, Tata Rias, atau kustom).`,
+        dutyTime: '07:00 - 15:00 WIB',
+        taskTitle: 'Pendampingan Keterampilan & Vokasi Santri',
+        actionInstruction: 'Hadir pukul 07:00, laksanakan pendampingan keterampilan siswa sesuai bidang vokasi yang ditugaskan hingga pukul 15:00 WIB.',
+        requiredActions: [
+          'Hadir tepat waktu di lokasi/pos keterampilan santri pukul 07:00 WIB',
+          'Mendampingi instruktur/guru kejuruan dalam pengawasan kedisiplinan dan keselamatan kerja santri',
+          'Pengawasan saat praktik kerja/vokasi (Perhotelan, Tata Boga, Peternakan, Pertanian, Tata Rias, atau kustom)',
+          'Mengawal ibadah sholat Dzuhur dan makan siang santri vokasi',
+          'Pencatatan jurnal/log pendampingan vokasi dan serah terima dinas ke shif sore pukul 15:00 WIB'
+        ],
+        sound: 'chime',
+      },
+      notes: 'P5 (07:00 - 15:00 / 8 Jam): Pendampingan keterampilan/vokasi santri (Perhotelan, Tata Boga, Peternakan, Pertanian, Tata Rias, atau Kustom).',
     };
   }
 

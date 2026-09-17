@@ -1,4 +1,4 @@
-export type ShiftCode = 'P' | 'P1' | 'P2' | 'P3' | 'P4' | 'S' | 'S2A' | 'S3A' | 'S4A' | 'M' | 'M1' | 'M2' | 'M3' | 'LP' | 'O' | 'L' | 'C';
+export type ShiftCode = 'P' | 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'S' | 'S2A' | 'S3A' | 'S4A' | 'M' | 'M1' | 'M2' | 'M3' | 'LP' | 'O' | 'L' | 'C';
 
 export interface ShiftInfo {
   code: ShiftCode;
@@ -50,12 +50,13 @@ export interface MonthSchedule {
 export interface ShiftSummary {
   staffId: number;
   staffName: string;
-  pFull: number; // P + P1 + P2 + P3 + P4
+  pFull: number; // P + P1 + P2 + P3 + P4 + P5
   p: number;
   p1: number;
   p2: number;
   p3: number;
   p4?: number;
+  p5?: number;
   s: number;
   s2a?: number;
   s3a?: number;
@@ -238,4 +239,23 @@ export interface StudentMedicalPlan {
   updatedAt: string;
   createdBy?: string;
 }
+
+// ==================== P5 VOCATIONAL / SKILL ACCOMPANYING TYPES ====================
+export interface P5TaskAssignment {
+  staffId: number;
+  day: number;
+  month: number;
+  year: number;
+  taskTitle: string; // e.g. "Mendampingi Tata Boga"
+  customDetail?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface P5CustomTaskOption {
+  id: string;
+  label: string; // e.g. "Mendampingi Perhotelan"
+  isDefault?: boolean;
+}
+
 
