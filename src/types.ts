@@ -258,4 +258,23 @@ export interface P5CustomTaskOption {
   isDefault?: boolean;
 }
 
+// ==================== P1 & P2 MORNING POST TASK TYPES ====================
+export interface MorningPostAssignment {
+  staffId: number;
+  day: number;
+  month: number;
+  year: number;
+  shiftCode: 'P1' | 'P2';
+  postTitle: string; // e.g. "UKS SMP", "Mobile / Keliling"
+  customDetail?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface MorningPostCustomOption {
+  id: string;
+  label: string; // e.g. "UKS SD", "UKS SMP", "UKS SMA", "Mobile / Keliling"
+  isDefault?: boolean;
+}
+
 

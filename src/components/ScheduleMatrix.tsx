@@ -31,7 +31,9 @@ import { soundManager } from '../utils/audio';
 import { notificationService } from '../utils/notification';
 import { P5TaskAssignmentModal } from './P5TaskAssignmentModal';
 import { getLocalP5Assignments, subscribeToP5Assignments } from '../utils/p5TaskService';
-import { P5TaskAssignment } from '../types';
+import { getLocalMorningPostAssignments, subscribeToMorningPostAssignments } from '../utils/morningPostService';
+import { MorningPostAssignmentModal } from './MorningPostAssignmentModal';
+import { P5TaskAssignment, MorningPostAssignment } from '../types';
 
 interface ScheduleMatrixProps {
   userRole?: 'admin' | 'staff';
@@ -71,6 +73,11 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
     getLocalP5Assignments(schedule.year, schedule.month)
   );
 
+  const [morningPostModalTarget, setMorningPostModalTarget] = useState<{ day: number; staff: Staff; shiftCode: 'P1' | 'P2' } | null>(null);
+  const [morningPostAssignments, setMorningPostAssignments] = useState<Record<string, MorningPostAssignment>>(() =>
+    getLocalMorningPostAssignments(schedule.year, schedule.month)
+  );
+
   useEffect(() => {
     const unsub = subscribeToP5Assignments(schedule.year, schedule.month, (data) => {
       setP5Assignments(data);
@@ -82,6 +89,20 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
     return () => {
       unsub();
       window.removeEventListener('p5_assignments_updated', handleCustomUpdate);
+    };
+  }, [schedule.year, schedule.month]);
+
+  useEffect(() => {
+    const unsub = subscribeToMorningPostAssignments(schedule.year, schedule.month, (data) => {
+      setMorningPostAssignments(data);
+    });
+    const handleCustomUpdate = () => {
+      setMorningPostAssignments(getLocalMorningPostAssignments(schedule.year, schedule.month));
+    };
+    window.addEventListener('morning_post_assignments_updated', handleCustomUpdate);
+    return () => {
+      unsub();
+      window.removeEventListener('morning_post_assignments_updated', handleCustomUpdate);
     };
   }, [schedule.year, schedule.month]);
 
@@ -206,6 +227,13 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
         soundManager.playChime();
         setEditingCell(null);
         setP5ModalTarget({ day, staff: staffObj });
+        return;
+      }
+
+      if (newShift === 'P1' || newShift === 'P2') {
+        soundManager.playChime();
+        setEditingCell(null);
+        setMorningPostModalTarget({ day, staff: staffObj, shiftCode: newShift });
         return;
       }
 
@@ -773,7 +801,10 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                       const isFocusedDay = day === activeDay;
                       const isM3 = shift === 'M3';
                       const isP5 = shift === 'P5';
+                      const isP1 = shift === 'P1';
+                      const isP2 = shift === 'P2';
                       const p5Task = isP5 ? p5Assignments[`${day}_${staff.id}`]?.taskTitle : null;
+                      const morningPost = (isP1 || isP2) ? morningPostAssignments[`${day}_${staff.id}`]?.postTitle : null;
 
                       return (
                         <td
@@ -781,6 +812,8 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                           onClick={() => {
                             if (shift === 'P5' && userRole === 'admin') {
                               setP5ModalTarget({ day, staff });
+                            } else if ((shift === 'P1' || shift === 'P2') && userRole === 'admin') {
+                              setMorningPostModalTarget({ day, staff, shiftCode: shift });
                             } else {
                               handleCellClick(day, staff.id);
                             }
@@ -788,7 +821,7 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                           className={`p-0.2 border-r border-slate-200 dark:border-slate-700/80 cursor-pointer select-none transition-all ${
                             isFocusedDay ? 'bg-blue-50 dark:bg-blue-900/20 font-bold' : ''
                           } ${isM3 ? 'bg-fuchsia-100/60 dark:bg-fuchsia-950/40' : ''} ${isP5 ? 'bg-emerald-50/50 dark:bg-emerald-950/30' : ''}`}
-                          title={`Tgl ${day} - ${staff.name}: ${meta?.name || shift} ${p5Task ? `[Tugas: ${p5Task}]` : ''} (${meta?.startTime || '07:00'}-${meta?.endTime || '15:00'})`}
+                          title={`Tgl ${day} - ${staff.name}: ${meta?.name || shift} ${p5Task ? `[Tugas: ${p5Task}]` : ''} ${morningPost ? `[Pos: ${morningPost}]` : ''} (${meta?.startTime || '07:00'}-${meta?.endTime || '15:00'})`}
                         >
                           <span
                             className={`inline-flex items-center justify-center min-w-[24px] max-w-[34px] py-0.5 px-1 rounded text-[9.5px] leading-tight border transition-all ${
@@ -796,6 +829,8 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                                 ? 'bg-fuchsia-600 text-white font-black border-fuchsia-700 dark:border-fuchsia-400 shadow-xs ring-1 ring-fuchsia-300 dark:ring-fuchsia-400 scale-105'
                                 : isP5
                                 ? 'bg-emerald-700 text-white font-black border-emerald-800 dark:border-emerald-600 shadow-2xs'
+                                : (isP1 || isP2) && morningPost
+                                ? `${meta?.bgLight || 'bg-slate-100'} ${meta?.bgDark || 'dark:bg-slate-800'} font-black ring-1 ring-sky-400/80 dark:ring-sky-500`
                                 : `${meta?.bgLight || 'bg-slate-100'} ${meta?.bgDark || 'dark:bg-slate-800'} font-bold`
                             }`}
                           >
@@ -1306,6 +1341,29 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
             setToastMessage(assignment 
               ? `Tugas P5 untuk ${p5ModalTarget.staff.name} berhasil disimpan: "${assignment.taskTitle}"`
               : `Tugas P5 untuk ${p5ModalTarget.staff.name} telah dihapus`
+            );
+            setTimeout(() => setToastMessage(null), 4000);
+          }}
+        />
+      )}
+
+      {/* Pop-up Dialog Penugasan Pos Shif P1 & P2 (UKS SD/SMP/SMA / Mobile / Kustom) */}
+      {morningPostModalTarget && (
+        <MorningPostAssignmentModal
+          isOpen={!!morningPostModalTarget}
+          onClose={() => setMorningPostModalTarget(null)}
+          staff={morningPostModalTarget.staff}
+          day={morningPostModalTarget.day}
+          month={schedule.month}
+          year={schedule.year}
+          monthName={schedule.monthName}
+          shiftCode={morningPostModalTarget.shiftCode}
+          userRole={userRole}
+          onSaved={(assignment) => {
+            setMorningPostAssignments(getLocalMorningPostAssignments(schedule.year, schedule.month));
+            setToastMessage(assignment
+              ? `Pos ${morningPostModalTarget.shiftCode} untuk ${morningPostModalTarget.staff.name} berhasil disimpan: "${assignment.postTitle}"`
+              : `Pos ${morningPostModalTarget.shiftCode} untuk ${morningPostModalTarget.staff.name} telah direset`
             );
             setTimeout(() => setToastMessage(null), 4000);
           }}

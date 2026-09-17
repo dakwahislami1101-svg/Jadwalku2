@@ -26,6 +26,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { P5TaskAdminManager } from './P5TaskAdminManager';
+import { MorningPostAdminManager } from './MorningPostAdminManager';
 import { MonthSchedule, Staff, ShiftCode, ShiftSwapRecord, AnnouncementData } from '../types';
 import { SHIFT_DEFINITIONS } from '../data/initialSchedule';
 import { INDONESIAN_DAY_NAMES, INDONESIAN_MONTH_NAMES, validateShiftAssignment } from '../utils/scheduler';
@@ -714,6 +715,9 @@ export const AdminShiftSwapView: React.FC<AdminShiftSwapViewProps> = ({
 
       {/* Pengaturan Pilihan Tugas Shif P5 (Keterampilan / Vokasi) */}
       <P5TaskAdminManager />
+
+      {/* Pengaturan Pilihan Pos Shif P1 & P2 (UKS SD/SMP/SMA / Mobile / Kustom) */}
+      <MorningPostAdminManager />
 
       {/* Date Picker & Mode Bar */}
       <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs flex flex-wrap items-center justify-between gap-3">

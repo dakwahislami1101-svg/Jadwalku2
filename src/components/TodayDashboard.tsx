@@ -31,7 +31,7 @@ import {
   BookOpen,
   GraduationCap
 } from 'lucide-react';
-import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan, P5TaskAssignment } from '../types';
+import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan, P5TaskAssignment, MorningPostAssignment } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
 import { calculateDailyStats, INDONESIAN_MONTH_NAMES, INDONESIAN_DAY_NAMES, validateShiftAssignment } from '../utils/scheduler';
 import { generateDailySchedulePDF } from '../utils/pdfExport';
@@ -46,6 +46,8 @@ import {
 } from '../utils/firebaseService';
 import { getLocalP5Assignments, subscribeToP5Assignments } from '../utils/p5TaskService';
 import { P5TaskAssignmentModal } from './P5TaskAssignmentModal';
+import { getLocalMorningPostAssignments, subscribeToMorningPostAssignments } from '../utils/morningPostService';
+import { MorningPostAssignmentModal } from './MorningPostAssignmentModal';
 import { AnnouncementPopup } from './AnnouncementPopup';
 import { IcsExportModal } from './IcsExportModal';
 import { getCurrentTwoHourTheme, TwoHourTheme } from '../utils/themeTwoHour';
@@ -114,6 +116,11 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
     getLocalP5Assignments(schedule.year, schedule.month)
   );
 
+  const [morningPostModalTarget, setMorningPostModalTarget] = useState<{ day: number; staff: Staff; shiftCode: 'P1' | 'P2' } | null>(null);
+  const [morningPostAssignments, setMorningPostAssignments] = useState<Record<string, MorningPostAssignment>>(() =>
+    getLocalMorningPostAssignments(schedule.year, schedule.month)
+  );
+
   useEffect(() => {
     const unsub = subscribeToP5Assignments(schedule.year, schedule.month, (data) => {
       setP5Assignments(data);
@@ -125,6 +132,20 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
     return () => {
       unsub();
       window.removeEventListener('p5_assignments_updated', handleCustomUpdate);
+    };
+  }, [schedule.year, schedule.month]);
+
+  useEffect(() => {
+    const unsub = subscribeToMorningPostAssignments(schedule.year, schedule.month, (data) => {
+      setMorningPostAssignments(data);
+    });
+    const handleCustomUpdate = () => {
+      setMorningPostAssignments(getLocalMorningPostAssignments(schedule.year, schedule.month));
+    };
+    window.addEventListener('morning_post_assignments_updated', handleCustomUpdate);
+    return () => {
+      unsub();
+      window.removeEventListener('morning_post_assignments_updated', handleCustomUpdate);
     };
   }, [schedule.year, schedule.month]);
 
@@ -609,15 +630,26 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               <span className={`px-1.5 py-0.2 rounded text-[10.5px] font-black shadow-xs ${shiftMeta.badgeClass}`}>
                 Kode: {shiftMeta.code}
               </span>
-              {userTodayShift === 'P5' && (
+              {userTodayShift === 'P5' && userRole === 'admin' && (
                 <button
                   type="button"
                   onClick={() => setP5ModalTarget({ day: activeDay, staff: selectedStaff })}
                   className="px-2 py-0.5 rounded bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold flex items-center gap-1 shadow-xs cursor-pointer transition-all"
-                  title="Ganti atau sesuaikan fokus tugas P5"
+                  title="Ganti atau sesuaikan fokus tugas P5 (Khusus Admin)"
                 >
                   <Edit3 className="w-2.5 h-2.5" />
                   <span>Ubah Tugas P5</span>
+                </button>
+              )}
+              {(userTodayShift === 'P1' || userTodayShift === 'P2') && userRole === 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => setMorningPostModalTarget({ day: activeDay, staff: selectedStaff, shiftCode: userTodayShift as 'P1' | 'P2' })}
+                  className="px-2 py-0.5 rounded bg-sky-500 hover:bg-sky-400 text-white text-[10px] font-bold flex items-center gap-1 shadow-xs cursor-pointer transition-all"
+                  title={`Tentukan pos tugas ${userTodayShift} (UKS SD/SMP/SMA/Mobile)`}
+                >
+                  <Edit3 className="w-2.5 h-2.5" />
+                  <span>Atur Pos {userTodayShift}</span>
                 </button>
               )}
             </div>
@@ -625,6 +657,10 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               {userTodayShift === 'P5' ? (
                 <span>
                   Fokus Tugas Khusus: <strong>{p5Assignments[`${activeDay}_${selectedStaff.id}`]?.taskTitle || 'Mendampingi Perhotelan'}</strong>. Melaksanakan bimbingan keterampilan & pendampingan vokasi santri di jam 07:00 – 15:00 WIB.
+                </span>
+              ) : (userTodayShift === 'P1' || userTodayShift === 'P2') ? (
+                <span>
+                  Pos Penugasan {userTodayShift}: <strong>{morningPostAssignments[`${activeDay}_${selectedStaff.id}`]?.postTitle || (userTodayShift === 'P1' ? 'UKS SD / UKS SMP' : 'Mobile / Keliling')}</strong>. {shiftMeta.description}
                 </span>
               ) : (
                 shiftMeta.description
@@ -787,11 +823,13 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               dailyStats.pagiWali.map((st) => {
                 const shiftCode = schedule.days[activeDay]?.[st.id];
                 const isP1 = shiftCode === 'P1' || shiftCode === 'P';
+                const isP2 = shiftCode === 'P2';
                 const isP5 = shiftCode === 'P5';
                 const p5Task = isP5 ? p5Assignments[`${activeDay}_${st.id}`]?.taskTitle : null;
+                const morningPost = (isP1 || isP2) ? morningPostAssignments[`${activeDay}_${st.id}`]?.postTitle : null;
                 const badgeClass = isP1
                   ? 'bg-sky-600 text-white'
-                  : shiftCode === 'P2'
+                  : isP2
                   ? 'bg-teal-600 text-white'
                   : shiftCode === 'P4'
                   ? 'bg-cyan-700 text-white'
@@ -808,6 +846,17 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                       {shiftCode === 'P4' && (
                         <span className="text-[8.5px] text-cyan-700 dark:text-cyan-300 shrink-0 font-bold">(Kunjungan)</span>
                       )}
+                      {(isP1 || isP2) && morningPost && (
+                        <span 
+                          onClick={() => {
+                            if (userRole === 'admin') setMorningPostModalTarget({ day: activeDay, staff: st, shiftCode: isP1 ? 'P1' : 'P2' });
+                          }}
+                          className={`text-[8.5px] px-1 py-0.2 rounded font-bold truncate shrink-0 ${isP1 ? 'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-300' : 'bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300'} ${userRole === 'admin' ? 'cursor-pointer hover:underline' : ''}`}
+                          title={`Pos: ${morningPost} (Klik untuk atur)`}
+                        >
+                          {morningPost}
+                        </span>
+                      )}
                       {isP5 && (
                         <span 
                           onClick={() => {
@@ -822,9 +871,14 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                     </div>
                     <span 
                       onClick={() => {
-                        if (isP5 && userRole === 'admin') setP5ModalTarget({ day: activeDay, staff: st });
+                        if (isP5 && userRole === 'admin') {
+                          setP5ModalTarget({ day: activeDay, staff: st });
+                        } else if ((isP1 || isP2) && userRole === 'admin') {
+                          setMorningPostModalTarget({ day: activeDay, staff: st, shiftCode: isP1 ? 'P1' : 'P2' });
+                        }
                       }}
-                      className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded shrink-0 ${badgeClass} ${isP5 && userRole === 'admin' ? 'cursor-pointer hover:opacity-85' : ''}`}
+                      className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded shrink-0 ${badgeClass} ${(isP5 || isP1 || isP2) && userRole === 'admin' ? 'cursor-pointer hover:opacity-85' : ''}`}
+                      title={userRole === 'admin' ? 'Klik untuk atur penugasan pos/tugas' : undefined}
                     >
                       {shiftCode}
                     </span>
@@ -1357,6 +1411,24 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
           monthName={schedule.monthName}
           onSaved={() => {
             setP5Assignments(getLocalP5Assignments(schedule.year, schedule.month));
+          }}
+        />
+      )}
+
+      {/* Pop-up Dialog Penugasan Pos Shif P1 & P2 (UKS SD/SMP/SMA / Mobile / Kustom) */}
+      {morningPostModalTarget && (
+        <MorningPostAssignmentModal
+          isOpen={!!morningPostModalTarget}
+          onClose={() => setMorningPostModalTarget(null)}
+          staff={morningPostModalTarget.staff}
+          day={morningPostModalTarget.day}
+          month={schedule.month}
+          year={schedule.year}
+          monthName={schedule.monthName}
+          shiftCode={morningPostModalTarget.shiftCode}
+          userRole={userRole}
+          onSaved={() => {
+            setMorningPostAssignments(getLocalMorningPostAssignments(schedule.year, schedule.month));
           }}
         />
       )}

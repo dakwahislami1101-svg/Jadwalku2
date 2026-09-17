@@ -19,6 +19,8 @@ import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule
 import { calculateStaffSummary, INDONESIAN_DAY_NAMES } from '../utils/scheduler';
 import { soundManager } from '../utils/audio';
 import { notificationService } from '../utils/notification';
+import { getLocalMorningPostAssignments } from '../utils/morningPostService';
+import { getLocalP5Assignments } from '../utils/p5TaskService';
 import { IcsExportModal } from './IcsExportModal';
 
 interface PersonalScheduleProps {
@@ -71,6 +73,9 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
     );
   }
 
+  const p5Assignments = getLocalP5Assignments(schedule.year, schedule.month);
+  const morningPostAssignments = getLocalMorningPostAssignments(schedule.year, schedule.month);
+
   // Generate WhatsApp formatted text
   const generateWhatsAppShareText = () => {
     let text = `📋 *JADWAL SHIF WALI ASUH - ${schedule.monthName.toUpperCase()} ${schedule.year}*\n`;
@@ -83,7 +88,10 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
       const meta = SHIFT_DEFINITIONS[shift];
       const dObj = new Date(schedule.year, schedule.month - 1, d);
       const dayName = INDONESIAN_DAY_NAMES[dObj.getDay()];
-      text += `• Tgl ${d} (${dayName}): *${shift}* - ${meta.name} (${meta.startTime} - ${meta.endTime})\n`;
+      const p5Task = shift === 'P5' ? p5Assignments[`${d}_${selectedStaff.id}`]?.taskTitle : null;
+      const morningPost = (shift === 'P1' || shift === 'P2') ? morningPostAssignments[`${d}_${selectedStaff.id}`]?.postTitle : null;
+      const extraNote = p5Task ? ` [Tugas: ${p5Task}]` : morningPost ? ` [Pos: ${morningPost}]` : '';
+      text += `• Tgl ${d} (${dayName}): *${shift}*${extraNote} - ${meta.name} (${meta.startTime} - ${meta.endTime})\n`;
     }
 
     text += `\n_Kementerian Sosial RI - SRT 1 Kab Kediri_`;
@@ -315,6 +323,8 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
               const isToday = isCurrentMonthYear && day === todayDate;
               const dayOfWeek = (firstDayIndex + day - 1) % 7;
               const isSunday = dayOfWeek === 0;
+              const p5Task = shift === 'P5' ? p5Assignments[`${day}_${selectedStaff.id}`]?.taskTitle : null;
+              const morningPost = (shift === 'P1' || shift === 'P2') ? morningPostAssignments[`${day}_${selectedStaff.id}`]?.postTitle : null;
 
               return (
                 <div
@@ -344,6 +354,11 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
                     <span className={`inline-block px-1.5 py-0.2 rounded text-[10px] font-black ${meta.badgeClass}`}>
                       {shift}
                     </span>
+                    {(p5Task || morningPost) && (
+                      <div className="text-[8px] font-bold text-sky-700 dark:text-sky-300 truncate mt-0.5" title={p5Task || morningPost || ''}>
+                        {p5Task || morningPost}
+                      </div>
+                    )}
                   </div>
 
                   <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">
@@ -368,42 +383,51 @@ export const PersonalSchedule: React.FC<PersonalScheduleProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            {upcomingShifts.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40 text-xs"
-              >
-                <div className="flex items-center gap-2">
-                  <span className={`w-6 h-6 rounded flex items-center justify-center font-bold text-[10px] ${item.meta.badgeClass}`}>
-                    {item.shift}
-                  </span>
-                  <div>
-                    <div className="font-bold text-[11px] text-slate-900 dark:text-white">
-                      {item.dayName}, {item.day} {schedule.monthName}
-                    </div>
-                    <div className="text-[10px] text-slate-500 truncate max-w-[140px]">
-                      {item.meta.name} • {item.meta.startTime}
+            {upcomingShifts.map((item, idx) => {
+              const p5Task = item.shift === 'P5' ? p5Assignments[`${item.day}_${selectedStaff.id}`]?.taskTitle : null;
+              const morningPost = (item.shift === 'P1' || item.shift === 'P2') ? morningPostAssignments[`${item.day}_${selectedStaff.id}`]?.postTitle : null;
+              return (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-1.5 px-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/40 text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`w-6 h-6 rounded flex items-center justify-center font-bold text-[10px] ${item.meta.badgeClass}`}>
+                      {item.shift}
+                    </span>
+                    <div>
+                      <div className="font-bold text-[11px] text-slate-900 dark:text-white flex items-center gap-1">
+                        <span>{item.dayName}, {item.day} {schedule.monthName}</span>
+                        {(p5Task || morningPost) && (
+                          <span className="text-[9px] px-1 py-0.2 rounded font-semibold bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-300">
+                            {p5Task || morningPost}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-500 truncate max-w-[140px]">
+                        {item.meta.name} • {item.meta.startTime}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <button
-                  onClick={() => {
-                    notificationService.triggerNotification(
-                      `Pengingat Shif ${item.meta.name}`,
-                      {
-                        body: `Jadwal ${item.dayName}, ${item.day} ${schedule.monthName}: ${item.meta.name} (${item.meta.startTime} - ${item.meta.endTime})`,
-                        sound: 'chime',
-                      }
-                    );
-                  }}
-                  className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-amber-500 transition-colors"
-                  title="Bunyikan Uji Alarm"
-                >
-                  <Bell className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
+                  <button
+                    onClick={() => {
+                      notificationService.triggerNotification(
+                        `Pengingat Shif ${item.meta.name}`,
+                        {
+                          body: `Jadwal ${item.dayName}, ${item.day} ${schedule.monthName}: ${item.meta.name} (${item.meta.startTime} - ${item.meta.endTime})${p5Task ? ` [Tugas: ${p5Task}]` : ''}${morningPost ? ` [Pos: ${morningPost}]` : ''}`,
+                          sound: 'chime',
+                        }
+                      );
+                    }}
+                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-amber-500 transition-colors"
+                    title="Bunyikan Uji Alarm"
+                  >
+                    <Bell className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-1.5">

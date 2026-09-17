@@ -12,6 +12,7 @@ import {
 import { MonthSchedule, Staff, ShiftCode } from '../types';
 import { soundManager } from '../utils/audio';
 import { getLocalP5Assignments } from '../utils/p5TaskService';
+import { getLocalMorningPostAssignments } from '../utils/morningPostService';
 
 interface ActiveShiftModalProps {
   isOpen: boolean;
@@ -74,13 +75,23 @@ export function getCurrentShiftPeriod(date: Date = new Date()): ShiftPeriodInfo 
 /**
  * Keterangan singkat & padat untuk setiap kode shif (misal: S2A Jaga Kantin SMP)
  */
-export function getShortShiftDescription(code: ShiftCode, customP5Title?: string): { shortDesc: string; badgeBg: string } {
+export function getShortShiftDescription(
+  code: ShiftCode, 
+  customP5Title?: string,
+  morningPostTitle?: string
+): { shortDesc: string; badgeBg: string } {
   switch (code) {
     case 'P1':
     case 'P':
-      return { shortDesc: 'Piket Pagi 1 (Apel & Makan Siang)', badgeBg: 'bg-sky-600 text-white' };
+      return { 
+        shortDesc: morningPostTitle ? `Pos ${morningPostTitle} (07-15)` : 'Piket Pagi 1 (Apel & Makan Siang)', 
+        badgeBg: 'bg-sky-600 text-white' 
+      };
     case 'P2':
-      return { shortDesc: 'Piket Pagi 2 (Operasional Sekolah)', badgeBg: 'bg-teal-600 text-white' };
+      return { 
+        shortDesc: morningPostTitle ? `Pos ${morningPostTitle} (08-16)` : 'Piket Pagi 2 (Operasional Sekolah)', 
+        badgeBg: 'bg-teal-600 text-white' 
+      };
     case 'P3':
       return { shortDesc: 'Piket Pagi Khusus (Upacara / Senin)', badgeBg: 'bg-amber-600 text-white' };
     case 'P4':
@@ -170,6 +181,7 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
     }[] = [];
 
     const p5Assignments = getLocalP5Assignments(schedule.year, schedule.month);
+    const morningPostAssignments = getLocalMorningPostAssignments(schedule.year, schedule.month);
 
     staffList.forEach((staff) => {
       const shiftCode = schedule.days[todayDay]?.[staff.id];
@@ -194,7 +206,10 @@ export const ActiveShiftModal: React.FC<ActiveShiftModalProps> = ({
 
       if (isIncluded) {
         const p5Custom = shiftCode === 'P5' ? p5Assignments[`${todayDay}_${staff.id}`]?.taskTitle : undefined;
-        const { shortDesc, badgeBg } = getShortShiftDescription(shiftCode, p5Custom);
+        const morningPost = (shiftCode === 'P1' || shiftCode === 'P2' || shiftCode === 'P') 
+          ? morningPostAssignments[`${todayDay}_${staff.id}`]?.postTitle 
+          : undefined;
+        const { shortDesc, badgeBg } = getShortShiftDescription(shiftCode, p5Custom, morningPost);
         list.push({
           staff,
           shiftCode,
