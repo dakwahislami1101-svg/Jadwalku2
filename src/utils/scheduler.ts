@@ -122,6 +122,9 @@ export function calculateStaffSummary(
       case 'C':
         cuti++;
         break;
+      case 'IZIN':
+        cuti++;
+        break;
     }
   }
 
@@ -325,6 +328,7 @@ export function calculateDailyStats(
         offWali.push(staff);
         break;
       case 'C':
+      case 'IZIN':
         cuti++;
         cutiWali.push(staff);
         break;

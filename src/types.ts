@@ -1,4 +1,4 @@
-export type ShiftCode = 'P' | 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'S' | 'S2A' | 'S3A' | 'S4A' | 'M' | 'M1' | 'M2' | 'M3' | 'LP' | 'O' | 'L' | 'C';
+export type ShiftCode = 'P' | 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'S' | 'S2A' | 'S3A' | 'S4A' | 'M' | 'M1' | 'M2' | 'M3' | 'LP' | 'O' | 'L' | 'C' | 'IZIN';
 
 export interface ShiftInfo {
   code: ShiftCode;
@@ -275,6 +275,27 @@ export interface MorningPostCustomOption {
   id: string;
   label: string; // e.g. "UKS SD", "UKS SMP", "UKS SMA", "Mobile / Keliling"
   isDefault?: boolean;
+}
+
+// ==================== IZIN (PERIZINAN PETUGAS / SAKIT / DINAS) TYPES ====================
+export type LeaveType = 'sakit' | 'dinas' | 'keperluan_lain';
+
+export interface LeavePermissionRecord {
+  id: string; // e.g. "2026_9_15_12" (year_month_day_staffId)
+  staffId: number;
+  staffName: string;
+  day: number;
+  month: number;
+  year: number;
+  leaveType: LeaveType; // 'sakit' | 'dinas' | 'keperluan_lain'
+  notes?: string; // Keterangan tambahan dari admin
+  proofUrl?: string; // Data URL Base64 image (JPG/PNG) surat bukti sakit/surat tugas dinas
+  proofFileName?: string;
+  proofUploadedAt?: string;
+  proofUploadedBy?: string;
+  createdAt: string;
+  createdBy?: string;
+  updatedAt: string;
 }
 
 

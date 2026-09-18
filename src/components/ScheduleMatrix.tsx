@@ -33,7 +33,9 @@ import { P5TaskAssignmentModal } from './P5TaskAssignmentModal';
 import { getLocalP5Assignments, subscribeToP5Assignments } from '../utils/p5TaskService';
 import { getLocalMorningPostAssignments, subscribeToMorningPostAssignments } from '../utils/morningPostService';
 import { MorningPostAssignmentModal } from './MorningPostAssignmentModal';
-import { P5TaskAssignment, MorningPostAssignment } from '../types';
+import { LeaveAssignmentModal } from './LeaveAssignmentModal';
+import { getLocalLeaveRecords, subscribeToLeaveRecords } from '../utils/leaveService';
+import { P5TaskAssignment, MorningPostAssignment, LeavePermissionRecord } from '../types';
 
 interface ScheduleMatrixProps {
   userRole?: 'admin' | 'staff';
@@ -77,6 +79,25 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
   const [morningPostAssignments, setMorningPostAssignments] = useState<Record<string, MorningPostAssignment>>(() =>
     getLocalMorningPostAssignments(schedule.year, schedule.month)
   );
+
+  const [leaveModalTarget, setLeaveModalTarget] = useState<{ day: number; staff: Staff } | null>(null);
+  const [leaveRecords, setLeaveRecords] = useState<Record<string, LeavePermissionRecord>>(() =>
+    getLocalLeaveRecords(schedule.year, schedule.month)
+  );
+
+  useEffect(() => {
+    const unsub = subscribeToLeaveRecords(schedule.year, schedule.month, (data) => {
+      setLeaveRecords(data);
+    });
+    const handleCustomUpdate = () => {
+      setLeaveRecords(getLocalLeaveRecords(schedule.year, schedule.month));
+    };
+    window.addEventListener('leave_records_updated', handleCustomUpdate);
+    return () => {
+      unsub();
+      window.removeEventListener('leave_records_updated', handleCustomUpdate);
+    };
+  }, [schedule.year, schedule.month]);
 
   useEffect(() => {
     const unsub = subscribeToP5Assignments(schedule.year, schedule.month, (data) => {
@@ -234,6 +255,13 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
         soundManager.playChime();
         setEditingCell(null);
         setMorningPostModalTarget({ day, staff: staffObj, shiftCode: newShift });
+        return;
+      }
+
+      if (newShift === 'IZIN') {
+        soundManager.playChime();
+        setEditingCell(null);
+        setLeaveModalTarget({ day, staff: staffObj });
         return;
       }
 
@@ -803,8 +831,10 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                       const isP5 = shift === 'P5';
                       const isP1 = shift === 'P1';
                       const isP2 = shift === 'P2';
+                      const isIzin = shift === 'IZIN';
                       const p5Task = isP5 ? p5Assignments[`${day}_${staff.id}`]?.taskTitle : null;
                       const morningPost = (isP1 || isP2) ? morningPostAssignments[`${day}_${staff.id}`]?.postTitle : null;
+                      const leaveRecord = isIzin ? leaveRecords[`${schedule.year}_${schedule.month}_${day}_${staff.id}`] : null;
 
                       return (
                         <td
@@ -814,14 +844,16 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                               setP5ModalTarget({ day, staff });
                             } else if ((shift === 'P1' || shift === 'P2') && userRole === 'admin') {
                               setMorningPostModalTarget({ day, staff, shiftCode: shift });
+                            } else if (shift === 'IZIN' && userRole === 'admin') {
+                              setLeaveModalTarget({ day, staff });
                             } else {
                               handleCellClick(day, staff.id);
                             }
                           }}
                           className={`p-0.2 border-r border-slate-200 dark:border-slate-700/80 cursor-pointer select-none transition-all ${
                             isFocusedDay ? 'bg-blue-50 dark:bg-blue-900/20 font-bold' : ''
-                          } ${isM3 ? 'bg-fuchsia-100/60 dark:bg-fuchsia-950/40' : ''} ${isP5 ? 'bg-emerald-50/50 dark:bg-emerald-950/30' : ''}`}
-                          title={`Tgl ${day} - ${staff.name}: ${meta?.name || shift} ${p5Task ? `[Tugas: ${p5Task}]` : ''} ${morningPost ? `[Pos: ${morningPost}]` : ''} (${meta?.startTime || '07:00'}-${meta?.endTime || '15:00'})`}
+                          } ${isM3 ? 'bg-fuchsia-100/60 dark:bg-fuchsia-950/40' : ''} ${isP5 ? 'bg-emerald-50/50 dark:bg-emerald-950/30' : ''} ${isIzin ? 'bg-rose-50/70 dark:bg-rose-950/40' : ''}`}
+                          title={`Tgl ${day} - ${staff.name}: ${meta?.name || shift} ${p5Task ? `[Tugas: ${p5Task}]` : ''} ${morningPost ? `[Pos: ${morningPost}]` : ''} ${leaveRecord ? `[Izin: ${leaveRecord.leaveType}${leaveRecord.notes ? ` - ${leaveRecord.notes}` : ''}]` : ''}`}
                         >
                           <span
                             className={`inline-flex items-center justify-center min-w-[24px] max-w-[34px] py-0.5 px-1 rounded text-[9.5px] leading-tight border transition-all ${
@@ -829,6 +861,8 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
                                 ? 'bg-fuchsia-600 text-white font-black border-fuchsia-700 dark:border-fuchsia-400 shadow-xs ring-1 ring-fuchsia-300 dark:ring-fuchsia-400 scale-105'
                                 : isP5
                                 ? 'bg-emerald-700 text-white font-black border-emerald-800 dark:border-emerald-600 shadow-2xs'
+                                : isIzin
+                                ? 'bg-rose-600 text-white font-black border-rose-700 dark:border-rose-400 shadow-2xs ring-1 ring-rose-300 dark:ring-rose-500'
                                 : (isP1 || isP2) && morningPost
                                 ? `${meta?.bgLight || 'bg-slate-100'} ${meta?.bgDark || 'dark:bg-slate-800'} font-black ring-1 ring-sky-400/80 dark:ring-sky-500`
                                 : `${meta?.bgLight || 'bg-slate-100'} ${meta?.bgDark || 'dark:bg-slate-800'} font-bold`
@@ -1364,6 +1398,28 @@ export const ScheduleMatrix: React.FC<ScheduleMatrixProps> = ({
             setToastMessage(assignment
               ? `Pos ${morningPostModalTarget.shiftCode} untuk ${morningPostModalTarget.staff.name} berhasil disimpan: "${assignment.postTitle}"`
               : `Pos ${morningPostModalTarget.shiftCode} untuk ${morningPostModalTarget.staff.name} telah direset`
+            );
+            setTimeout(() => setToastMessage(null), 4000);
+          }}
+        />
+      )}
+
+      {/* Pop-up Dialog Konfigurasi Perizinan (IZIN - Sakit/Dinas/Keperluan Lain) */}
+      {leaveModalTarget && (
+        <LeaveAssignmentModal
+          isOpen={!!leaveModalTarget}
+          onClose={() => setLeaveModalTarget(null)}
+          staff={leaveModalTarget.staff}
+          day={leaveModalTarget.day}
+          month={schedule.month}
+          year={schedule.year}
+          monthName={schedule.monthName}
+          userRole={userRole}
+          onSaved={(record) => {
+            setLeaveRecords(getLocalLeaveRecords(schedule.year, schedule.month));
+            setToastMessage(record
+              ? `Keterangan IZIN (${record.leaveType}) untuk ${leaveModalTarget.staff.name} berhasil disimpan`
+              : `Status perizinan untuk ${leaveModalTarget.staff.name} telah dibersihkan`
             );
             setTimeout(() => setToastMessage(null), 4000);
           }}

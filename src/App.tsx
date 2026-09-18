@@ -28,6 +28,7 @@ import { PrintReportModal } from './components/PrintReportModal';
 import { HandoverReportView } from './components/HandoverReportView';
 import { AdminShiftSwapView } from './components/AdminShiftSwapView';
 import { AdminChecklistConfigView } from './components/AdminChecklistConfigView';
+import { LeaveManagementView } from './components/LeaveManagementView';
 import { StudentMedicalView } from './components/StudentMedicalView';
 import { AssignmentReminderView } from './components/AssignmentReminderView';
 import { MedicalNotificationsModal } from './components/MedicalNotificationsModal';
@@ -213,7 +214,7 @@ export default function App() {
 
   // Active view tab (defaults to admin swap view if admin, or dashboard if staff)
   const [currentTab, setCurrentTab] = useState<
-    'dashboard' | 'matrix' | 'codeguide' | 'personal' | 'admin' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio'
+    'dashboard' | 'matrix' | 'codeguide' | 'personal' | 'admin' | 'leave' | 'auto' | 'notifications' | 'print' | 'handover' | 'sop' | 'medical' | 'assignment' | 'portfolio'
   >(() => {
     try {
       const local = localStorage.getItem('sr_auth_session');
@@ -229,7 +230,7 @@ export default function App() {
 
   // Safeguard: redirect regular staff away from admin-only tabs
   useEffect(() => {
-    if (currentUserRole !== 'admin' && (currentTab === 'admin' || currentTab === 'auto' || currentTab === 'sop')) {
+    if (currentUserRole !== 'admin' && (currentTab === 'admin' || currentTab === 'leave' || currentTab === 'auto' || currentTab === 'sop')) {
       setCurrentTab('dashboard');
     }
   }, [currentUserRole, currentTab]);
@@ -1024,6 +1025,19 @@ export default function App() {
                 staffList={staffList}
                 activeDay={activeDay}
                 setActiveDay={setActiveDay}
+                onNavigateToMatrix={() => setCurrentTab('matrix')}
+                onNavigateToDashboard={() => setCurrentTab('dashboard')}
+              />
+            )}
+
+            {currentTab === 'leave' && currentUserRole === 'admin' && (
+              <LeaveManagementView
+                schedule={schedule}
+                setSchedule={setSchedule}
+                staffList={staffList}
+                activeDay={activeDay}
+                setActiveDay={setActiveDay}
+                userRole={currentUserRole}
                 onNavigateToMatrix={() => setCurrentTab('matrix')}
                 onNavigateToDashboard={() => setCurrentTab('dashboard')}
               />

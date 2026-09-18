@@ -29,7 +29,11 @@ import {
   Radio,
   Send,
   BookOpen,
-  GraduationCap
+  GraduationCap,
+  Upload,
+  Image,
+  Check,
+  Eye
 } from 'lucide-react';
 import { MonthSchedule, Staff, ShiftCode, DailyTask, AnnouncementData, StudentMedicalPlan, P5TaskAssignment, MorningPostAssignment } from '../types';
 import { SHIFT_DEFINITIONS, SHIFT_TASKS_TEMPLATE } from '../data/initialSchedule';
@@ -48,9 +52,13 @@ import { getLocalP5Assignments, subscribeToP5Assignments } from '../utils/p5Task
 import { P5TaskAssignmentModal } from './P5TaskAssignmentModal';
 import { getLocalMorningPostAssignments, subscribeToMorningPostAssignments } from '../utils/morningPostService';
 import { MorningPostAssignmentModal } from './MorningPostAssignmentModal';
+import { LeaveProofUploadModal } from './LeaveProofUploadModal';
+import { LeaveAssignmentModal } from './LeaveAssignmentModal';
+import { getLocalLeaveRecords, subscribeToLeaveRecords } from '../utils/leaveService';
 import { AnnouncementPopup } from './AnnouncementPopup';
 import { IcsExportModal } from './IcsExportModal';
 import { getCurrentTwoHourTheme, TwoHourTheme } from '../utils/themeTwoHour';
+import { LeavePermissionRecord } from '../types';
 
 interface TodayDashboardProps {
   schedule: MonthSchedule;
@@ -120,6 +128,26 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   const [morningPostAssignments, setMorningPostAssignments] = useState<Record<string, MorningPostAssignment>>(() =>
     getLocalMorningPostAssignments(schedule.year, schedule.month)
   );
+
+  const [leaveRecords, setLeaveRecords] = useState<Record<string, LeavePermissionRecord>>(() =>
+    getLocalLeaveRecords(schedule.year, schedule.month)
+  );
+  const [isLeaveUploadModalOpen, setIsLeaveUploadModalOpen] = useState<boolean>(false);
+  const [adminLeaveModalTarget, setAdminLeaveModalTarget] = useState<{ day: number; staff: Staff } | null>(null);
+
+  useEffect(() => {
+    const unsub = subscribeToLeaveRecords(schedule.year, schedule.month, (data) => {
+      setLeaveRecords(data);
+    });
+    const handleCustomUpdate = () => {
+      setLeaveRecords(getLocalLeaveRecords(schedule.year, schedule.month));
+    };
+    window.addEventListener('leave_records_updated', handleCustomUpdate);
+    return () => {
+      unsub();
+      window.removeEventListener('leave_records_updated', handleCustomUpdate);
+    };
+  }, [schedule.year, schedule.month]);
 
   useEffect(() => {
     const unsub = subscribeToP5Assignments(schedule.year, schedule.month, (data) => {
@@ -306,6 +334,9 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
   };
   const userTodayShift: ShiftCode = selectedStaff.id ? (schedule.days[activeDay]?.[selectedStaff.id] || 'O') : 'O';
   const shiftMeta = SHIFT_DEFINITIONS[userTodayShift] || SHIFT_DEFINITIONS['O'];
+
+  const currentLeaveKey = `${schedule.year}_${schedule.month}_${activeDay}_${selectedStaff.id}`;
+  const currentLeaveRecord = userTodayShift === 'IZIN' ? leaveRecords[currentLeaveKey] : null;
 
   // Daily statistics for active day
   const dailyStats = calculateDailyStats(activeDay, schedule.days, staffList);
@@ -652,6 +683,32 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
                   <span>Atur Pos {userTodayShift}</span>
                 </button>
               )}
+              {userTodayShift === 'IZIN' && userRole === 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => setAdminLeaveModalTarget({ day: activeDay, staff: selectedStaff })}
+                  className="px-2 py-0.5 rounded bg-rose-500 hover:bg-rose-400 text-white text-[10px] font-bold flex items-center gap-1 shadow-xs cursor-pointer transition-all"
+                  title="Atur kategori izin & keterangan admin"
+                >
+                  <Edit3 className="w-2.5 h-2.5" />
+                  <span>Atur Izin</span>
+                </button>
+              )}
+              {userTodayShift === 'IZIN' && (currentLeaveRecord?.leaveType === 'sakit' || currentLeaveRecord?.leaveType === 'dinas' || !currentLeaveRecord) && (
+                <button
+                  type="button"
+                  onClick={() => setIsLeaveUploadModalOpen(true)}
+                  className={`px-2.5 py-0.5 rounded text-[10.5px] font-bold flex items-center gap-1 shadow-xs cursor-pointer transition-all ${
+                    currentLeaveRecord?.proofUrl
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                      : 'bg-amber-400 hover:bg-amber-300 text-slate-950 font-black ring-1 ring-white/50 animate-pulse'
+                  }`}
+                  title={currentLeaveRecord?.proofUrl ? 'Bukti surat sudah diunggah. Klik untuk melihat / ganti.' : 'Wajib unggah foto surat sakit / surat dinas (JPG/PNG)'}
+                >
+                  <Upload className="w-3 h-3" />
+                  <span>{currentLeaveRecord?.proofUrl ? '✓ Bukti Terunggah' : 'Upload Bukti (JPG/PNG)'}</span>
+                </button>
+              )}
             </div>
             <p className="text-[11.5px] sm:text-xs text-white/95 max-w-3xl leading-snug drop-shadow-xs font-normal">
               {userTodayShift === 'P5' ? (
@@ -661,6 +718,14 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
               ) : (userTodayShift === 'P1' || userTodayShift === 'P2') ? (
                 <span>
                   Pos Penugasan {userTodayShift}: <strong>{morningPostAssignments[`${activeDay}_${selectedStaff.id}`]?.postTitle || (userTodayShift === 'P1' ? 'UKS SD / UKS SMP' : 'Mobile / Keliling')}</strong>. {shiftMeta.description}
+                </span>
+              ) : userTodayShift === 'IZIN' ? (
+                <span>
+                  Kategori Perizinan: <strong className="uppercase">{currentLeaveRecord?.leaveType === 'sakit' ? 'Sakit' : currentLeaveRecord?.leaveType === 'dinas' ? 'Dinas Luar' : currentLeaveRecord?.leaveType === 'keperluan_lain' ? 'Keperluan Lain' : 'Belum Ditentukan'}</strong>
+                  {currentLeaveRecord?.notes ? ` • Catatan Admin: "${currentLeaveRecord.notes}"` : ''}.
+                  {currentLeaveRecord?.leaveType === 'sakit' || currentLeaveRecord?.leaveType === 'dinas' ? (
+                    currentLeaveRecord?.proofUrl ? ' [Bukti foto surat telah tersimpan di sistem]' : ' [Silakan klik tombol Upload Bukti di atas untuk melampirkan surat]'
+                  ) : ''}
                 </span>
               ) : (
                 shiftMeta.description
@@ -1429,6 +1494,42 @@ export const TodayDashboard: React.FC<TodayDashboardProps> = ({
           userRole={userRole}
           onSaved={() => {
             setMorningPostAssignments(getLocalMorningPostAssignments(schedule.year, schedule.month));
+          }}
+        />
+      )}
+
+      {/* Pop-up Upload Bukti Foto Surat Perizinan (Sakit / Dinas) untuk Petugas */}
+      {isLeaveUploadModalOpen && (
+        <LeaveProofUploadModal
+          isOpen={isLeaveUploadModalOpen}
+          onClose={() => setIsLeaveUploadModalOpen(false)}
+          staff={selectedStaff}
+          day={activeDay}
+          month={schedule.month}
+          year={schedule.year}
+          monthName={schedule.monthName}
+          existingRecord={currentLeaveRecord}
+          onUploadSuccess={() => {
+            setLeaveRecords(getLocalLeaveRecords(schedule.year, schedule.month));
+            showToast('Bukti foto surat perizinan berhasil diunggah & tersimpan!');
+          }}
+        />
+      )}
+
+      {/* Pop-up Dialog Pengaturan Perizinan oleh Admin di Dashboard */}
+      {adminLeaveModalTarget && (
+        <LeaveAssignmentModal
+          isOpen={!!adminLeaveModalTarget}
+          onClose={() => setAdminLeaveModalTarget(null)}
+          staff={adminLeaveModalTarget.staff}
+          day={adminLeaveModalTarget.day}
+          month={schedule.month}
+          year={schedule.year}
+          monthName={schedule.monthName}
+          userRole={userRole}
+          onSaved={() => {
+            setLeaveRecords(getLocalLeaveRecords(schedule.year, schedule.month));
+            showToast('Keterangan perizinan staf berhasil diperbarui.');
           }}
         />
       )}

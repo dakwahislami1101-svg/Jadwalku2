@@ -328,6 +328,23 @@ export const SHIFT_DEFINITIONS: Record<ShiftCode, ShiftInfo> = {
     badgeClass: 'bg-teal-600 text-white font-semibold',
     description: 'Sedang melaksanakan cuti tahunan/alasan penting yang disetujui pimpinan',
   },
+  IZIN: {
+    code: 'IZIN',
+    name: 'Izin / Sakit / Dinas (IZIN)',
+    fullName: 'Perizinan Petugas (Sakit, Dinas, Keperluan Lain)',
+    startTime: '00:00',
+    endTime: '23:59',
+    hours: 0,
+    color: '#e11d48', // Rose / Maroon vibrant
+    bgLight: 'bg-rose-100 text-rose-900 border-rose-400 font-black',
+    bgDark: 'dark:bg-rose-950/80 dark:text-rose-200 dark:border-rose-600 font-black',
+    borderLight: 'border-rose-400',
+    borderDark: 'dark:border-rose-500',
+    textColor: 'text-rose-800',
+    darkTextColor: 'dark:text-rose-300',
+    badgeClass: 'bg-rose-600 text-white font-black shadow-xs ring-1 ring-rose-400',
+    description: 'Petugas berhalangan dinas karena izin resmi: Sakit (dengan surat dokter), Dinas Luar (surat tugas), atau Keperluan Lain.',
+  },
 };
 
 export const INITIAL_STAFF_LIST: Staff[] = SEPTEMBER_2026_STAFF_LIST;

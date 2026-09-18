@@ -437,6 +437,30 @@ const SHIFT_GUIDE_DATA: ShiftGuideDetail[] = [
     ],
     colorBorder: 'border-rose-300 dark:border-rose-800',
     cardBg: 'bg-gradient-to-br from-rose-50/40 via-white to-rose-50/20 dark:from-rose-950/20 dark:via-slate-900 dark:to-slate-900'
+  },
+  {
+    code: 'IZIN',
+    category: 'libur',
+    categoryLabel: 'Perizinan Petugas',
+    categoryIcon: <FileText className="w-4 h-4 text-rose-500" />,
+    categoryColor: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800',
+    dutyTime: '00:00 – 24:00 WIB',
+    workHours: 0,
+    badgeBg: 'bg-rose-600 text-white font-black ring-1 ring-rose-400',
+    tagline: 'Perizinan Petugas: Sakit, Dinas Luar & Keperluan Lain (Upload Bukti Surat)',
+    description: 'Status perizinan resmi bagi wali asuh yang berhalangan dinas dengan kategori: Sakit (dengan surat dokter), Dinas Luar (surat tugas resmi pimpinan), atau Keperluan Lain. Petugas yang bersangkutan dapat melampirkan foto dokumen bukti surat resmi (JPG/PNG) langsung dari dashboard dinas.',
+    responsibilities: [
+      'Melaporkan permohonan izin kepada pimpinan / koordinator dinas sebelum jam dinas dimulai',
+      'Mengunggah bukti foto surat dokter/surat tugas dinas dalam format JPG/PNG melalui dashboard hari ini',
+      'Memastikan telah dikoordinasikan penggantian pos/tugas piket kepada rekan dinas lainnya'
+    ],
+    rulesAndNotes: [
+      'Kategori Sakit & Dinas Luar wajib melampirkan file bukti dokumen resmi (JPG/PNG)',
+      'Admin dapat meninjau, mengunduh, dan mencatat keterangan di panel Menu Perizinan (IZIN)',
+      'Dihitung 0 jam kerja dinas pada hari izin berlangsung'
+    ],
+    colorBorder: 'border-rose-400 dark:border-rose-600',
+    cardBg: 'bg-gradient-to-br from-rose-50/60 via-white to-rose-50/30 dark:from-rose-950/30 dark:via-slate-900 dark:to-slate-900'
   }
 ];
 
